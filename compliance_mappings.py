@@ -5,7 +5,7 @@ Maps threats to ISO 26262 and UN R155 requirements
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Set, Optional
+from typing import Dict, List
 
 class ComplianceType(Enum):
     ISO_26262 = "ISO 26262"
@@ -13,16 +13,14 @@ class ComplianceType(Enum):
 
 @dataclass
 class ComplianceRequirement:
-    standard: ComplianceType
-    section: str
-    title: str
+    standard: str
+    requirement: str
     description: str
     
     def to_dict(self) -> Dict:
         return {
-            "standard": self.standard.value,
-            "section": self.section,
-            "title": self.title,
+            "standard": self.standard,
+            "requirement": self.requirement,
             "description": self.description
         }
 
@@ -30,56 +28,48 @@ class ComplianceRequirement:
 ISO_26262_REQUIREMENTS = {
     "ASIL D": {
         "4-6": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "4-6",
-            "Item integration and testing",
-            "Requirements for integration testing of the item including hardware-software integration"
+            "Item integration and testing"
         ),
         "4-7": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "4-7",
-            "Safety validation",
-            "Requirements for safety validation of the item"
+            "Safety validation"
         ),
         "6-7": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "6-7",
-            "Safety mechanisms",
-            "Requirements for safety mechanisms including diagnostic coverage"
+            "Safety mechanisms"
         ),
         "6-8": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "6-8",
-            "Safety analysis",
-            "Requirements for safety analysis of the hardware design"
+            "Safety analysis"
         )
     },
     "ASIL C": {
         "4-6": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "4-6",
-            "Item integration and testing",
-            "Requirements for integration testing with reduced rigor compared to ASIL D"
+            "Item integration and testing"
         ),
         "6-7": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "6-7",
-            "Safety mechanisms",
-            "Requirements for safety mechanisms with reduced diagnostic coverage"
+            "Safety mechanisms"
         )
     },
     "ASIL B": {
         "4-6": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "4-6",
-            "Item integration and testing",
-            "Basic requirements for integration testing"
+            "Item integration and testing"
         ),
         "6-7": ComplianceRequirement(
-            ComplianceType.ISO_26262,
+            "ISO 26262",
             "6-7",
-            "Safety mechanisms",
-            "Basic requirements for safety mechanisms"
+            "Safety mechanisms"
         )
     }
 }
@@ -88,99 +78,153 @@ ISO_26262_REQUIREMENTS = {
 UN_R155_REQUIREMENTS = {
     "Critical": {
         "7.3.1": ComplianceRequirement(
-            ComplianceType.UN_R155,
+            "UN R155",
             "7.3.1",
-            "Security critical elements",
-            "Requirements for protection of security critical elements"
+            "Security critical elements"
         ),
         "7.3.2": ComplianceRequirement(
-            ComplianceType.UN_R155,
+            "UN R155",
             "7.3.2",
-            "Risk assessment",
-            "Requirements for risk assessment methodology"
+            "Risk assessment"
         ),
         "7.3.3": ComplianceRequirement(
-            ComplianceType.UN_R155,
+            "UN R155",
             "7.3.3",
-            "Security controls",
-            "Requirements for security controls implementation"
+            "Security controls"
         ),
         "7.3.4": ComplianceRequirement(
-            ComplianceType.UN_R155,
+            "UN R155",
             "7.3.4",
-            "Security testing",
-            "Requirements for security testing and validation"
+            "Security testing"
         )
     },
     "Boundary": {
         "7.3.3": ComplianceRequirement(
-            ComplianceType.UN_R155,
+            "UN R155",
             "7.3.3",
-            "Security controls",
-            "Requirements for security controls at trust boundaries"
+            "Security controls"
         ),
         "7.3.5": ComplianceRequirement(
-            ComplianceType.UN_R155,
+            "UN R155",
             "7.3.5",
-            "Data protection",
-            "Requirements for protection of sensitive data"
+            "Data protection"
         )
     },
     "Standard": {
         "7.3.6": ComplianceRequirement(
-            ComplianceType.UN_R155,
+            "UN R155",
             "7.3.6",
-            "Monitoring and response",
-            "Requirements for security monitoring and incident response"
+            "Monitoring and response"
         )
     }
 }
 
-def map_threat_to_standards(threat_type: str, safety_level: str, 
-                          trust_zone: str) -> List[ComplianceRequirement]:
-    """Map threat to relevant ISO 26262 and UN R155 requirements"""
+def map_threat_to_standards(threat_type: str, safety_level: str, trust_zone: str) -> List[ComplianceRequirement]:
+    """Map threats to relevant ISO 26262 and UN R155 requirements"""
     requirements = []
     
-    # Map ISO 26262 requirements based on ASIL level
-    if safety_level.startswith("ASIL"):
-        if safety_level in ISO_26262_REQUIREMENTS:
-            requirements.extend(ISO_26262_REQUIREMENTS[safety_level].values())
+    # ISO 26262 mappings based on safety level
+    if safety_level == "ASIL D":
+        requirements.extend([
+            ComplianceRequirement(
+                standard="ISO 26262",
+                requirement="Part 4-7",
+                description="Hardware-software interface specification and verification"
+            ),
+            ComplianceRequirement(
+                standard="ISO 26262",
+                requirement="Part 6-8",
+                description="Software unit design and implementation"
+            )
+        ])
+    elif safety_level == "ASIL C":
+        requirements.extend([
+            ComplianceRequirement(
+                standard="ISO 26262",
+                requirement="Part 4-6",
+                description="Technical safety requirements specification"
+            ),
+            ComplianceRequirement(
+                standard="ISO 26262",
+                requirement="Part 6-7",
+                description="Software architectural design"
+            )
+        ])
+    elif safety_level in ["ASIL B", "ASIL A"]:
+        requirements.extend([
+            ComplianceRequirement(
+                standard="ISO 26262",
+                requirement="Part 4-5",
+                description="Initiation of product development at the system level"
+            ),
+            ComplianceRequirement(
+                standard="ISO 26262",
+                requirement="Part 6-6",
+                description="Software safety requirements specification"
+            )
+        ])
     
-    # Map UN R155 requirements based on trust zone
-    if trust_zone in UN_R155_REQUIREMENTS:
-        requirements.extend(UN_R155_REQUIREMENTS[trust_zone].values())
+    # UN R155 mappings based on trust zone
+    if trust_zone == "Critical":
+        requirements.extend([
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.3.1",
+                description="Access control for critical vehicle systems"
+            ),
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.3.4",
+                description="Security monitoring and incident response"
+            )
+        ])
+    elif trust_zone == "Boundary":
+        requirements.extend([
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.3.2",
+                description="Protection of external interfaces"
+            ),
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.3.3",
+                description="Security of wireless communications"
+            )
+        ])
+    elif trust_zone == "Standard":
+        requirements.extend([
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.2.2.2",
+                description="Security controls for vehicle systems"
+            )
+        ])
     
-    # Add specific requirements based on threat type
-    if threat_type == "CAN Injection":
-        if safety_level in ["ASIL C", "ASIL D"]:
-            requirements.append(
-                ComplianceRequirement(
-                    ComplianceType.UN_R155,
-                    "7.3.7",
-                    "Network security",
-                    "Requirements for securing vehicle internal networks"
-                )
+    # Add threat-specific requirements
+    if "injection" in threat_type.lower():
+        requirements.extend([
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.3.8",
+                description="Input validation and sanitization"
             )
-    elif threat_type == "ECU Firmware Tampering":
-        if safety_level in ["ASIL C", "ASIL D"]:
-            requirements.append(
-                ComplianceRequirement(
-                    ComplianceType.UN_R155,
-                    "7.3.8",
-                    "Software security",
-                    "Requirements for securing ECU software and firmware"
-                )
+        ])
+    elif "firmware" in threat_type.lower():
+        requirements.extend([
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.3.5",
+                description="Software update security"
             )
-    elif threat_type == "Sensor Data Manipulation":
-        if safety_level in ["ASIL C", "ASIL D"]:
-            requirements.append(
-                ComplianceRequirement(
-                    ComplianceType.UN_R155,
-                    "7.3.9",
-                    "Sensor security",
-                    "Requirements for securing vehicle sensors and their data"
-                )
+        ])
+    elif "sensor" in threat_type.lower():
+        requirements.extend([
+            ComplianceRequirement(
+                standard="UN R155",
+                requirement="7.3.6",
+                description="Sensor data integrity"
             )
+        ])
     
     return requirements
 
@@ -200,9 +244,8 @@ def format_compliance_mappings(requirements: List[ComplianceRequirement]) -> str
     
     # Format each standard's requirements
     for standard, reqs in by_standard.items():
-        result.append(f"\n{standard.value} Requirements:")
+        result.append(f"\n{standard} Requirements:")
         for req in reqs:
-            result.append(f"- Section {req.section}: {req.title}")
-            result.append(f"  {req.description}")
+            result.append(f"- Requirement {req.requirement}: {req.description}")
     
     return "\n".join(result)
