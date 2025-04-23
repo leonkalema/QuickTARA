@@ -1,6 +1,6 @@
 # QuickTARA: Automotive Security Analysis Tool
 
-Enhanced threat and risk assessment tool for automotive systems, incorporating STRIDE analysis, attack chain detection, and safety-weighted scoring.
+Enhanced threat and risk assessment tool for automotive systems, incorporating STRIDE analysis, attack chain detection, safety-weighted scoring, attacker feasibility assessment, and formal risk acceptance criteria with human review.
 
 ## Features
 
@@ -14,7 +14,7 @@ Enhanced threat and risk assessment tool for automotive systems, incorporating S
 - STRIDE categorization
 - Impact analysis (financial, safety, privacy)
 - Attack chain detection
-- Compliance mapping (ISO 26262, UN R155)
+- Compliance mapping (ISO 21434, UN R155)
 
 ### 3. Risk Assessment
 - Component-based risk factors:
@@ -24,6 +24,29 @@ Enhanced threat and risk assessment tool for automotive systems, incorporating S
 - Trust boundary analysis
 - Attack surface calculation
 - Safety-weighted scoring
+
+### 4. Attacker Feasibility Assessment
+- Technical capability requirements
+- Knowledge requirements
+- Resource needs assessment
+- Time requirements
+- Attacker profiles (Hobbyist, Criminal, Hacktivist, Insider, APT)
+- Enabling and mitigating factors
+
+### 5. Risk Acceptance Criteria (Clause 14)
+- Formal risk treatment decisions (Accept, Accept with Controls, Transfer, Avoid, Mitigate)
+- Decision justification
+- Residual risk calculation
+- Stakeholder approval tracking
+- Reassessment scheduling
+- Evidence references
+
+### 6. Manual Review Workflow
+- Human review interface for all risk treatments
+- Documentation of review decisions
+- Evidence-based justifications
+- Traceable decision records
+- Compliance with audit requirements
 
 ## Installation
 
@@ -39,6 +62,8 @@ pip install -r requirements.txt
 
 ## Usage
 
+### 1. Prepare Component Data
+
 Create an assets.csv file with your component information:
 
 ```csv
@@ -46,7 +71,25 @@ component_id,name,type,safety_level,interfaces,access_points,data_types,location
 ECU001,Engine Control Unit,ECU,ASIL D,CAN|FlexRay,OBD-II|Debug Port,Control Commands|Sensor Data,Internal,Critical,ECU002|ECU003
 ```
 
-Run the analysis:
+### 2. GUI Workflow (Recommended)
+
+The graphical interface provides a complete workflow including manual review:
+
+```bash
+# Launch the GUI
+python quicktara_gui.py
+```
+
+GUI Workflow Steps:
+1. Click "Open CSV" to load your component data
+2. Click "Run Analysis" to perform automatic threat analysis
+3. Review the preliminary analysis results
+4. Click "Review Risk Treatments" to manually review and approve/modify decisions
+5. Click "Generate Final Report" to create the final TARA report with review documentation
+
+### 3. Command Line Usage
+
+For basic analysis without review workflow:
 
 ```bash
 python quicktara.py -i assets.csv
@@ -55,7 +98,7 @@ python quicktara.py -i assets.csv
 This will generate:
 - report.txt: Detailed text report
 - report.json: Machine-readable data
-- report.xlsx: Excel spreadsheet
+- report.xlsx: Excel spreadsheet with multiple analysis sheets
 - report.pdf: Formatted PDF report
 
 ## Input Format
@@ -84,28 +127,41 @@ SNS001,Wheel Speed Sensor,Sensor,ASIL B,CAN,,Sensor Data,External,Untrusted,ECU0
 GWY001,Telematics Gateway,Gateway,ASIL C,CAN|Ethernet|4G,Debug Port|USB,All Traffic|Diagnostic Data,Internal,Boundary,ECU001|ECU004
 ```
 
-## Output Analysis
+## Output Reports
 
-### 1. STRIDE Analysis
-- Spoofing: Authentication and identity threats
-- Tampering: Data/code modification threats
-- Repudiation: Audit and logging threats
-- Information Disclosure: Data leakage threats
-- Denial of Service: Availability threats
-- Elevation of Privilege: Authorization threats
+### 1. Preliminary Report
+- Generated after initial automated analysis
+- Contains tool-suggested risk treatments
 
-### 2. Impact Categories
-- Financial: Cost and business impact
-- Safety: Physical safety implications
-- Privacy: Data protection concerns
+### 2. Final Report
+- Generated after human review process
+- Contains justified and traceable risk decisions
+- Documents reviewer information and evidence references
+- Includes both original and final decisions
 
-### 3. Attack Chains
-- Connected component analysis
-- Trust boundary crossings
-- Attack path identification
+### 3. Report Contents
 
-### 4. Risk Factors
-- Component exposure
-- Interface complexity
-- Attack surface area
-- Safety level weighting
+All reports include comprehensive analysis:
+
+- **STRIDE Analysis**: Categorization of threats by type (Spoofing, Tampering, etc.)
+- **Impact Categories**: Assessment of financial, safety, and privacy impacts
+- **Attack Chains**: Analysis of potential attack paths through connected components
+- **Risk Factors**: Calculation of exposure, complexity, and attack surface metrics
+- **Attacker Feasibility**: Assessment of attack difficulty and attacker profiles
+- **Risk Acceptance Criteria**: Formal justification for treatment decisions
+- **Compliance Mappings**: Connections to standards like ISO 21434 and UN R155
+- **Cybersecurity Goals**: Alignment with security objectives
+
+## Review Process
+
+The risk treatment review process enables:
+
+1. **Manual Review of All Treatments**: Review each risk decision (Accept, Transfer, Avoid, Mitigate)
+2. **Decision Modification**: Change automated treatment decisions based on human judgment
+3. **Justification Documentation**: Record reasoning behind each risk decision
+4. **Evidence Tracking**: Document references to supporting evidence
+5. **Reviewer Attribution**: Track who reviewed and approved each decision
+6. **Review Status**: Monitor which risks have been reviewed and which are pending
+7. **Audit Compliance**: Generate reports that satisfy regulatory audit requirements
+
+This formal review process ensures that risk treatment decisions are justified, traceable, and properly documented, meeting the requirements of Clause 14 in cybersecurity standards.

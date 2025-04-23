@@ -1,10 +1,12 @@
 component_id,name,type,safety_level,interfaces,access_points,data_types,location,trust_zone,connected_to
-ECU001,Engine Control Unit,ECU,ASIL D,CAN|FlexRay,OBD-II|Debug Port,Control Commands|Sensor Data|Configuration,Internal,Critical,ECU002|ECU003|SNS001
-ECU002,Transmission Control Unit,ECU,ASIL C,CAN|FlexRay,Debug Port,Control Commands|Sensor Data,Internal,Critical,ECU001|ECU003
-ECU003,Brake Control Unit,ECU,ASIL D,CAN,Debug Port,Control Commands|Sensor Data,Internal,Critical,ECU001|ECU002|SNS002
-SNS001,Engine Speed Sensor,Sensor,ASIL B,CAN,,Sensor Data,External,Untrusted,ECU001
-SNS002,Wheel Speed Sensor,Sensor,ASIL B,CAN,,Sensor Data,External,Untrusted,ECU003
-GWY001,Telematics Gateway,Gateway,ASIL C,CAN|Ethernet|4G,Debug Port|USB,All Traffic|Diagnostic Data|Telemetry,Internal,Boundary,ECU001|ECU002|ECU003
-NET001,CAN Bus Network,Network,ASIL C,CAN,,All Traffic,Internal,Standard,ECU001|ECU002|ECU003|GWY001
-ACT001,Electronic Throttle,Actuator,ASIL C,CAN,,Control Commands,Internal,Critical,ECU001
-ACT002,Brake Actuator,Actuator,ASIL D,CAN,,Control Commands,Internal,Critical,ECU003
+ECU001,Engine Control Unit,ECU,ASIL D,CAN|FlexRay,OBD-II|Debug Port,Control Commands|Sensor Data,Internal,Critical,ECU002|ECU003|SNS001
+SNS001,Wheel Speed Sensor,Sensor,ASIL B,CAN,,Sensor Data,External,Untrusted,ECU001
+GWY001,Telematics Gateway,Gateway,ASIL C,CAN|Ethernet|4G,USB|Debug Port,All Traffic|Diagnostic Data,Internal,Boundary,ECU001|ECU004|ECU005
+ACT001,Brake Actuator,Actuator,ASIL D,CAN,,Brake Commands,Internal,Critical,ECU003
+ECU002,Transmission Control Unit,ECU,ASIL C,CAN,Debug Port,Transmission Data|Control Commands,Internal,Critical,ECU001|ACT001
+SNS002,Passenger Door Sensor,Sensor,QM,CAN,,Status Data,External,Untrusted,ECU004
+ECU003,Body Control Module,ECU,ASIL B,CAN|LIN,OBD-II|Debug Port,Body Control Data,Internal,Standard,ECU001|SNS002
+ECU004,HVAC Control Unit,ECU,QM,CAN,,Climate Control Data,Internal,Standard,GWY001|SNS002
+SNS003,Cabin Temperature Sensor,Sensor,QM,CAN,,Temperature Data,Internal,Standard,ECU004
+ACT002,Door Actuator,Actuator,ASIL A,CAN,,Door Movement Commands,Internal,Boundary,ECU003
+ECU005,Infotainment System,ECU,QM,WiFi|Bluetooth|Ethernet,Touchscreen|USB,Media|Navigation Data,Internal,Untrusted,GWY001

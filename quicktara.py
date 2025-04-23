@@ -20,6 +20,11 @@ from stride_analysis import (
     format_stride_analysis,
     StrideCategory
 )
+from risk_acceptance import (
+    assess_component_risk_acceptance,
+    format_risk_acceptance,
+    RiskAcceptanceAssessment
+)
 from threat_analysis import (
     load_threats_from_capec,
     AUTOMOTIVE_THREATS,
@@ -28,6 +33,8 @@ from threat_analysis import (
 )
 from datetime import datetime
 from rich.console import Console
+from cybersecurity_goals import map_all_component_threats_to_goals
+from attacker_feasibility import assess_all_component_threats
 
 class AssetType(Enum):
     ECU = "ECU"
@@ -266,6 +273,30 @@ def analyze_threats(components: Dict[str, Component]) -> Dict[str, Dict]:
             )
             compliance_reqs.extend(reqs)
         
+        # Map threats to cybersecurity goals
+        goal_mappings = map_all_component_threats_to_goals({
+            'type': component.type.value,
+            'safety_level': component.safety_level.value,
+            'threats': matched_threats
+        })
+        
+        # Assess attacker feasibility for threats
+        feasibility_assessments = assess_all_component_threats({
+            'type': component.type.value,
+            'safety_level': component.safety_level.value,
+            'interfaces': list(component.interfaces),
+            'access_points': list(component.access_points),
+            'location': component.location,
+            'threats': matched_threats
+        })
+        
+        # Assess risk acceptance criteria
+        risk_acceptance_assessments = assess_component_risk_acceptance({
+            'type': component.type.value,
+            'safety_level': component.safety_level.value,
+            'threats': matched_threats
+        })
+        
         # Store results
         analyzed_components[comp_id] = {
             'name': component.name,
@@ -285,7 +316,10 @@ def analyze_threats(components: Dict[str, Component]) -> Dict[str, Dict]:
                 }
                 for category in StrideCategory
             },
-            'compliance': compliance_reqs
+            'compliance': compliance_reqs,
+            'cybersecurity_goals': goal_mappings,
+            'feasibility_assessments': feasibility_assessments,
+            'risk_acceptance': risk_acceptance_assessments
         }
     
     # Convert components dictionary to list for attack path analysis
@@ -387,6 +421,35 @@ def write_report(components: Dict[str, Component], analyzed_components: Dict[str
         
         # Convert components to serializable format
         for comp_id, comp in components.items():
+            # Convert cybersecurity goals to serializable format
+            if comp_id in analyzed_components and 'cybersecurity_goals' in analyzed_components[comp_id]:
+                goals_dict = {}
+                for threat_name, mappings in analyzed_components[comp_id]['cybersecurity_goals'].items():
+                    goals_dict[threat_name] = [
+                        {
+                            'goal': mapping.goal.value,
+                            'relevance': mapping.relevance,
+                            'description': mapping.description,
+                            'requirements': mapping.requirements
+                        } for mapping in mappings
+                    ]
+                analyzed_components[comp_id]['cybersecurity_goals'] = goals_dict
+            
+            # Convert feasibility assessments to serializable format
+            if comp_id in analyzed_components and 'feasibility_assessments' in analyzed_components[comp_id]:
+                feasibility_dict = {}
+                for threat_name, assessment in analyzed_components[comp_id]['feasibility_assessments'].items():
+                    feasibility_dict[threat_name] = assessment.to_dict()
+                analyzed_components[comp_id]['feasibility_assessments'] = feasibility_dict
+            
+            # Convert risk acceptance assessments to serializable format
+            if comp_id in analyzed_components and 'risk_acceptance' in analyzed_components[comp_id]:
+                risk_acceptance_dict = {}
+                for threat_name, assessment in analyzed_components[comp_id]['risk_acceptance'].items():
+                    risk_acceptance_dict[threat_name] = assessment.to_dict()
+                analyzed_components[comp_id]['risk_acceptance'] = risk_acceptance_dict
+                
+            # Add component to report
             report_data['components'][comp_id] = {
                 'name': comp.name,
                 'type': comp.type.value,
@@ -399,7 +462,10 @@ def write_report(components: Dict[str, Component], analyzed_components: Dict[str
                 'connected_to': list(comp.connected_to),
                 'threats': analyzed_components[comp_id]['threats'],
                 'stride_analysis': analyzed_components[comp_id]['stride_analysis'],
-                'compliance': analyzed_components[comp_id]['compliance']
+                'compliance': analyzed_components[comp_id]['compliance'],
+                'cybersecurity_goals': analyzed_components[comp_id].get('cybersecurity_goals', {}),
+                'feasibility_assessments': analyzed_components[comp_id].get('feasibility_assessments', {}),
+                'risk_acceptance': analyzed_components[comp_id].get('risk_acceptance', {})
             }
         
         # Export in different formats
@@ -469,6 +535,93 @@ def analyze(input_file: str, output: str, format: str):
             for req in comp_data['compliance']:
                 console.print(f"\n- {req['standard']}: {req['requirement']}")
                 console.print(f"  Description: {req['description']}")
+        
+        # Display cybersecurity goals
+        console.print("\n[bold magenta]Cybersecurity Goals:[/bold magenta]")
+        for comp_id, comp_data in analyzed_components.items():
+            component = components[comp_id]
+            console.print(f"\n[bold cyan]Component: {component.name}[/bold cyan]")
+            
+            if 'cybersecurity_goals' in comp_data and comp_data['cybersecurity_goals']:
+                for threat_name, mappings in comp_data['cybersecurity_goals'].items():
+                    console.print(f"\nThreat: {threat_name}")
+                    
+                    for mapping in mappings:
+                        console.print(f"- Goal: {mapping.goal.value} (Relevance: {mapping.relevance}/5)")
+                        console.print(f"  Description: {mapping.description}")
+                        console.print("  Top Requirements:")
+                        
+                        for req in mapping.requirements[:2]:  # Show top 2 for readability
+                            console.print(f"    * {req}")
+            else:
+                console.print("  No specific cybersecurity goals identified.")
+        
+        # Display feasibility assessments
+        console.print("\n[bold yellow]Attacker Feasibility Assessments:[/bold yellow]")
+        for comp_id, comp_data in analyzed_components.items():
+            component = components[comp_id]
+            console.print(f"\n[bold cyan]Component: {component.name}[/bold cyan]")
+            
+            if 'feasibility_assessments' in comp_data and comp_data['feasibility_assessments']:
+                for threat_name, assessment in comp_data['feasibility_assessments'].items():
+                    console.print(f"\nThreat: {threat_name}")
+                    console.print(f"Feasibility: {assessment.feasibility.feasibility_level} ({assessment.feasibility.overall_score}/5)")
+                    
+                    console.print("Attack Difficulty Factors:")
+                    console.print(f"- Technical Capability: {assessment.feasibility.technical_capability}/5")
+                    console.print(f"- Knowledge Required: {assessment.feasibility.knowledge_required}/5")
+                    console.print(f"- Resources Needed: {assessment.feasibility.resources_needed}/5")
+                    console.print(f"- Time Required: {assessment.feasibility.time_required}/5")
+                    
+                    # Show top attacker profiles
+                    console.print("\nRelevant Attacker Profiles:")
+                    top_profiles = sorted(assessment.profiles.items(), key=lambda x: x[1], reverse=True)[:2]
+                    for profile, score in top_profiles:
+                        console.print(f"- {profile.value}: {score}/5 relevance")
+                    
+                    # Show a sample of factors
+                    if assessment.enabling_factors:
+                        console.print("\nEnabling Factors:")
+                        for factor in assessment.enabling_factors[:2]:  # Show top 2 for readability
+                            console.print(f"- {factor}")
+                    
+                    if assessment.mitigating_factors:
+                        console.print("\nMitigating Factors:")
+                        for factor in assessment.mitigating_factors[:2]:  # Show top 2 for readability
+                            console.print(f"- {factor}")
+            else:
+                console.print("  No attacker feasibility assessment available.")
+                
+        # Display risk acceptance assessments
+        console.print("\n[bold magenta]Risk Acceptance Criteria (Clause 14):[/bold magenta]")
+        for comp_id, comp_data in analyzed_components.items():
+            component = components[comp_id]
+            console.print(f"\n[bold cyan]Component: {component.name}[/bold cyan]")
+            
+            if 'risk_acceptance' in comp_data and comp_data['risk_acceptance']:
+                for threat_name, assessment in comp_data['risk_acceptance'].items():
+                    console.print(f"\nThreat: {threat_name}")
+                    console.print(f"Decision: {assessment.decision.value}")
+                    console.print(f"Risk Severity: {assessment.risk_severity.value}")
+                    console.print(f"Residual Risk: {assessment.residual_risk:.1%}")
+                    
+                    console.print(f"\nJustification: {assessment.justification}")
+                    
+                    # Show conditions
+                    if assessment.conditions:
+                        console.print("\nConditions:")
+                        for condition in assessment.conditions[:3]:  # Show top 3 for readability
+                            console.print(f"- {condition}")
+                    
+                    # Show approvers
+                    if assessment.approvers:
+                        console.print("\nRequired Approvals:")
+                        for approver in assessment.approvers:
+                            console.print(f"- {approver.value}")
+                    
+                    console.print(f"Reassessment Period: {assessment.criteria.reassessment_period} months")
+            else:
+                console.print("  No risk acceptance assessment available.")
         
         console.print(f"\n[bold green]Report saved to {output_path}[/bold green]")
         
