@@ -1,78 +1,115 @@
 #!/usr/bin/env python3
 """
-QuickTARA Web Interface
-A web-based interface for automotive threat analysis and risk assessment
+QuickTARA Web - Main entry point
+A local-first web application for automotive security analysis
 """
-
-from pathlib import Path
 import os
-from flask import Flask, render_template, request, jsonify, send_file
-from werkzeug.utils import secure_filename
-import pandas as pd
+import argparse
+import logging
+import uvicorn
+from pathlib import Path
 
-from quicktara import load_components, analyze_threats, write_report
+from config.settings import load_settings, configure_logging
+from db.session import init_db
+from api.app import create_app
 
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+logger = logging.getLogger(__name__)
 
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
+def main():
+    """
+    Main entry point for QuickTARA Web
+    """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="QuickTARA Web - Automotive Security Analysis")
+    parser.add_argument(
+        "--config", "-c",
+        help="Path to configuration file",
+        type=str,
+        default=None
+    )
+    parser.add_argument(
+        "--host",
+        help="Host to bind the server to",
+        type=str,
+        default=None
+    )
+    parser.add_argument(
+        "--port",
+        help="Port to bind the server to",
+        type=int,
+        default=None
+    )
+    parser.add_argument(
+        "--db",
+        help="Database connection string or path",
+        type=str,
+        default=None
+    )
+    parser.add_argument(
+        "--debug",
+        help="Enable debug mode",
+        action="store_true"
+    )
     
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+    args = parser.parse_args()
     
-    if not file.filename.endswith('.csv'):
-        return jsonify({'error': 'Only CSV files are allowed'}), 400
+    # Load configuration
+    config_path = Path(args.config) if args.config else None
+    settings = load_settings(config_path)
     
-    try:
-        # Save file
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        
-        # Load and analyze components
-        components = load_components(Path(filepath))
-        analyzed = analyze_threats(components)
-        
-        # Generate report
-        report_path = os.path.join(app.config['UPLOAD_FOLDER'], 'report.json')
-        write_report(components, analyzed, Path(report_path))
-        
-        # Return analysis results
-        return jsonify({
-            'success': True,
-            'components': len(components),
-            'threats': sum(len(comp_data['threats']) for comp_data in analyzed.values()),
-            'report_url': '/download/report.json'
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    # Override settings with command line arguments
+    if args.host:
+        settings.setdefault("server", {})["host"] = args.host
+    if args.port:
+        settings.setdefault("server", {})["port"] = args.port
+    if args.db:
+        # Simple handling - treat as SQLite path or full connection string
+        if args.db.startswith("sqlite:") or args.db.startswith("postgresql:") or args.db.startswith("mysql:"):
+            # It's a connection string - parse it
+            if args.db.startswith("sqlite:"):
+                settings.setdefault("database", {})["type"] = "sqlite"
+                settings.setdefault("database", {})["path"] = args.db.split("sqlite:///")[1]
+            else:
+                # Just store the connection string for later use
+                os.environ["DATABASE_URL"] = args.db
+        else:
+            # Assume it's a SQLite path
+            settings.setdefault("database", {})["type"] = "sqlite"
+            settings.setdefault("database", {})["path"] = args.db
+    
+    if args.debug:
+        settings.setdefault("server", {})["debug"] = True
+        settings.setdefault("logging", {})["level"] = "debug"
+    
+    # Configure logging
+    configure_logging(settings)
+    
+    # Initialize database
+    logger.info("Initializing database...")
+    init_db(settings)
+    
+    # Create FastAPI application
+    logger.info("Creating FastAPI application...")
+    app = create_app(settings)
+    
+    # Get server settings
+    server_settings = settings.get("server", {})
+    host = server_settings.get("host", "127.0.0.1")
+    port = int(server_settings.get("port", 8080))
+    debug = server_settings.get("debug", False)
+    
+    # Start server
+    logger.info(f"Starting server on {host}:{port} (debug={debug})...")
+    uvicorn.run(
+        "api.app:create_app",
+        host=host,
+        port=port,
+        reload=debug,
+        factory=True,
+        log_level="debug" if debug else "info"
+    )
 
-@app.route('/download/<filename>')
-def download_file(filename):
-    try:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename))
-        if not os.path.exists(file_path):
-            return jsonify({'error': 'Report file not found'}), 404
-        return send_file(
-            file_path,
-            as_attachment=True,
-            download_name=filename
-        )
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+if __name__ == "__main__":
+    main()

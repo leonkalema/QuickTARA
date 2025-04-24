@@ -71,9 +71,45 @@ component_id,name,type,safety_level,interfaces,access_points,data_types,location
 ECU001,Engine Control Unit,ECU,ASIL D,CAN|FlexRay,OBD-II|Debug Port,Control Commands|Sensor Data,Internal,Critical,ECU002|ECU003
 ```
 
-### 2. GUI Workflow (Recommended)
+### 2. Web Interface (Recommended)
 
-The graphical interface provides a complete workflow including manual review:
+The web interface provides a modern, user-friendly experience with a complete workflow:
+
+```bash
+# Start the web application (local mode)
+python quicktara_web.py
+```
+
+Then open your browser to `http://localhost:8080` to access the application.
+
+Web Interface Features:
+- Modern user interface built with Svelte and Tailwind CSS
+- Component management with import/export
+- Interactive analysis dashboard
+- Visual STRIDE and attack path analysis
+- Complete risk review workflow
+- Multiple report formats
+- Configurable database backend
+
+Additional options:
+```bash
+# Custom configuration file
+python quicktara_web.py --config my_config.yaml
+
+# Custom database location or connection string
+python quicktara_web.py --db ./my_database.db
+python quicktara_web.py --db postgresql://user:pass@localhost/quicktara
+
+# Custom host and port
+python quicktara_web.py --host 0.0.0.0 --port 9000
+
+# Debug mode
+python quicktara_web.py --debug
+```
+
+### 3. GUI Workflow (Legacy)
+
+The desktop GUI provides the original interface:
 
 ```bash
 # Launch the GUI
@@ -87,7 +123,7 @@ GUI Workflow Steps:
 4. Click "Review Risk Treatments" to manually review and approve/modify decisions
 5. Click "Generate Final Report" to create the final TARA report with review documentation
 
-### 3. Command Line Usage
+### 4. Command Line Usage
 
 For basic analysis without review workflow:
 
@@ -100,6 +136,38 @@ This will generate:
 - report.json: Machine-readable data
 - report.xlsx: Excel spreadsheet with multiple analysis sheets
 - report.pdf: Formatted PDF report
+
+## Configuration Options
+
+QuickTARA Web can be configured using a YAML configuration file:
+
+```yaml
+# Database configuration
+database:
+  type: sqlite  # sqlite, postgresql, mysql
+  path: ./quicktara.db  # For SQLite
+  host: localhost  # For other databases
+  port: 5432  # For other databases
+  name: quicktara  # For other databases
+  user: username  # For other databases
+  password: password  # For other databases
+
+# Server configuration
+server:
+  host: 127.0.0.1
+  port: 8080
+  debug: false
+
+# File storage configuration
+storage:
+  uploads_dir: ./uploads
+  reports_dir: ./reports
+
+# Logging configuration
+logging:
+  level: info  # debug, info, warning, error
+  file: ./quicktara.log
+```
 
 ## Input Format
 
@@ -165,3 +233,32 @@ The risk treatment review process enables:
 7. **Audit Compliance**: Generate reports that satisfy regulatory audit requirements
 
 This formal review process ensures that risk treatment decisions are justified, traceable, and properly documented, meeting the requirements of Clause 14 in cybersecurity standards.
+
+## Developer Information
+
+### API Documentation
+
+When running in debug mode, the API documentation is available at:
+- OpenAPI UI: http://localhost:8080/docs
+- ReDoc UI: http://localhost:8080/redoc
+- OpenAPI JSON: http://localhost:8080/openapi.json
+
+### Frontend Development
+
+The frontend is built with Svelte, Vite, and Tailwind CSS. To start the frontend development server:
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+For production build:
+```bash
+npm run build
+```

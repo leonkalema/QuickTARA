@@ -1,0 +1,27 @@
+# Default QuickTARA configuration
+
+# Database configuration
+database:
+  type: sqlite  # sqlite, postgresql, mysql
+  path: ./quicktara.db  # For SQLite
+  host: localhost  # For other databases
+  port: 5432  # For other databases
+  name: quicktara  # For other databases
+  user: username  # For other databases
+  password: password  # For other databases
+
+# Server configuration
+server:
+  host: 127.0.0.1
+  port: 8080
+  debug: false
+
+# File storage configuration
+storage:
+  uploads_dir: ./uploads
+  reports_dir: ./reports
+
+# Logging configuration
+logging:
+  level: info  # debug, info, warning, error
+  file: ./quicktara.log

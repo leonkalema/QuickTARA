@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2d6cdf;
+  --color-secondary: #50a38e;
+  --color-background: #f7f9fb;
+  --color-danger: #ef4444;
+  --color-warning: #fcd34d;
+  --color-text-main: #1a1a1a;
+  --color-text-muted: #6b7280;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+    font-family: system-ui, sans-serif;
+    @apply antialiased;
+  }
+
+  h1, h2, h3 {
+    color: var(--color-primary);
+    @apply font-semibold;
+  }
+
+  a {
+    color: var(--color-primary);
+    @apply hover:underline;
+  }
+
+  input, textarea, select {
+    @apply border rounded-md px-3 py-2 border-gray-300 focus:outline-none focus:ring-2;
+    border-color: var(--color-primary);
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded font-medium transition;
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    @apply hover:brightness-110;
+  }
+
+  .btn-secondary {
+    background-color: var(--color-secondary);
+    color: white;
+    @apply hover:brightness-110;
+  }
+
+  .badge-high {
+    background-color: var(--color-danger);
+    color: white;
+    @apply text-sm px-2 py-1 rounded-full;
+  }
+
+  .badge-low {
+    background-color: var(--color-secondary);
+    color: white;
+    @apply text-sm px-2 py-1 rounded-full;
+  }
+}
