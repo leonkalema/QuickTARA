@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { Search, Filter, X } from '@lucide/svelte';
+  import { Search, Filter, X, ChevronDown, ChevronUp } from '@lucide/svelte';
 
   export let componentTypes = ['ECU', 'Sensor', 'Gateway', 'Actuator', 'Network'];
   export let safetyLevels = ['QM', 'ASIL A', 'ASIL B', 'ASIL C', 'ASIL D'];
@@ -12,9 +12,22 @@
   let selectedSafetyLevel = '';
   let selectedTrustZone = '';
   
+  // UI state
+  let filtersExpanded = false;
+  let activeFilterCount = 0;
+  
   const dispatch = createEventDispatcher();
   
+  // Function to update the active filter count
+  function updateActiveFilterCount() {
+    activeFilterCount = 0;
+    if (selectedType) activeFilterCount++;
+    if (selectedSafetyLevel) activeFilterCount++;
+    if (selectedTrustZone) activeFilterCount++;
+  }
+  
   function applyFilters() {
+    updateActiveFilterCount();
     dispatch('filter', {
       searchTerm,
       type: selectedType,
@@ -28,6 +41,7 @@
     selectedType = '';
     selectedSafetyLevel = '';
     selectedTrustZone = '';
+    activeFilterCount = 0;
     dispatch('filter', {
       searchTerm: '',
       type: '',
@@ -44,81 +58,131 @@
       trustZone: selectedTrustZone
     });
   }
+  
+  function toggleFilters() {
+    filtersExpanded = !filtersExpanded;
+  }
 </script>
 
-<div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-      <Filter size={20} class="mr-2" />
-      Filter Components
-    </h2>
-    
-    {#if searchTerm || selectedType || selectedSafetyLevel || selectedTrustZone}
-      <button 
-        on:click={resetFilters}
-        class="text-sm text-gray-600 flex items-center hover:text-red-600 transition-colors">
-        <X size={16} class="mr-1" /> Clear Filters
+<div style="background-color: rgba(255, 255, 255, 0.5); border: 1px solid var(--color-border);" class="rounded-lg mb-6 transition-all duration-300 overflow-hidden">
+  <!-- Filter Header - Always visible -->
+  <div class="flex items-center justify-between px-4 py-3" style="color: var(--color-text-main);">
+    <div class="flex items-center">
+      <!-- Show the clear button if filters are applied -->
+      {#if searchTerm || selectedType || selectedSafetyLevel || selectedTrustZone}
+        <button 
+          type="button"
+          on:click|stopPropagation={resetFilters}
+          on:keydown={e => e.key === 'Enter' && resetFilters()}
+          class="text-xs flex items-center mr-3 transition-colors duration-200 cursor-pointer bg-transparent border-0"
+          style="color: var(--color-danger);">
+          <X size={14} class="mr-1" /> Clear
+        </button>
+      {/if}
+      
+      <!-- Filter title and indicator -->
+      <button
+        type="button"
+        on:click={toggleFilters}
+        on:keydown={e => e.key === 'Enter' && toggleFilters()}
+        class="font-medium flex items-center bg-transparent border-0 cursor-pointer"
+        style="color: var(--color-text-primary);"
+      >
+        <Filter size={18} style="color: var(--color-primary);" class="mr-2" />
+        <span>Filter Components {activeFilterCount > 0 ? '(active)' : '(optional)'}</span>
+        
+        <!-- Filter count badge -->
+        {#if activeFilterCount > 0}
+          <span class="ml-2 text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: var(--color-primary); color: white;">
+            {activeFilterCount}
+          </span>
+        {/if}
       </button>
-    {/if}
-  </div>
-  
-  <div class="relative mb-4">
-    <input 
-      type="text" 
-      bind:value={searchTerm}
-      on:input={handleInput}
-      placeholder="Search components..."
-      class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-    />
-    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <Search size={18} class="text-gray-400" />
-    </div>
-  </div>
-  
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <!-- Type Filter -->
-    <div>
-      <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-1">Component Type</label>
-      <select 
-        id="type-filter" 
-        bind:value={selectedType}
-        on:change={applyFilters}
-        class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary">
-        <option value="">All Types</option>
-        {#each componentTypes as type}
-          <option value={type}>{type}</option>
-        {/each}
-      </select>
     </div>
     
-    <!-- Safety Level Filter -->
-    <div>
-      <label for="safety-filter" class="block text-sm font-medium text-gray-700 mb-1">Safety Level</label>
-      <select 
-        id="safety-filter" 
-        bind:value={selectedSafetyLevel}
-        on:change={applyFilters}
-        class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary">
-        <option value="">All Levels</option>
-        {#each safetyLevels as level}
-          <option value={level}>{level}</option>
-        {/each}
-      </select>
-    </div>
-    
-    <!-- Trust Zone Filter -->
-    <div>
-      <label for="trust-filter" class="block text-sm font-medium text-gray-700 mb-1">Trust Zone</label>
-      <select 
-        id="trust-filter" 
-        bind:value={selectedTrustZone}
-        on:change={applyFilters}
-        class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary">
-        <option value="">All Zones</option>
-        {#each trustZones as zone}
-          <option value={zone}>{zone}</option>
-        {/each}
-      </select>
-    </div>
+    <!-- Chevron indicator button -->
+    <button
+      type="button"
+      on:click={toggleFilters}
+      on:keydown={e => e.key === 'Enter' && toggleFilters()}
+      class="bg-transparent border-0 cursor-pointer"
+    >
+      {#if filtersExpanded}
+        <ChevronUp size={20} style="color: var(--color-text-secondary);" />
+      {:else}
+        <ChevronDown size={20} style="color: var(--color-text-secondary);" />
+      {/if}
+    </button>
   </div>
+  
+  <!-- Expandable Filter Content -->
+  {#if filtersExpanded}
+    <div class="p-4 pt-0 border-t" style="border-color: var(--color-border);">
+      <!-- Search -->
+      <div class="relative mb-4">
+        <input 
+          type="text" 
+          bind:value={searchTerm}
+          on:input={handleInput}
+          placeholder="Search components..."
+          class="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1"
+          style="border-color: var(--color-border); background-color: rgba(255, 255, 255, 0.7); color: var(--color-text-main);"
+        />
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search size={16} style="color: var(--color-text-muted);" />
+        </div>
+      </div>
+      
+      <!-- Filter dropdowns -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Type Filter -->
+        <div>
+          <label for="type-filter" class="block text-xs mb-1" style="color: var(--color-text-muted);">Component Type (Optional)</label>
+          <select 
+            id="type-filter" 
+            bind:value={selectedType}
+            on:change={applyFilters}
+            class="w-full rounded-md border py-1.5 text-sm focus:outline-none focus:ring-1"
+            style="border-color: var(--color-border); background-color: rgba(255, 255, 255, 0.7); color: var(--color-text-main);">
+            <option value="">All Types</option>
+            {#each componentTypes as type}
+              <option value={type}>{type}</option>
+            {/each}
+          </select>
+        </div>
+        
+        <!-- Safety Level Filter -->
+        <div>
+          <label for="safety-filter" class="block text-xs mb-1" style="color: var(--color-text-muted);">Safety Level (Optional)</label>
+          <select 
+            id="safety-filter" 
+            bind:value={selectedSafetyLevel}
+            on:change={applyFilters}
+            class="w-full rounded-md border py-1.5 text-sm focus:outline-none focus:ring-1"
+            style="border-color: var(--color-border); background-color: rgba(255, 255, 255, 0.7); color: var(--color-text-main);">
+            <option value="">All Levels</option>
+            {#each safetyLevels as level}
+              <option value={level}>{level}</option>
+            {/each}
+          </select>
+        </div>
+        
+        <!-- Trust Zone Filter -->
+        <div>
+          <label for="trust-filter" class="block text-xs mb-1" style="color: var(--color-text-muted);">Trust Zone (Optional)</label>
+          <select 
+            id="trust-filter" 
+            bind:value={selectedTrustZone}
+            on:change={applyFilters}
+            class="w-full rounded-md border py-1.5 text-sm focus:outline-none focus:ring-1"
+            style="border-color: var(--color-border); background-color: rgba(255, 255, 255, 0.7); color: var(--color-text-main);">
+            <option value="">All Zones</option>
+            {#each trustZones as zone}
+              <option value={zone}>{zone}</option>
+            {/each}
+          </select>
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>

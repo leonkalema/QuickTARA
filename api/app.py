@@ -24,10 +24,19 @@ def create_app(settings=None):
     # Configure CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allows all origins in development
+        allow_origins=[
+            "http://localhost:5173",     # Vite dev server
+            "http://127.0.0.1:5173",     # Vite dev server alternative
+            "http://localhost:4173",     # Vite preview
+            "http://localhost:3000",     # Alternative development port
+            "http://localhost",          # Generic localhost
+            "http://127.0.0.1"          # Generic local IP
+            # Cannot use wildcard '*' with credentials mode 'include'
+        ],
         allow_credentials=True,
-        allow_methods=["*"],  # Allows all methods
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],  # Allows all headers
+        expose_headers=["Content-Disposition"]
     )
     
     # Include all API routers

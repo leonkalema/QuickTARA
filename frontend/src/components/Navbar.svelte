@@ -17,21 +17,29 @@
   }
 </script>
 
-<nav class="bg-gray-800 text-white shadow-lg">
+<nav style="background-color: var(--color-nav-bg); color: var(--color-nav-text);" class="shadow-md">
   <div class="container mx-auto px-4">
     <div class="flex justify-between items-center h-16">
       <!-- Logo & App Name -->
       <div class="flex items-center">
         <span class="text-2xl font-bold">QuickTARA</span>
-        <span class="ml-2 text-sm bg-blue-500 text-white py-1 px-2 rounded">Web</span>
+        <span class="ml-2 text-sm py-1 px-2 rounded" style="background-color: var(--color-primary); color: white;">Web</span>
       </div>
       
       <!-- Navigation Items -->
       <div class="flex space-x-4">
         {#each navItems as item}
           <button
-            class="flex items-center px-4 py-2 rounded-md text-base font-medium transition-all duration-200 ease-in-out
-                   {activePage === item.id ? 'bg-blue-600 text-white shadow-md scale-105' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}"
+            class="flex items-center px-4 py-2 rounded-md text-base font-medium transition-all duration-200 ease-in-out"
+            style={activePage === item.id 
+              ? 'background-color: var(--color-primary); color: white; transform: scale(1.05);' 
+              : 'color: var(--color-nav-text); opacity: 0.85;'}
+            on:mouseenter={(e) => {
+              if (activePage !== item.id) e.currentTarget.style.opacity = '1';
+            }}
+            on:mouseleave={(e) => {
+              if (activePage !== item.id) e.currentTarget.style.opacity = '0.85';
+            }}
             on:click={() => handleNavClick(item.id)}
           >
             <!-- Icon (placeholder) -->

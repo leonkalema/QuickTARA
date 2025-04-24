@@ -7,14 +7,14 @@
  * API base URL
  * In production, this would typically be loaded from environment variables
  */
-export const API_BASE_URL = 'http://localhost:8080/api';
+export const API_BASE_URL = 'http://127.0.0.1:8080/api';
 
 /**
  * Configuration for different environments
  */
 export const config = {
   development: {
-    apiBaseUrl: 'http://localhost:8080/api',
+    apiBaseUrl: 'http://127.0.0.1:8080/api',
     debugEnabled: true,
   },
   production: {
@@ -22,7 +22,7 @@ export const config = {
     debugEnabled: false,
   },
   test: {
-    apiBaseUrl: 'http://localhost:8080/api',
+    apiBaseUrl: 'http://127.0.0.1:8080/api',
     debugEnabled: true,
   }
 };

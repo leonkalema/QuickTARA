@@ -94,7 +94,7 @@ export const apiClient = {
         method: options.method,
         headers,
         body,
-        credentials: 'include', // Include cookies for sessions if needed
+        credentials: 'same-origin', // Only send credentials for same-origin requests
       });
 
       // Handle non-2xx responses

@@ -1,50 +1,110 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2d6cdf;
-  --color-secondary: #50a38e;
-  --color-background: #F0F2E6;
-  --color-danger: #ef4444;
-  --color-warning: #fcd34d;
-  --color-text-main: #1a1a1a;
-  --color-text-muted: #6b7280;
+  /* Main palette - earthy, warm, natural tones */
+  --color-primary: #5a8a84;       /* Muted teal - professional but not cold */
+  --color-secondary: #a3905f;     /* Warm sand - natural and inviting */
+  --color-background: #f0f2e6;    /* Soft sage/ivory - warm and natural */
+  
+  /* Status colors - softer, more natural versions */
+  --color-danger: #b86464;        /* Terracotta - warm red that's less alarming */
+  --color-warning: #d4b45e;       /* Muted gold - warmer and more natural */
+  --color-success: #6e9a76;       /* Sage green - calming and positive */
+  --color-info: #6d8fa3;          /* Dusty blue - informative but gentle */
+  
+  /* Text colors - warmer and easier on the eyes */
+  --color-text-main: #4a4a46;     /* Warm charcoal - softer than black */
+  --color-text-muted: #7d7d78;    /* Warm gray - soft but readable */
+  
+  /* UI elements */
+  --color-card-bg: #ffffff;       /* Clean white for content cards */
+  --color-border: #e5e2d6;        /* Warm beige border - subtle separation */
+  --color-nav-bg: #32454e;        /* Deep teal for navbar - professional but warm */
+  --color-nav-text: #f5f5f0;      /* Warm off-white for navbar text */
+  
+  /* Component status indicators */
+  --color-critical: rgba(184, 100, 100, 0.15);   /* Terracotta with transparency */
+  --color-boundary: rgba(212, 180, 94, 0.15);    /* Gold with transparency */
+  --color-standard: rgba(109, 143, 163, 0.15);   /* Blue with transparency */
+  --color-untrusted: rgba(125, 125, 120, 0.15);  /* Gray with transparency */
 }
 
 @layer base {
   body {
     background-color: var(--color-background);
     color: var(--color-text-main);
-    font-family: system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     @apply antialiased;
     margin: 0;
     padding: 0;
   }
 
   h1, h2, h3 {
-    color: var(--color-primary);
-    @apply font-semibold;
+    color: var(--color-text-main);
+    @apply font-medium;
   }
 
   a {
     color: var(--color-primary);
-    @apply hover:underline;
+    @apply hover:underline transition-all duration-200;
   }
 
   input, textarea, select {
-    @apply border rounded-md px-3 py-2 border-gray-300 focus:outline-none focus:ring-2;
+    @apply border rounded-md px-3 py-2 focus:outline-none focus:ring-1;
+    border-color: var(--color-border);
+    background-color: rgba(255, 255, 255, 0.7);
+    color: var(--color-text-main);
+  }
+  
+  input:focus, textarea:focus, select:focus {
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(90, 138, 132, 0.15);
   }
 }
 
 @layer components {
+  /* Buttons */
   .btn {
-    @apply px-4 py-2 rounded font-medium transition;
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 inline-flex items-center justify-center;
+    border: 1px solid transparent;
   }
 
   .btn-primary {
     background-color: var(--color-primary);
     color: white;
-    @apply hover:brightness-110;
+    @apply hover:brightness-105 shadow-sm hover:shadow;
+  }
+  
+  .btn-secondary {
+    background-color: white;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    @apply hover:bg-opacity-90;
+  }
+  
+  /* Cards */
+  .stat-card {
+    @apply rounded-lg p-4 shadow-sm transition-all duration-200 hover:shadow;
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+  }
+  
+  /* Dashboard metrics */
+  .metric-card {
+    @apply rounded-lg p-5 shadow-sm;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--color-border);
+    backdrop-filter: blur(4px);
+  }
+  
+  .metric-value {
+    @apply text-3xl font-semibold;
+    color: var(--color-primary);
+  }
+  
+  .metric-label {
+    @apply text-sm;
+    color: var(--color-text-muted);
   }
 
   .btn-secondary {

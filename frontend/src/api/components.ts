@@ -41,8 +41,19 @@ export const componentApi = {
    * @returns Promise with array of components
    */
   async getAll(): Promise<Component[]> {
-    const response = await apiClient.get<{components: Component[], total: number}>('/components');
-    return response.components || [];
+    try {
+      const response = await apiClient.get<{components: Component[], total: number}>('/components');
+      if (response && response.components) {
+        return response.components;
+      } else if (Array.isArray(response)) {
+        // Handle case where API directly returns array
+        return response;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching components:', error);
+      return [];
+    }
   },
 
   /**
@@ -60,7 +71,13 @@ export const componentApi = {
    * @returns Promise with created component
    */
   async create(component: ComponentCreate): Promise<Component> {
-    return apiClient.post<Component>('/components', component);
+    try {
+      const response = await apiClient.post<Component>('/components', component);
+      return response;
+    } catch (error) {
+      console.error('Error creating component:', error);
+      throw error; // Rethrow to let error handler deal with it
+    }
   },
 
   /**

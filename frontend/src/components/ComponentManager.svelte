@@ -6,11 +6,13 @@
   import { safeApiCall } from '../utils/error-handler';
   
   // ComponentList instance reference
-  let componentListInstance;
+  // Add proper type to avoid TypeScript warnings
+  let componentListInstance: any;
   
   // Summary stats
   let stats = {
     totalComponents: 0,
+    unreviewedThreats: 5, // This would normally come from an API call to get actual pending threats
     byType: {
       ECU: 0,
       Sensor: 0,
@@ -78,62 +80,79 @@
 </script>
 
 <div>
-  <!-- Stats cards area - now uses consistent spacing -->
+  <!-- Stats cards area with new warm color palette -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div class="bg-blue-50 rounded-lg p-4 flex items-center border border-blue-100 hover:shadow-md transition-shadow">
-      <Database size={24} class="text-blue-500 mr-3" />
-      <div>
-        <p class="text-sm text-blue-600 font-medium">Total Components</p>
-        <p class="text-2xl font-bold text-blue-700">{stats.totalComponents}</p>
+    <!-- Simple Critical Status Metric -->
+    <div class="metric-card">
+      <div class="flex items-start">
+        <AlertTriangle size={20} 
+          class="mr-3 mt-1"
+          style={`color: ${stats.unreviewedThreats > 0 ? 'var(--color-danger)' : 'var(--color-success)'}`} 
+        />
+        <div>
+          <p class="metric-label">Unreviewed Threats</p>
+          <p class="metric-value" style={`color: ${stats.unreviewedThreats > 0 ? 'var(--color-danger)' : 'var(--color-success)'}`}>
+            {stats.unreviewedThreats}
+          </p>
+        </div>
       </div>
     </div>
     
-    <div class="bg-red-50 rounded-lg p-4 flex items-center border border-red-100 hover:shadow-md transition-shadow">
-      <Shield size={24} class="text-red-500 mr-3" />
-      <div>
-        <p class="text-sm text-red-600 font-medium">ASIL D Components</p>
-        <p class="text-2xl font-bold text-red-700">{stats.bySafetyLevel['ASIL D']}</p>
+    <div class="metric-card">
+      <div class="flex items-start">
+        <Database size={24} style="color: var(--color-primary);" class="mr-3 mt-1" />
+        <div>
+          <p class="metric-label">Total Components</p>
+          <p class="metric-value">{stats.totalComponents}</p>
+        </div>
       </div>
     </div>
     
-    <div class="bg-orange-50 rounded-lg p-4 flex items-center border border-orange-100 hover:shadow-md transition-shadow">
-      <Settings size={24} class="text-orange-500 mr-3" />
-      <div>
-        <p class="text-sm text-orange-600 font-medium">Electronic Control Units</p>
-        <p class="text-2xl font-bold text-orange-700">{stats.byType.ECU}</p>
+    <div class="metric-card">
+      <div class="flex items-start">
+        <Shield size={24} style="color: var(--color-secondary);" class="mr-3 mt-1" />
+        <div>
+          <p class="metric-label">ASIL D Components</p>
+          <p class="metric-value">{stats.bySafetyLevel['ASIL D']}</p>
+        </div>
       </div>
     </div>
     
-    <div class="bg-emerald-50 rounded-lg p-4 flex items-center border border-emerald-100 hover:shadow-md transition-shadow">
-      <AlertTriangle size={24} class="text-emerald-500 mr-3" />
-      <div>
-        <p class="text-sm text-emerald-600 font-medium">Sensors</p>
-        <p class="text-2xl font-bold text-emerald-700">{stats.byType.Sensor}</p>
+    <div class="metric-card">
+      <div class="flex items-start">
+        <Settings size={24} style="color: var(--color-success);" class="mr-3 mt-1" />
+        <div>
+          <p class="metric-label">Electronic Control Units</p>
+          <p class="metric-value">{stats.byType.ECU}</p>
+        </div>
       </div>
     </div>
   </div>
   
-  <!-- Action bar -->
+  <!-- Action bar with warm styling -->
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-semibold text-gray-800">Component List</h2>
+    <h2 class="text-xl font-semibold" style="color: var(--color-text-main);">Component List</h2>
     <div class="flex space-x-2">
       <button 
         on:click={loadComponents}
-        class="p-2 text-gray-600 hover:bg-gray-100 rounded-md flex items-center gap-1">
+        style="color: var(--color-text-muted); background-color: rgba(255, 255, 255, 0.5);" 
+        class="p-2 rounded-md flex items-center gap-1 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200">
         <RefreshCw size={16} class="{isLoading ? 'animate-spin' : ''}" />
         <span class="sr-only md:not-sr-only">Refresh</span>
       </button>
       
       <button 
         on:click={() => componentListInstance.handleOpenImport()}
-        class="p-2 text-gray-600 hover:bg-gray-100 rounded-md flex items-center gap-1">
+        style="color: var(--color-text-muted); background-color: rgba(255, 255, 255, 0.5);"
+        class="p-2 rounded-md flex items-center gap-1 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200">
         <Upload size={16} />
         <span class="sr-only md:not-sr-only">Import</span>
       </button>
       
       <button 
         on:click={() => componentListInstance.handleExportCSV()}
-        class="p-2 text-gray-600 hover:bg-gray-100 rounded-md flex items-center gap-1">
+        style="color: var(--color-text-muted); background-color: rgba(255, 255, 255, 0.5);"
+        class="p-2 rounded-md flex items-center gap-1 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200">
         <Download size={16} />
         <span class="sr-only md:not-sr-only">Export</span>
       </button>

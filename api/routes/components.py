@@ -10,7 +10,7 @@ import logging
 
 from api.deps.db import get_db
 from api.models.component import Component, ComponentCreate, ComponentUpdate, ComponentList
-from api.services.component_service import create_component, get_component, get_components, count_components, update_component, delete_component, import_components_from_csv, export_components_to_csv
+from api.services.component_service import create_component as service_create_component, get_component as service_get_component, get_components, count_components, update_component as service_update_component, delete_component as service_delete_component, import_components_from_csv, export_components_to_csv
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -39,7 +39,8 @@ async def create_component(
     Create a new component
     """
     try:
-        return create_component(db, component)
+        # Use the renamed service function
+        return service_create_component(db, component)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -55,7 +56,7 @@ async def get_component(
     """
     Get a component by ID
     """
-    component = get_component(db, component_id)
+    component = service_get_component(db, component_id)
     if not component:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -73,7 +74,7 @@ async def update_component(
     """
     Update a component
     """
-    updated = update_component(db, component_id, component)
+    updated = service_update_component(db, component_id, component)
     if not updated:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -90,7 +91,7 @@ async def delete_component(
     """
     Delete a component
     """
-    success = delete_component(db, component_id)
+    success = service_delete_component(db, component_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

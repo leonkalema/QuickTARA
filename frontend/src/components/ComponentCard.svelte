@@ -18,25 +18,25 @@
   const getTrustZoneClass = (zone: string): string => {
     switch (zone.toLowerCase()) {
       case 'critical':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-50 text-rose-700 border-red-100';
       case 'boundary':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-amber-50 text-amber-700 border-amber-100';
       case 'standard':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-50 text-blue-700 border-blue-100';
       case 'untrusted':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-slate-50 text-slate-700 border-slate-100';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-slate-50 text-slate-700 border-slate-100';
     }
   };
 
   // Map safety level to badge class
   const getSafetyLevelClass = (level: string): string => {
-    if (level.includes('D')) return 'badge-high';
-    if (level.includes('C')) return 'bg-orange-100 text-orange-800';
-    if (level.includes('B')) return 'bg-yellow-100 text-yellow-800';
-    if (level.includes('A')) return 'badge-low';
-    return 'bg-gray-100 text-gray-800';
+    if (level.includes('D')) return 'bg-rose-50 text-rose-700';
+    if (level.includes('C')) return 'bg-amber-50 text-amber-700';
+    if (level.includes('B')) return 'bg-yellow-50 text-yellow-700';
+    if (level.includes('A')) return 'bg-emerald-50 text-emerald-700';
+    return 'bg-slate-50 text-slate-700';
   };
 
   // Get icon based on component type
@@ -68,15 +68,15 @@
   }
 </script>
 
-<div class="bg-white rounded-xl shadow-sm p-4 hover:shadow transition-shadow duration-200 border border-gray-100">
+<div style="background-color: var(--color-card-bg); border: 1px solid var(--color-border);" class="rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-300">
   <div class="flex justify-between items-start">
     <div class="flex gap-3">
       <div class="p-2 rounded-lg {getTrustZoneClass(component.trust_zone)}">
         <Icon size={20} />
       </div>
       <div>
-        <h3 class="text-lg font-semibold text-gray-900">{component.name}</h3>
-        <p class="text-sm text-gray-500 mt-0.5">{component.component_id}</p>
+        <h3 class="text-lg font-semibold" style="color: var(--color-text-main);">{component.name}</h3>
+        <p class="text-sm mt-0.5" style="color: var(--color-text-muted);">{component.component_id}</p>
       </div>
     </div>
     <span class={`text-xs font-medium px-2 py-1 rounded-full ${getSafetyLevelClass(component.safety_level)}`}>
@@ -86,23 +86,23 @@
   
   <div class="mt-4 flex flex-wrap gap-2">
     {#each component.interfaces as interfaceItem}
-      <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">{interfaceItem}</span>
+      <span class="text-xs px-2 py-1 rounded" style="background-color: var(--color-background); color: var(--color-text-main); border: 1px solid var(--color-border);">{interfaceItem}</span>
     {/each}
   </div>
   
-  <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+  <div class="flex justify-between items-center mt-4 pt-3" style="border-top: 1px solid var(--color-border);">
     <span class="text-sm font-medium {getTrustZoneClass(component.trust_zone)} px-2 py-1 rounded">
       {component.trust_zone}
     </span>
     <div class="flex space-x-2">
       <button 
         on:click={handleEdit}
-        class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-full transition-colors">
+        class="p-1.5 rounded-full transition-colors" style="color: var(--color-primary); hover:background-color: rgba(59, 126, 161, 0.1);">
         <Edit size={18} />
       </button>
       <button 
         on:click={handleDelete}
-        class="p-1.5 text-red-600 hover:bg-red-50 rounded-full transition-colors">
+        class="p-1.5 rounded-full transition-colors" style="color: var(--color-danger); hover:background-color: rgba(208, 83, 83, 0.1);">
         <Trash2 size={18} />
       </button>
     </div>
