@@ -75,7 +75,7 @@
     applyFilters(event.detail);
   }
   
-  function handleAddComponent() {
+  export function handleAddComponent() {
     editingComponent = null;
     showForm = true;
   }
@@ -131,7 +131,7 @@
     editingComponent = null;
   }
   
-  function handleOpenImport() {
+  export function handleOpenImport() {
     showImportModal = true;
   }
   
@@ -144,7 +144,7 @@
     await loadComponents(); // Reload all components to ensure we have the latest data
   }
   
-  function handleExportCSV() {
+  export function handleExportCSV() {
     window.open(componentApi.getExportUrl(), '_blank');
   }
 </script>
@@ -215,8 +215,9 @@
   
   <!-- Component Form Dialog (only shown when showForm is true) -->
   {#if showForm}
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="w-full max-w-3xl max-h-screen overflow-y-auto">
+    <!-- Improved modal backdrop with blur effect and warmer overlay -->
+    <div class="fixed inset-0 backdrop-blur-sm bg-neutral-900/40 flex items-center justify-center z-50 p-4 transition-opacity duration-200">
+      <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <ComponentForm 
           editMode={!!editingComponent}
           component={editingComponent || undefined}

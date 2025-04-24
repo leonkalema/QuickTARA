@@ -65,7 +65,7 @@
 </script>
 
 {#if isOpen}
-<div class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+<div class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-neutral-900/40 transition-opacity duration-200">
   <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mx-4">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-xl font-bold text-gray-900 flex items-center">

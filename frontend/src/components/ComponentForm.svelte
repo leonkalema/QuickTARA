@@ -50,6 +50,19 @@
       validationErrors.name = 'Name is required';
     }
     
+    // Required field validation
+    if (!component.type) {
+      validationErrors.type = 'Type is required';
+    }
+    
+    if (!component.safety_level) {
+      validationErrors.safety_level = 'Safety level is required';
+    }
+    
+    if (!component.trust_zone) {
+      validationErrors.trust_zone = 'Trust zone is required';
+    }
+    
     // Check for empty arrays
     if (component.interfaces.length === 0 || (component.interfaces.length === 1 && !component.interfaces[0])) {
       validationErrors.interfaces = 'At least one interface is required';
@@ -64,13 +77,25 @@
       return; // Stop if validation fails
     }
     
-    // Filter out empty values from arrays
+    // Normalize and deduplicate array values
+    const normalizeArray = (arr: string[]) => {
+      return [...new Set(arr
+        .filter(i => i.trim() !== '')
+        .map(i => i.trim())
+      )];
+    };
+    
+    // Clean and normalize the component data
     const cleanedComponent = {
       ...component,
-      interfaces: component.interfaces.filter(i => i.trim() !== ''),
-      access_points: component.access_points.filter(a => a.trim() !== ''),
-      data_types: component.data_types.filter(d => d.trim() !== ''),
-      connected_to: component.connected_to.filter(c => c.trim() !== '')
+      // Normalize ID and name
+      component_id: component.component_id.trim(),
+      name: component.name.trim(),
+      // Normalize and deduplicate arrays
+      interfaces: normalizeArray(component.interfaces),
+      access_points: normalizeArray(component.access_points),
+      data_types: normalizeArray(component.data_types),
+      connected_to: normalizeArray(component.connected_to)
     };
     
     dispatch('submit', cleanedComponent);
@@ -94,7 +119,7 @@
   }
 </script>
 
-<div class="bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
+<div class="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto border border-gray-100">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-xl font-bold text-gray-900">
       {editMode ? 'Edit Component' : 'Add New Component'}
@@ -110,15 +135,15 @@
     <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
       <!-- Component ID -->
       <div>
-        <label for="component_id" class="block text-sm font-medium text-gray-700 mb-1">Component ID *</label>
+        <label for="component_id" class="block text-sm font-medium {validationErrors.component_id ? 'text-red-700' : 'text-gray-700'} mb-1">Component ID *</label>
         <input 
           type="text" 
           id="component_id" 
           bind:value={component.component_id}
           required
           disabled={editMode}
-          class="w-full rounded-md {editMode ? 'bg-gray-100' : ''} {validationErrors.component_id ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}"
-          placeholder="ECU001"
+          class="w-full rounded-md {validationErrors.component_id ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}"
+          placeholder="component-001"
         />
         {#if validationErrors.component_id}
           <p class="text-xs text-red-600 mt-1">{validationErrors.component_id}</p>
@@ -127,13 +152,13 @@
       
       <!-- Name -->
       <div>
-        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+        <label for="name" class="block text-sm font-medium {validationErrors.name ? 'text-red-700' : 'text-gray-700'} mb-1">Name *</label>
         <input 
           type="text" 
           id="name" 
           bind:value={component.name}
           required
-          class="w-full rounded-md {validationErrors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}"
+          class="w-full rounded-md {validationErrors.name ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}"
           placeholder="Engine Control Unit"
         />
         {#if validationErrors.name}
@@ -143,30 +168,38 @@
       
       <!-- Type -->
       <div>
-        <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+        <label for="type" class="block text-sm font-medium {validationErrors.type ? 'text-red-700' : 'text-gray-700'} mb-1">Type *</label>
         <select 
           id="type" 
           bind:value={component.type}
           required
-          class="w-full rounded-md">
+          class="w-full rounded-md {validationErrors.type ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}">
+          <option value="" disabled>Select a type</option>
           {#each componentTypes as type}
             <option value={type}>{type}</option>
           {/each}
         </select>
+        {#if validationErrors.type}
+          <p class="text-xs text-red-600 mt-1">{validationErrors.type}</p>
+        {/if}
       </div>
       
       <!-- Safety Level -->
       <div>
-        <label for="safety_level" class="block text-sm font-medium text-gray-700 mb-1">Safety Level *</label>
+        <label for="safety_level" class="block text-sm font-medium {validationErrors.safety_level ? 'text-red-700' : 'text-gray-700'} mb-1">Safety Level *</label>
         <select 
           id="safety_level" 
           bind:value={component.safety_level}
           required
-          class="w-full rounded-md">
+          class="w-full rounded-md {validationErrors.safety_level ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}">
+          <option value="" disabled>Select safety level</option>
           {#each safetyLevels as level}
             <option value={level}>{level}</option>
           {/each}
         </select>
+        {#if validationErrors.safety_level}
+          <p class="text-xs text-red-600 mt-1">{validationErrors.safety_level}</p>
+        {/if}
       </div>
       
       <!-- Location -->
@@ -185,31 +218,39 @@
       
       <!-- Trust Zone -->
       <div>
-        <label for="trust_zone" class="block text-sm font-medium text-gray-700 mb-1">Trust Zone *</label>
+        <label for="trust_zone" class="block text-sm font-medium {validationErrors.trust_zone ? 'text-red-700' : 'text-gray-700'} mb-1">Trust Zone *</label>
         <select 
           id="trust_zone" 
           bind:value={component.trust_zone}
           required
-          class="w-full rounded-md">
+          class="w-full rounded-md {validationErrors.trust_zone ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}">
+          <option value="" disabled>Select trust zone</option>
           {#each trustZones as zone}
             <option value={zone}>{zone}</option>
           {/each}
         </select>
+        {#if validationErrors.trust_zone}
+          <p class="text-xs text-red-600 mt-1">{validationErrors.trust_zone}</p>
+        {/if}
       </div>
     </div>
     
     <!-- Interfaces (Array) -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Interfaces {#if validationErrors.interfaces}<span class="text-red-600">*</span>{/if}</label>
-      <div class="space-y-2">
+      <div class="flex justify-between items-center mb-2">
+        <label for="interfaces-group" class="block text-sm font-medium {validationErrors.interfaces ? 'text-red-700' : 'text-gray-700'}">Interfaces *</label>
+      </div>
+      <div id="interfaces-group" class="space-y-2" role="group" aria-labelledby="interfaces-label">
         {#each component.interfaces as interfaceItem, index}
           <div class="flex gap-2">
             <input 
               type="text" 
+              id={`interface-${index}`}
               bind:value={component.interfaces[index]}
               on:input={() => component.interfaces = updateItem(component.interfaces, index, component.interfaces[index])}
-              class="flex-1 rounded-md"
-              placeholder="CAN, FlexRay, etc."
+              class="flex-1 rounded-md {validationErrors.interfaces ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}"
+              placeholder="CAN, Ethernet, etc."
+              aria-label={`Interface ${index + 1}`}
             />
             {#if index === component.interfaces.length - 1}
               <button 
@@ -239,16 +280,20 @@
     
     <!-- Access Points (Array) -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Access Points</label>
-      <div class="space-y-2">
+      <div class="flex justify-between items-center mb-2">
+        <label for="access-points-group" class="block text-sm font-medium text-gray-700">Access Points</label>
+      </div>
+      <div id="access-points-group" class="space-y-2" role="group" aria-labelledby="access-points-label">
         {#each component.access_points as point, index}
           <div class="flex gap-2">
             <input 
               type="text" 
+              id={`access-point-${index}`}
               bind:value={component.access_points[index]}
               on:input={() => component.access_points = updateItem(component.access_points, index, component.access_points[index])}
               class="flex-1 rounded-md"
-              placeholder="OBD-II, Debug Port, etc."
+              placeholder="OBD Port, USB, etc."
+              aria-label={`Access Point ${index + 1}`}
             />
             {#if index === component.access_points.length - 1}
               <button 
@@ -274,16 +319,20 @@
     
     <!-- Data Types (Array) -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Data Types</label>
-      <div class="space-y-2">
+      <div class="flex justify-between items-center mb-2">
+        <label for="data-types-group" class="block text-sm font-medium text-gray-700">Data Types</label>
+      </div>
+      <div id="data-types-group" class="space-y-2" role="group" aria-labelledby="data-types-label">
         {#each component.data_types as dataType, index}
           <div class="flex gap-2">
             <input 
               type="text" 
+              id={`data-type-${index}`}
               bind:value={component.data_types[index]}
               on:input={() => component.data_types = updateItem(component.data_types, index, component.data_types[index])}
               class="flex-1 rounded-md"
               placeholder="Control Commands, Sensor Data, etc."
+              aria-label={`Data Type ${index + 1}`}
             />
             {#if index === component.data_types.length - 1}
               <button 
@@ -309,14 +358,18 @@
     
     <!-- Connected To (Array of Select) -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Connected To</label>
-      <div class="space-y-2">
+      <div class="flex justify-between items-center mb-2">
+        <label for="connected-to-group" class="block text-sm font-medium text-gray-700">Connected To</label>
+      </div>
+      <div id="connected-to-group" class="space-y-2" role="group" aria-labelledby="connected-to-label">
         {#each component.connected_to as connected, index}
           <div class="flex gap-2">
             <select 
+              id={`connected-to-${index}`}
               bind:value={component.connected_to[index]}
               on:change={() => component.connected_to = updateItem(component.connected_to, index, component.connected_to[index])}
-              class="flex-1 rounded-md">
+              class="flex-1 rounded-md"
+              aria-label={`Connected Component ${index + 1}`}>
               <option value="">Select a component</option>
               {#each availableComponents.filter(c => c.component_id !== component.component_id) as avComp}
                 <option value={avComp.component_id}>{avComp.name} ({avComp.component_id})</option>
@@ -355,7 +408,8 @@
       </button>
       <button 
         type="submit"
-        class="btn btn-primary flex items-center gap-2">
+        class="btn btn-primary flex items-center gap-2" 
+        disabled={Object.keys(validationErrors).length > 0}>
         <Save size={16} />
         {editMode ? 'Update Component' : 'Save Component'}
       </button>
