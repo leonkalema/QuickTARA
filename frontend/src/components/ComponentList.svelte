@@ -5,7 +5,7 @@
   import ComponentFilter from './ComponentFilter.svelte';
   import ComponentForm from './ComponentForm.svelte';
   import ComponentImport from './ComponentImport.svelte';
-  import { componentApi } from '../api/api';
+  import { componentApi } from '../api/components';
   import { safeApiCall } from '../utils/error-handler';
   
   // Component management state
@@ -33,16 +33,18 @@
     isLoading = true;
     error = '';
     
-    const result = await safeApiCall(() => componentApi.getAll());
-    
-    if (result) {
-      components = result;
+    try {
+      const result = await componentApi.getAll();
+      
+      // The API should now return an array (potentially empty)
+      components = Array.isArray(result) ? result : [];
       applyFilters();
-    } else {
+    } catch (err) {
+      console.error('Error loading components:', err);
       error = 'Failed to load components. Please try again.';
+    } finally {
+      isLoading = false;
     }
-    
-    isLoading = false;
   }
   
   function applyFilters(newFilters: any = null) {
@@ -147,44 +149,12 @@
   }
 </script>
 
-<div class="container mx-auto px-4 py-6 max-w-7xl">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Components</h1>
-    
-    <div class="flex space-x-2">
-      <button 
-        on:click={loadComponents}
-        class="btn p-2 text-gray-600 hover:bg-gray-100 rounded-md flex items-center gap-1"
-        disabled={isLoading}>
-        <RefreshCw size={16} class={isLoading ? 'animate-spin' : ''} />
-        <span class="sr-only md:not-sr-only md:inline-block">Refresh</span>
-      </button>
-      <button 
-        on:click={handleOpenImport}
-        class="btn p-2 text-gray-600 hover:bg-gray-100 rounded-md flex items-center gap-1">
-        <Upload size={16} />
-        <span class="sr-only md:not-sr-only md:inline-block">Import</span>
-      </button>
-      <button 
-        on:click={handleExportCSV}
-        class="btn p-2 text-gray-600 hover:bg-gray-100 rounded-md flex items-center gap-1">
-        <Download size={16} />
-        <span class="sr-only md:not-sr-only md:inline-block">Export</span>
-      </button>
-      <button 
-        on:click={handleAddComponent}
-        class="btn btn-primary flex items-center gap-1">
-        <Plus size={16} />
-        <span>Add Component</span>
-      </button>
-    </div>
-  </div>
-  
+<div>
   <!-- Filter Component -->
   <ComponentFilter on:filter={handleFilter} />
   
   <!-- Component List -->
-  <div class="mb-8">
+  <div>
     {#if isLoading}
       <div class="flex justify-center items-center h-64">
         <div class="text-center">

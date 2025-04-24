@@ -10,7 +10,7 @@ import logging
 
 from api.deps.db import get_db
 from api.models.component import Component, ComponentCreate, ComponentUpdate, ComponentList
-from api.services import component_service
+from api.services.component_service import create_component, get_component, get_components, count_components, update_component, delete_component, import_components_from_csv, export_components_to_csv
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -25,8 +25,8 @@ async def list_components(
     """
     List all components with pagination
     """
-    components = component_service.get_components(db, skip=skip, limit=limit)
-    total = component_service.count_components(db)
+    components = get_components(db, skip=skip, limit=limit)
+    total = count_components(db)
     return ComponentList(components=components, total=total)
 
 
@@ -39,7 +39,7 @@ async def create_component(
     Create a new component
     """
     try:
-        return component_service.create_component(db, component)
+        return create_component(db, component)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -55,7 +55,7 @@ async def get_component(
     """
     Get a component by ID
     """
-    component = component_service.get_component(db, component_id)
+    component = get_component(db, component_id)
     if not component:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -73,7 +73,7 @@ async def update_component(
     """
     Update a component
     """
-    updated = component_service.update_component(db, component_id, component)
+    updated = update_component(db, component_id, component)
     if not updated:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -90,7 +90,7 @@ async def delete_component(
     """
     Delete a component
     """
-    success = component_service.delete_component(db, component_id)
+    success = delete_component(db, component_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -116,7 +116,7 @@ async def import_components(
     try:
         content = await file.read()
         csv_content = content.decode('utf-8')
-        result = component_service.import_components_from_csv(db, csv_content)
+        result = import_components_from_csv(db, csv_content)
         return result
     except Exception as e:
         logger.error(f"Error importing components: {str(e)}")
@@ -132,7 +132,7 @@ async def export_components(db: Session = Depends(get_db)):
     Export components to CSV file
     """
     try:
-        csv_content = component_service.export_components_to_csv(db)
+        csv_content = export_components_to_csv(db)
         return StreamingResponse(
             StringIO(csv_content),
             media_type="text/csv",

@@ -41,7 +41,8 @@ export const componentApi = {
    * @returns Promise with array of components
    */
   async getAll(): Promise<Component[]> {
-    return apiClient.get<Component[]>('/components');
+    const response = await apiClient.get<{components: Component[], total: number}>('/components');
+    return response.components || [];
   },
 
   /**

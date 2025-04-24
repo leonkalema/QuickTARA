@@ -8,6 +8,7 @@ import componentApi from './components';
 import analysisApi from './analysis';
 import reportsApi from './reports';
 import reviewApi from './review';
+import settingsApi from './settings';
 
 /**
  * Central API client that combines all API services
@@ -37,10 +38,15 @@ export const api = {
    * Risk review workflow API
    */
   review: reviewApi,
+
+  /**
+   * Settings and configuration API
+   */
+  settings: settingsApi,
 };
 
 // Export individual services for direct imports
-export { apiClient, componentApi, analysisApi, reportsApi, reviewApi };
+export { apiClient, componentApi, analysisApi, reportsApi, reviewApi, settingsApi };
 
 // Default export for convenience
 export default api;

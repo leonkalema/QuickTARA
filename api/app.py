@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 import logging
 from pathlib import Path
 
-from api.routes import components, analysis, reports, review
+from api.routes import components, analysis, reports, review, settings_routes
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,7 @@ def create_app(settings=None):
     app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])
+    app.include_router(settings_routes.router, prefix="/api/settings", tags=["settings"])
     
     # Serve static files (for production when frontend is built)
     frontend_dir = Path(__file__).parent.parent / "frontend" / "dist"

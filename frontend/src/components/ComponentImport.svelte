@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Upload, X, FileText, CheckCircle, AlertCircle } from '@lucide/svelte';
-  import { componentApi } from '../api/api';
+  import { componentApi } from '../api/components';
   
   export let isOpen = false;
   

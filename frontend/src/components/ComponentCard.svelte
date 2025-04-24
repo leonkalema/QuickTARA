@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { Shield, AlertTriangle, Settings, Edit, Trash2 } from '@lucide/svelte';
   
   export let component: {
@@ -10,6 +11,8 @@
     trust_zone: string;
     location: string;
   };
+
+  const dispatch = createEventDispatcher();
 
   // Map trust zone to safety level for visual indication
   const getTrustZoneClass = (zone: string): string => {
@@ -55,19 +58,13 @@
   // Function to handle edit action
   function handleEdit() {
     // Dispatch edit event
-    const event = new CustomEvent('edit', {
-      detail: component
-    });
-    dispatchEvent(event);
+    dispatch('edit', component);
   }
   
   // Function to handle delete action
   function handleDelete() {
     // Dispatch delete event
-    const event = new CustomEvent('delete', {
-      detail: component.component_id
-    });
-    dispatchEvent(event);
+    dispatch('delete', component.component_id);
   }
 </script>
 

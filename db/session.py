@@ -73,9 +73,48 @@ def get_session_factory(settings=None):
 
 def init_db(settings=None):
     """
-    Initialize database with required tables
+    Initialize database with required tables using Alembic migrations
+    
+    If running migrations fails, falls back to direct schema generation
     """
     from db.base import Base
+    import subprocess
+    import os
+    import sys
+    from pathlib import Path
     
     engine = get_engine(settings)
+    
+    # Try to run Alembic migrations first
+    try:
+        # Get the project root directory
+        project_dir = Path(__file__).parent.parent.absolute()
+        
+        logger.info("Running database migrations...")
+        result = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        
+        if result.returncode == 0:
+            logger.info("Database migrations completed successfully")
+            return
+        else:
+            # Check if the error is just because tables already exist
+            if "table already exists" in result.stderr:
+                logger.info("Tables already exist, skipping migration")
+                return
+            else:
+                logger.warning(
+                    f"Failed to run migrations: {result.stderr}\nFalling back to direct table creation"
+                )
+    except Exception as e:
+        logger.warning(f"Error running migrations: {str(e)}\nFalling back to direct table creation")
+    
+    # Fall back to direct table creation if migrations fail
+    logger.info("Creating database tables directly...")
     Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created successfully")

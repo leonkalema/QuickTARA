@@ -8,7 +8,7 @@ import logging
 
 from api.deps.db import get_db
 from api.models.analysis import Analysis, AnalysisCreate, AnalysisList
-from api.services import analysis_service
+from api.services.analysis_service import run_analysis, list_analyses, count_analyses, get_analysis, get_stride_analysis, get_attack_paths
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ async def run_analysis(
     """
     try:
         logger.info(f"Starting analysis for components: {analysis_create.component_ids}")
-        analysis = analysis_service.run_analysis(db, analysis_create)
+        analysis = run_analysis(db, analysis_create)
         return analysis
     except ValueError as e:
         logger.error(f"Error during analysis: {str(e)}")
@@ -49,8 +49,8 @@ async def list_analyses(
     """
     List all analyses with pagination
     """
-    analyses = analysis_service.list_analyses(db, skip=skip, limit=limit)
-    total = analysis_service.count_analyses(db)
+    analyses = list_analyses(db, skip=skip, limit=limit)
+    total = count_analyses(db)
     return AnalysisList(analyses=analyses, total=total)
 
 
@@ -62,7 +62,7 @@ async def get_analysis_results(
     """
     Get analysis results by ID
     """
-    analysis = analysis_service.get_analysis(db, analysis_id)
+    analysis = get_analysis(db, analysis_id)
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -80,7 +80,7 @@ async def get_stride_analysis(
     Get STRIDE analysis for all components in the analysis
     """
     # Check if analysis exists
-    analysis = analysis_service.get_analysis(db, analysis_id)
+    analysis = get_analysis(db, analysis_id)
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -88,7 +88,7 @@ async def get_stride_analysis(
         )
     
     # Get STRIDE analysis
-    stride_results = analysis_service.get_stride_analysis(db, analysis_id)
+    stride_results = get_stride_analysis(db, analysis_id)
     return stride_results
 
 
@@ -101,7 +101,7 @@ async def get_attack_paths(
     Get attack path analysis for all components in the analysis
     """
     # Check if analysis exists
-    analysis = analysis_service.get_analysis(db, analysis_id)
+    analysis = get_analysis(db, analysis_id)
     if not analysis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -109,7 +109,7 @@ async def get_attack_paths(
         )
     
     # Get attack paths
-    attack_paths = analysis_service.get_attack_paths(db, analysis_id)
+    attack_paths = get_attack_paths(db, analysis_id)
     return attack_paths
 
 

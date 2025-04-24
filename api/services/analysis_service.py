@@ -16,7 +16,7 @@ from api.models.analysis import (
     Threat, StrideRecommendation, ComplianceRequirement, AttackerFeasibility,
     RiskAcceptance, AttackPath
 )
-from api.services import component_service
+from api.services.component_service import get_component
 
 # Import core analysis functionality
 from core.quicktara import (
@@ -49,7 +49,7 @@ def run_analysis(db: Session, analysis_create: AnalysisCreate) -> Analysis:
     # Get components from database
     components = {}
     for component_id in analysis_create.component_ids:
-        component = component_service.get_component(db, component_id)
+        component = get_component(db, component_id)
         if component:
             # Convert Pydantic model to the format expected by core analysis
             components[component_id] = _convert_component_for_analysis(component)
@@ -372,7 +372,7 @@ def get_analysis(db: Session, analysis_id: str) -> Optional[Analysis]:
         attack_paths = json.loads(db_comp_analysis.attack_paths) if db_comp_analysis.attack_paths else []
         
         # Get component info
-        component = component_service.get_component(db, db_comp_analysis.component_id)
+        component = get_component(db, db_comp_analysis.component_id)
         if not component:
             continue
         
@@ -469,7 +469,7 @@ def get_stride_analysis(db: Session, analysis_id: str) -> Dict[str, Any]:
     result = {}
     for db_comp_analysis in db_component_analyses:
         # Get component info
-        component = component_service.get_component(db, db_comp_analysis.component_id)
+        component = get_component(db, db_comp_analysis.component_id)
         if not component:
             continue
             
@@ -507,7 +507,7 @@ def get_attack_paths(db: Session, analysis_id: str) -> List[Dict[str, Any]]:
     
     # First get all component names for reference
     for db_comp_analysis in db_component_analyses:
-        component = component_service.get_component(db, db_comp_analysis.component_id)
+        component = get_component(db, db_comp_analysis.component_id)
         if component:
             component_names[db_comp_analysis.component_id] = component.name
     

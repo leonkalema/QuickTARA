@@ -28,7 +28,42 @@
   
   const dispatch = createEventDispatcher();
   
+  // Form validation
+  let validationErrors: { [key: string]: string } = {};
+  
+  function validateForm(): boolean {
+    validationErrors = {};
+    
+    // Component ID validation (only for new components)
+    if (!editMode) {
+      if (!component.component_id) {
+        validationErrors.component_id = 'Component ID is required';
+      } else if (!/^[A-Za-z0-9_-]+$/.test(component.component_id)) {
+        validationErrors.component_id = 'Component ID can only contain letters, numbers, underscores, and hyphens';
+      } else if (availableComponents.some(c => c.component_id === component.component_id)) {
+        validationErrors.component_id = 'Component ID already exists';
+      }
+    }
+    
+    // Name validation
+    if (!component.name.trim()) {
+      validationErrors.name = 'Name is required';
+    }
+    
+    // Check for empty arrays
+    if (component.interfaces.length === 0 || (component.interfaces.length === 1 && !component.interfaces[0])) {
+      validationErrors.interfaces = 'At least one interface is required';
+    }
+    
+    return Object.keys(validationErrors).length === 0;
+  }
+  
   function handleSubmit() {
+    // Validate the form
+    if (!validateForm()) {
+      return; // Stop if validation fails
+    }
+    
     // Filter out empty values from arrays
     const cleanedComponent = {
       ...component,
@@ -82,9 +117,12 @@
           bind:value={component.component_id}
           required
           disabled={editMode}
-          class="w-full rounded-md {editMode ? 'bg-gray-100' : ''}"
+          class="w-full rounded-md {editMode ? 'bg-gray-100' : ''} {validationErrors.component_id ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}"
           placeholder="ECU001"
         />
+        {#if validationErrors.component_id}
+          <p class="text-xs text-red-600 mt-1">{validationErrors.component_id}</p>
+        {/if}
       </div>
       
       <!-- Name -->
@@ -95,9 +133,12 @@
           id="name" 
           bind:value={component.name}
           required
-          class="w-full rounded-md"
+          class="w-full rounded-md {validationErrors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}"
           placeholder="Engine Control Unit"
         />
+        {#if validationErrors.name}
+          <p class="text-xs text-red-600 mt-1">{validationErrors.name}</p>
+        {/if}
       </div>
       
       <!-- Type -->
@@ -159,7 +200,7 @@
     
     <!-- Interfaces (Array) -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-2">Interfaces</label>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Interfaces {#if validationErrors.interfaces}<span class="text-red-600">*</span>{/if}</label>
       <div class="space-y-2">
         {#each component.interfaces as interfaceItem, index}
           <div class="flex gap-2">
@@ -191,6 +232,9 @@
         {/each}
       </div>
       <p class="text-xs text-gray-500 mt-1">Add multiple interfaces separated by commas</p>
+      {#if validationErrors.interfaces}
+        <p class="text-xs text-red-600 mt-1">{validationErrors.interfaces}</p>
+      {/if}
     </div>
     
     <!-- Access Points (Array) -->

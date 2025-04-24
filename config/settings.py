@@ -99,6 +99,40 @@ def deep_update(base_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> None:
             base_dict[key] = value
 
 
+def update_settings(new_settings: Dict[str, Any], config_path: Optional[Path] = None) -> None:
+    """
+    Update settings and save to custom config file
+    
+    Args:
+        new_settings: New settings to save
+        config_path: Path to custom config file (defaults to config/custom.yaml)
+    """
+    if config_path is None:
+        config_path = Path(__file__).parent / "custom.yaml"
+    
+    # Ensure directory exists
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        # Load existing custom settings if file exists
+        existing_settings = {}
+        if config_path.exists():
+            with open(config_path, "r") as f:
+                existing_settings = yaml.safe_load(f) or {}
+        
+        # Update with new settings
+        deep_update(existing_settings, new_settings)
+        
+        # Save to file
+        with open(config_path, "w") as f:
+            yaml.dump(existing_settings, f, default_flow_style=False)
+        
+        logger.info(f"Settings updated and saved to {config_path}")
+    except Exception as e:
+        logger.error(f"Error updating settings: {e}")
+        raise
+
+
 def configure_logging(config: Dict[str, Any]) -> None:
     """
     Configure logging based on settings
