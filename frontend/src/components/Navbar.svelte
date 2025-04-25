@@ -4,8 +4,8 @@
   
   // Navigation items
   const navItems = [
-    { id: 'components', label: 'Components', icon: 'chip' },
     { id: 'scopes', label: 'Scopes', icon: 'target' },
+    { id: 'components', label: 'Components', icon: 'chip' },
     { id: 'analysis', label: 'Analysis', icon: 'search' },
     { id: 'review', label: 'Review', icon: 'check-circle' },
     { id: 'reports', label: 'Reports', icon: 'file-text' },

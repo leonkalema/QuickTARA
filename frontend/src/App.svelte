@@ -7,7 +7,7 @@
   import Navbar from './components/Navbar.svelte';
   
   // Active page state
-  let activePage = 'components';
+  let activePage = 'scopes';
 </script>
 
 <main class="min-h-screen" style="background-color: var(--color-background);">
@@ -56,9 +56,9 @@
               This feature is under development and will be available in a future update.
             </p>
             <button 
-              on:click={() => activePage = 'components'}
+              on:click={() => activePage = 'scopes'}
               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-              Go to Components
+              Go to Scopes
             </button>
           </div>
         </div>
