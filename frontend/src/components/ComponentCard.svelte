@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { Shield, AlertTriangle, Settings, Edit, Trash2 } from '@lucide/svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
+  import { Shield, AlertTriangle, Settings, Edit, Trash2, Target } from '@lucide/svelte';
+  import { scopeApi, type SystemScope } from '../api/scope';
+  import { safeApiCall } from '../utils/error-handler';
   
   export let component: {
     component_id: string;
@@ -10,9 +12,24 @@
     interfaces: string[];
     trust_zone: string;
     location: string;
+    scope_id?: string;
   };
 
   const dispatch = createEventDispatcher();
+  
+  // Store scope info if available
+  let scopeInfo: SystemScope | null = null;
+  
+  // Load scope information if component has scope_id
+  onMount(async () => {
+    if (component.scope_id) {
+      try {
+        scopeInfo = await safeApiCall(() => scopeApi.getById(component.scope_id!));
+      } catch (error) {
+        console.error('Error loading scope info:', error);
+      }
+    }
+  });
 
   // Map trust zone to safety level for visual indication
   const getTrustZoneClass = (zone: string): string => {
@@ -89,6 +106,16 @@
       <span class="text-xs px-2 py-1 rounded" style="background-color: var(--color-background); color: var(--color-text-main); border: 1px solid var(--color-border);">{interfaceItem}</span>
     {/each}
   </div>
+  
+  <!-- Scope information if available -->
+  {#if component.scope_id && scopeInfo}
+    <div class="mt-4 p-2 rounded-md flex items-center gap-2" style="background-color: var(--color-background); border: 1px solid var(--color-border);">
+      <Target size={14} style="color: var(--color-primary);" />
+      <span class="text-xs" style="color: var(--color-text-main);">
+        Scope: <span class="font-medium">{scopeInfo.name}</span> ({scopeInfo.system_type})
+      </span>
+    </div>
+  {/if}
   
   <div class="flex justify-between items-center mt-4 pt-3" style="border-top: 1px solid var(--color-border);">
     <span class="text-sm font-medium {getTrustZoneClass(component.trust_zone)} px-2 py-1 rounded">

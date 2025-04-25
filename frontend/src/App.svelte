@@ -3,6 +3,7 @@
   import ComponentManager from './components/ComponentManager.svelte';
   import AnalysisManager from './components/AnalysisManager.svelte';
   import SettingsManager from './components/settings/SettingsManager.svelte';
+  import ScopeManager from './components/ScopeManager.svelte';
   import Navbar from './components/Navbar.svelte';
   
   // Active page state
@@ -18,6 +19,8 @@
       <h1 class="text-2xl font-bold" style="color: var(--color-primary);">
         {#if activePage === 'components'}
           Components Dashboard
+        {:else if activePage === 'scopes'}
+          System Scopes
         {:else if activePage === 'analysis'}
           Analysis Dashboard
         {:else if activePage === 'review'}
@@ -35,6 +38,8 @@
   <div class="container mx-auto px-4 max-w-7xl pb-8">
     {#if activePage === 'components'}
       <ComponentManager />
+    {:else if activePage === 'scopes'}
+      <ScopeManager />
     {:else if activePage === 'analysis'}
       <AnalysisManager />
     {:else if activePage === 'settings'}

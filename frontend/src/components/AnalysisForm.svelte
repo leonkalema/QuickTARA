@@ -1,7 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { X, AlertCircle, RefreshCw } from '@lucide/svelte';
+  import { X, AlertCircle, RefreshCw, Target } from '@lucide/svelte';
   import { componentApi } from '../api/components';
+  import { scopeApi, type SystemScope } from '../api/scope';
   import { safeApiCall } from '../utils/error-handler';
   
   // Component properties
@@ -16,6 +17,10 @@
   
   // Available components to select from
   let components: any[] = [];
+  // Available scopes for filtering
+  let scopes: SystemScope[] = [];
+  // Scope filter
+  let selectedScopeFilter = '';
   
   // Event dispatcher
   const dispatch = createEventDispatcher();
@@ -24,9 +29,23 @@
   let validationErrors: any = {};
   
   onMount(async () => {
-    await loadComponents();
+    await Promise.all([
+      loadComponents(),
+      loadScopes()
+    ]);
   });
   
+  async function loadScopes() {
+    try {
+      const result = await safeApiCall(() => scopeApi.getAll());
+      if (result) {
+        scopes = result.scopes;
+      }
+    } catch (err) {
+      console.error('Error loading scopes:', err);
+    }
+  }
+
   async function loadComponents() {
     isLoading = true;
     error = '';
@@ -162,12 +181,24 @@
     <div>
       <div class="flex justify-between items-center mb-2">
         <label for="component-selection" class="block text-sm font-medium text-gray-700">Select Components *</label>
-        <button 
-          type="button"
-          on:click={handleSelectAll}
-          class="text-sm text-indigo-600 hover:text-indigo-800">
-          {components.length === selectedComponentIds.length ? 'Deselect All' : 'Select All'}
-        </button>
+        <div class="flex items-center gap-2">
+          <select 
+            id="scope-filter"
+            bind:value={selectedScopeFilter}
+            class="text-sm border border-gray-300 rounded-md py-1 px-2"
+          >
+            <option value="">All Scopes</option>
+            {#each scopes as scope}
+              <option value={scope.scope_id}>{scope.name}</option>
+            {/each}
+          </select>
+          <button 
+            type="button"
+            on:click={handleSelectAll}
+            class="text-sm text-indigo-600 hover:text-indigo-800">
+            {components.length === selectedComponentIds.length ? 'Deselect All' : 'Select All'}
+          </button>
+        </div>
       </div>
       
       {#if validationErrors.components}
@@ -185,7 +216,7 @@
       {:else}
         <div id="component-selection" class="max-h-64 overflow-y-auto border border-gray-200 rounded-lg" role="group" aria-labelledby="component-selection-label">
           <ul class="divide-y divide-gray-200">
-            {#each components as component}
+            {#each components.filter(c => !selectedScopeFilter || c.scope_id === selectedScopeFilter) as component}
               <li class="hover:bg-gray-50">
                 <label class="flex items-center px-4 py-3 cursor-pointer">
                   <input
@@ -198,6 +229,12 @@
                   <div class="ml-3">
                     <p class="text-sm font-medium text-gray-900">{component.name}</p>
                     <p class="text-xs text-gray-500">{component.component_id} - {component.type} ({component.safety_level})</p>
+                    {#if component.scope_id}
+                      <p class="text-xs text-indigo-600 flex items-center mt-1">
+                        <Target size={10} class="inline mr-1" />
+                        {scopes.find(s => s.scope_id === component.scope_id)?.name || 'Unknown Scope'}
+                      </p>
+                    {/if}
                   </div>
                 </label>
               </li>
@@ -207,7 +244,7 @@
       {/if}
       
       <p class="mt-2 text-sm text-gray-500">
-        Selected {selectedComponentIds.length} of {components.length} components
+        Selected {selectedComponentIds.length} of {selectedScopeFilter ? components.filter(c => c.scope_id === selectedScopeFilter).length : components.length} components
       </p>
     </div>
     

@@ -1,16 +1,22 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { Search, Filter, X, ChevronDown, ChevronUp } from '@lucide/svelte';
+  import { scopeApi, type SystemScope } from '../api/scope';
+  import { safeApiCall } from '../utils/error-handler';
 
   export let componentTypes = ['ECU', 'Sensor', 'Gateway', 'Actuator', 'Network'];
   export let safetyLevels = ['QM', 'ASIL A', 'ASIL B', 'ASIL C', 'ASIL D'];
   export let trustZones = ['Critical', 'Boundary', 'Standard', 'Untrusted'];
+  
+  // Available scopes for filtering
+  let scopes: SystemScope[] = [];
   
   // Filter state
   let searchTerm = '';
   let selectedType = '';
   let selectedSafetyLevel = '';
   let selectedTrustZone = '';
+  let selectedScope = '';
   
   // UI state
   let filtersExpanded = false;
@@ -18,12 +24,21 @@
   
   const dispatch = createEventDispatcher();
   
+  // Load available scopes
+  onMount(async () => {
+    const result = await safeApiCall(scopeApi.getAll);
+    if (result) {
+      scopes = result.scopes;
+    }
+  });
+
   // Function to update the active filter count
   function updateActiveFilterCount() {
     activeFilterCount = 0;
     if (selectedType) activeFilterCount++;
     if (selectedSafetyLevel) activeFilterCount++;
     if (selectedTrustZone) activeFilterCount++;
+    if (selectedScope) activeFilterCount++;
   }
   
   function applyFilters() {
@@ -32,7 +47,8 @@
       searchTerm,
       type: selectedType,
       safetyLevel: selectedSafetyLevel,
-      trustZone: selectedTrustZone
+      trustZone: selectedTrustZone,
+      scope: selectedScope
     });
   }
   
@@ -41,12 +57,14 @@
     selectedType = '';
     selectedSafetyLevel = '';
     selectedTrustZone = '';
+    selectedScope = '';
     activeFilterCount = 0;
     dispatch('filter', {
       searchTerm: '',
       type: '',
       safetyLevel: '',
-      trustZone: ''
+      trustZone: '',
+      scope: ''
     });
   }
   
@@ -55,7 +73,8 @@
       searchTerm,
       type: selectedType,
       safetyLevel: selectedSafetyLevel,
-      trustZone: selectedTrustZone
+      trustZone: selectedTrustZone,
+      scope: selectedScope
     });
   }
   
@@ -134,7 +153,7 @@
       </div>
       
       <!-- Filter dropdowns -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Type Filter -->
         <div>
           <label for="type-filter" class="block text-xs mb-1" style="color: var(--color-text-muted);">Component Type (Optional)</label>
@@ -179,6 +198,22 @@
             <option value="">All Zones</option>
             {#each trustZones as zone}
               <option value={zone}>{zone}</option>
+            {/each}
+          </select>
+        </div>
+        
+        <!-- Scope Filter -->
+        <div>
+          <label for="scope-filter" class="block text-xs mb-1" style="color: var(--color-text-muted);">System Scope (Optional)</label>
+          <select 
+            id="scope-filter" 
+            bind:value={selectedScope}
+            on:change={applyFilters}
+            class="w-full rounded-md border py-1.5 text-sm focus:outline-none focus:ring-1"
+            style="border-color: var(--color-border); background-color: rgba(255, 255, 255, 0.7); color: var(--color-text-main);">
+            <option value="">All Scopes</option>
+            {#each scopes as scope}
+              <option value={scope.scope_id}>{scope.name}</option>
             {/each}
           </select>
         </div>

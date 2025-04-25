@@ -41,6 +41,7 @@ This document tracks the implementation status of the QuickTARA web version and 
 - [x] Error handling improvements
 - [ ] API documentation customization
 - [ ] Performance optimizations
+- [x] System scope data model and API endpoints
 
 ### Frontend (Svelte/Vite/Tailwind)
 
@@ -199,3 +200,69 @@ A task is considered done when:
 8. Implement Analysis UI
 9. Create STRIDE visualization
 10. Create attack path visualization
+11. Implement "Define Scope" feature
+    - ✅ Create SystemScope data model and database schema:
+      ```python
+      # Database model (SQLAlchemy)
+      class SystemScope(Base):
+          __tablename__ = "system_scopes"
+          
+          id = Column(Integer, primary_key=True, index=True)
+          scope_id = Column(String, unique=True, index=True)
+          name = Column(String, nullable=False)
+          system_type = Column(String, nullable=False)  # subsystem, API, backend, etc.
+          description = Column(Text, nullable=True)
+          boundaries = Column(ARRAY(String), nullable=True)
+          objectives = Column(ARRAY(String), nullable=True)
+          stakeholders = Column(ARRAY(String), nullable=True)
+          created_at = Column(DateTime, default=datetime.utcnow)
+          updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+          
+          # Relationships
+          components = relationship("Component", back_populates="scope")
+      
+      # Update Component model to link with scope
+      class Component(Base):
+          # existing fields...
+          scope_id = Column(String, ForeignKey("system_scopes.scope_id"), nullable=True)
+          scope = relationship("SystemScope", back_populates="components")
+      ```
+      
+      ```python
+      # Pydantic model
+      class SystemScopeCreate(BaseModel):
+          name: str
+          system_type: str
+          description: Optional[str] = None
+          boundaries: Optional[List[str]] = []
+          objectives: Optional[List[str]] = []
+          stakeholders: Optional[List[str]] = []
+          
+      class SystemScopeResponse(SystemScopeCreate):
+          scope_id: str
+          created_at: datetime
+          updated_at: datetime
+          
+          class Config:
+              orm_mode = True
+      ```
+    - ✅ Implement scope management backend API:
+      - ✅ POST /api/scope (create new scope)
+      - ✅ GET /api/scope/{scope_id} (retrieve scope)
+      - ✅ PUT /api/scope/{scope_id} (update scope)
+      - ✅ GET /api/scope (list all scopes)
+      - Add scope_id parameter to component APIs
+      - Include scope information in analysis results
+    - Create scope management UI components:
+      - Add "Scope" navigation item to Navbar.svelte (first item)
+      - Create ScopeManager.svelte (main container)
+      - Create ScopeForm.svelte (create/edit form)
+      - Create TypeScript interface for scope data
+      - Update App.svelte to include the new scope page
+      - Create scope API client in /api/scope.ts
+    - Integrate scope with analysis workflow:
+      - Update component creation to include scope reference
+      - Include scope information in reports
+      - Add scope filtering to component list
+      - Update STRIDE analysis to consider system type
+

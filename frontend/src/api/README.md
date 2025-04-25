@@ -6,6 +6,7 @@ This directory contains the API client functions used to interact with the Quick
 
 - `index.ts` - Base API client with request handling functionality
 - `api.ts` - Main export module that combines all API services
+- `scope.ts` - API client for system scope definition
 - `components.ts` - API client for component management
 - `analysis.ts` - API client for threat analysis
 - `reports.ts` - API client for report generation and management
@@ -24,6 +25,44 @@ import api from '../api/api';
 // Import specific API modules
 import { componentApi } from '../api/api';
 import analysisApi from '../api/analysis';
+```
+
+### Working with System Scope
+
+```typescript
+import { scopeApi } from '../api/api';
+import { SystemScope } from '../api/scope';
+import { handleApiError } from '../utils/error-handler';
+
+// Get all scopes
+async function loadScopes() {
+  try {
+    const response = await scopeApi.getAll();
+    console.log('Loaded scopes:', response.scopes);
+    return response.scopes;
+  } catch (error) {
+    handleApiError(error, 'Failed to load scopes');
+    return [];
+  }
+}
+
+// Create a new scope
+async function createScope(scopeData) {
+  try {
+    const newScope = await scopeApi.create({
+      name: scopeData.name,
+      system_type: scopeData.systemType,
+      description: scopeData.description,
+      boundaries: scopeData.boundaries,
+      objectives: scopeData.objectives,
+      stakeholders: scopeData.stakeholders
+    });
+    return newScope;
+  } catch (error) {
+    handleApiError(error, 'Failed to create scope');
+    return null;
+  }
+}
 ```
 
 ### Working with Components

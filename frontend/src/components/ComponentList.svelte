@@ -22,7 +22,8 @@
     searchTerm: '',
     type: '',
     safetyLevel: '',
-    trustZone: ''
+    trustZone: '',
+    scope: ''
   };
   
   onMount(async () => {
@@ -67,7 +68,10 @@
       // Trust zone filter
       const trustZoneMatch = !filters.trustZone || component.trust_zone === filters.trustZone;
       
-      return searchTermMatch && typeMatch && safetyLevelMatch && trustZoneMatch;
+      // Scope filter
+      const scopeMatch = !filters.scope || component.scope_id === filters.scope;
+      
+      return searchTermMatch && typeMatch && safetyLevelMatch && trustZoneMatch && scopeMatch;
     });
   }
   

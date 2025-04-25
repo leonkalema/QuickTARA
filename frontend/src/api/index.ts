@@ -163,7 +163,12 @@ export const apiClient = {
     return this.request<T>(endpoint, {
       method: HttpMethod.POST,
       body,
-      headers
+      headers: {
+        // Add Cache-Control header to prevent service worker caching
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        ...headers
+      }
     });
   },
 
@@ -178,7 +183,12 @@ export const apiClient = {
     return this.request<T>(endpoint, {
       method: HttpMethod.PUT,
       body,
-      headers
+      headers: {
+        // Add Cache-Control header to prevent service worker caching
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        ...headers
+      }
     });
   },
 
@@ -191,7 +201,12 @@ export const apiClient = {
   async delete<T>(endpoint: string, headers?: Record<string, string>): Promise<T> {
     return this.request<T>(endpoint, {
       method: HttpMethod.DELETE,
-      headers
+      headers: {
+        // Add Cache-Control header to prevent service worker caching
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        ...headers
+      }
     });
   },
 

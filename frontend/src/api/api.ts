@@ -4,6 +4,7 @@
  */
 
 import apiClient from './index';
+import scopeApi from './scope';
 import componentApi from './components';
 import analysisApi from './analysis';
 import reportsApi from './reports';
@@ -18,6 +19,11 @@ export const api = {
    * Base API client for custom requests
    */
   client: apiClient,
+
+  /**
+   * System scope definition API
+   */
+  scope: scopeApi,
 
   /**
    * Component management API
@@ -46,7 +52,7 @@ export const api = {
 };
 
 // Export individual services for direct imports
-export { apiClient, componentApi, analysisApi, reportsApi, reviewApi, settingsApi };
+export { apiClient, scopeApi, componentApi, analysisApi, reportsApi, reviewApi, settingsApi };
 
 // Default export for convenience
 export default api;

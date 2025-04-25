@@ -67,15 +67,64 @@ def get_components(db: Session, skip: int = 0, limit: int = 100) -> List[Compone
     """
     Get all components with pagination
     """
-    db_components = db.query(DBComponent).offset(skip).limit(limit).all()
-    return [_db_component_to_schema(c) for c in db_components]
+    try:
+        # Use a try-except block to handle potential database issues with schema
+        db_components = db.query(DBComponent).offset(skip).limit(limit).all()
+        return [_db_component_to_schema(c) for c in db_components]
+    except Exception as e:
+        # Handle the case where schema might be outdated
+        try:
+            # Try a direct SQL query that doesn't use the new scope_id column
+            from sqlalchemy import text
+            result = db.execute(text(
+                "SELECT component_id, name, type, safety_level, interfaces, "
+                "access_points, data_types, location, trust_zone "
+                "FROM components LIMIT :limit OFFSET :skip"
+            ), {"skip": skip, "limit": limit})
+            
+            components = []
+            for row in result:
+                # Create a minimal component from the raw SQL result
+                component = Component(
+                    component_id=row[0],
+                    name=row[1],
+                    type=row[2],
+                    safety_level=row[3],
+                    interfaces=json.loads(row[4]) if row[4] else [],
+                    access_points=json.loads(row[5]) if row[5] else [],
+                    data_types=json.loads(row[6]) if row[6] else [],
+                    location=row[7] or "",
+                    trust_zone=row[8] or "",
+                    connected_to=[],  # Can't fetch many-to-many without ORM
+                    scope_id=None  # No scope_id in database yet
+                )
+                components.append(component)
+            return components
+        except Exception as inner_e:
+            # If both methods fail, log the error and re-raise
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in get_components: {str(e)} | Fallback error: {str(inner_e)}")
+            raise
 
 
 def count_components(db: Session) -> int:
     """
     Count total number of components
     """
-    return db.query(DBComponent).count()
+    try:
+        return db.query(DBComponent).count()
+    except Exception:
+        # Fallback to direct SQL if ORM query fails
+        try:
+            from sqlalchemy import text
+            result = db.execute(text("SELECT COUNT(*) FROM components"))
+            return result.scalar() or 0
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in count_components: {str(e)}")
+            return 0  # Safe fallback
 
 
 def update_component(db: Session, component_id: str, component: ComponentUpdate) -> Optional[Component]:
@@ -225,6 +274,9 @@ def _db_component_to_schema(db_component: DBComponent) -> Component:
     # Get connected component IDs
     connected_to = [c.component_id for c in db_component.connected_to]
     
+    # Handle scope_id (may not exist in database yet)
+    scope_id = getattr(db_component, 'scope_id', None)
+    
     return Component(
         component_id=db_component.component_id,
         name=db_component.name,
@@ -236,4 +288,5 @@ def _db_component_to_schema(db_component: DBComponent) -> Component:
         location=db_component.location,
         trust_zone=db_component.trust_zone,
         connected_to=connected_to,
+        scope_id=scope_id,
     )

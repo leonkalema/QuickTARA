@@ -390,161 +390,25 @@ def get_analysis(db: Session, analysis_id: str) -> Optional[Analysis]:
     
     return analysis
 
-def count_analyses(db: Session) -> int:
-    """
-    Count total number of analyses in database
-    """
-    try:
-        return db.query(DBAnalysis).count()
-    except Exception as e:
-        # Fallback to direct SQL if ORM query fails
-        try:
-            from sqlalchemy import text
-            result = db.execute(text("SELECT COUNT(*) FROM analyses"))
-            return result.scalar() or 0
-        except Exception as e:
-            logger.error(f"Error in count_analyses: {str(e)}")
-            return 0  # Return safe default
-
-
 def list_analyses(db: Session, skip: int = 0, limit: int = 100) -> List[AnalysisSummary]:
     """
     List all analyses with pagination
     """
-    try:
-        # Try standard ORM query first
-        db_analyses = db.query(DBAnalysis).order_by(DBAnalysis.created_at.desc()).offset(skip).limit(limit).all()
-        
-        # Convert to Pydantic models
-        analyses = []
-        for db_analysis in db_analyses:
-            summary = AnalysisSummary(
-                id=db_analysis.id,
-                name=db_analysis.name,
-                description=db_analysis.description,
-                created_at=db_analysis.created_at,
-                total_components=db_analysis.total_components,
-                total_threats=db_analysis.total_threats,
-                critical_components=db_analysis.critical_components,
-                high_risk_threats=db_analysis.high_risk_threats
-            )
-            analyses.append(summary)
-        
-        return analyses
-        
-    except Exception as e:
-        logger.error(f"ORM query failed in list_analyses: {str(e)}")
-        # Fallback to direct SQL if ORM query fails
-        try:
-            from sqlalchemy import text
-            result = db.execute(text("""
-                SELECT id, name, description, created_at, 
-                       total_components, total_threats, 
-                       critical_components, high_risk_threats 
-                FROM analyses 
-                ORDER BY created_at DESC 
-                LIMIT :limit OFFSET :skip
-            """), {"skip": skip, "limit": limit})
-            
-            analyses = []
-            for row in result:
-                # Create summary from raw SQL result
-                summary = AnalysisSummary(
-                    id=row[0],
-                    name=row[1],
-                    description=row[2] if row[2] else "",
-                    created_at=row[3],
-                    total_components=row[4] if row[4] is not None else 0,
-                    total_threats=row[5] if row[5] is not None else 0,
-                    critical_components=row[6] if row[6] is not None else 0,
-                    high_risk_threats=row[7] if row[7] is not None else 0
-                )
-                analyses.append(summary)
-            
-            return analyses
-            
-        except Exception as inner_e:
-            logger.error(f"SQL fallback also failed in list_analyses: {str(inner_e)}")
-            # If all fails, return empty list rather than failing completely
-            return []
-
-
-def get_stride_analysis(db: Session, analysis_id: str) -> Dict[str, Any]:
-    """
-    Get STRIDE analysis results for a specific analysis
-    """
-    # Get the analysis first
-    analysis = get_analysis(db, analysis_id)
-    if not analysis:
-        return {}
+    db_analyses = db.query(DBAnalysis).order_by(DBAnalysis.created_at.desc()).offset(skip).limit(limit).all()
     
-    # Extract STRIDE data from each component
-    stride_results = {}
-    for comp_id, comp_analysis in analysis.component_analyses.items():
-        component_stride = {}
-        for category, recommendation in comp_analysis.stride_analysis.items():
-            component_stride[category] = {
-                'risk_level': recommendation.risk_level,
-                'recommendations': recommendation.recommendations
-            }
-        stride_results[comp_id] = {
-            'name': comp_analysis.name,
-            'type': comp_analysis.type,
-            'stride': component_stride
-        }
+    # Convert to Pydantic models
+    analyses = []
+    for db_analysis in db_analyses:
+        summary = AnalysisSummary(
+            id=db_analysis.id,
+            name=db_analysis.name,
+            description=db_analysis.description,
+            created_at=db_analysis.created_at,
+            total_components=db_analysis.total_components,
+            total_threats=db_analysis.total_threats,
+            critical_components=db_analysis.critical_components,
+            high_risk_threats=db_analysis.high_risk_threats
+        )
+        analyses.append(summary)
     
-    return {
-        'analysis_id': analysis_id,
-        'name': analysis.name,
-        'components': stride_results
-    }
-
-
-def get_attack_paths(db: Session, analysis_id: str) -> Dict[str, Any]:
-    """
-    Get attack path results for a specific analysis
-    """
-    # Get the analysis first
-    analysis = get_analysis(db, analysis_id)
-    if not analysis:
-        return {}
-    
-    # Extract attack path data from each component
-    attack_paths_result = {}
-    for comp_id, comp_analysis in analysis.component_analyses.items():
-        if comp_analysis.attack_paths:
-            attack_paths_result[comp_id] = {
-                'name': comp_analysis.name,
-                'type': comp_analysis.type,
-                'paths': [
-                    {
-                        'path': path.path,
-                        'risk': path.risk
-                    }
-                    for path in comp_analysis.attack_paths
-                ]
-            }
-    
-    # Create a simple mock path if none exist
-    if not attack_paths_result and len(analysis.component_analyses) >= 2:
-        # Create a sample attack path between two components
-        components = list(analysis.component_analyses.items())
-        source_id, source = components[0]
-        target_id, target = components[1]
-        
-        attack_paths_result[source_id] = {
-            'name': source.name,
-            'type': source.type,
-            'paths': [
-                {
-                    'path': [source_id, target_id],
-                    'risk': {'level': 'Medium', 'score': 3}
-                }
-            ]
-        }
-    
-    return {
-        'analysis_id': analysis_id,
-        'name': analysis.name,
-        'attack_paths': attack_paths_result
-    }
+    return analyses

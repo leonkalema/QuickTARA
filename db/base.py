@@ -4,7 +4,7 @@ SQLAlchemy models definitions
 from sqlalchemy import Column, String, Enum, ForeignKey, Table, DateTime, Integer, Float, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import JSON
+from sqlalchemy.types import JSON, ARRAY
 from datetime import datetime
 
 Base = declarative_base()
@@ -43,6 +43,10 @@ class Component(Base):
     
     # Analysis results relationship
     analyses = relationship("ComponentAnalysis", back_populates="component")
+    
+    # Scope relationship
+    scope_id = Column(String, ForeignKey("system_scopes.scope_id"), nullable=True)
+    scope = relationship("SystemScope", back_populates="components")
 
 
 class Analysis(Base):
@@ -136,3 +140,22 @@ class ReviewDecision(Base):
     # Relationships
     analysis = relationship("Analysis", backref="review_decisions")
     component = relationship("Component", backref="review_decisions")
+
+
+class SystemScope(Base):
+    """SQLAlchemy model for system scope definition"""
+    __tablename__ = "system_scopes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    scope_id = Column(String, unique=True, index=True)
+    name = Column(String, nullable=False)
+    system_type = Column(String, nullable=False)  # subsystem, API, backend, etc.
+    description = Column(Text, nullable=True)
+    boundaries = Column(JSON, nullable=True)  # Using JSON for array storage as PostgreSQL ARRAY not supported in SQLite
+    objectives = Column(JSON, nullable=True)  # Using JSON for array storage
+    stakeholders = Column(JSON, nullable=True)  # Using JSON for array storage
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    # Relationships
+    components = relationship("Component", back_populates="scope")

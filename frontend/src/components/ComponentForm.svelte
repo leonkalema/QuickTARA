@@ -1,6 +1,8 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { X, Save, Plus, Trash2 } from '@lucide/svelte';
+  import { scopeApi, type SystemScope } from '../api/scope';
+  import { safeApiCall } from '../utils/error-handler';
   
   // Default component types and safety levels
   const componentTypes = ['ECU', 'Sensor', 'Gateway', 'Actuator', 'Network'];
@@ -20,13 +22,25 @@
     data_types: [''],
     location: locations[0],
     trust_zone: trustZones[0],
-    connected_to: ['']
+    connected_to: [''],
+    scope_id: ''
   };
   
   // Available components for connection selection
   export let availableComponents: { component_id: string; name: string; }[] = [];
   
+  // Available scopes for selection
+  let availableScopes: SystemScope[] = [];
+  
   const dispatch = createEventDispatcher();
+  
+  // Load available scopes
+  onMount(async () => {
+    const result = await safeApiCall(scopeApi.getAll);
+    if (result) {
+      availableScopes = result.scopes;
+    }
+  });
   
   // Form validation
   let validationErrors: { [key: string]: string } = {};
@@ -91,6 +105,8 @@
       // Normalize ID and name
       component_id: component.component_id.trim(),
       name: component.name.trim(),
+      // Include scope ID if selected
+      scope_id: component.scope_id || null,
       // Normalize and deduplicate arrays
       interfaces: normalizeArray(component.interfaces),
       access_points: normalizeArray(component.access_points),
@@ -132,7 +148,22 @@
   </div>
   
   <form on:submit|preventDefault={handleSubmit} class="space-y-6">
-    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">    
+      <!-- Scope Selection -->
+      <div class="col-span-2">
+        <label for="scope_id" class="block text-sm font-medium text-gray-700 mb-1">System Scope</label>
+        <select 
+          id="scope_id" 
+          bind:value={component.scope_id}
+          class="w-full rounded-md"
+        >
+          <option value="">-- No Scope Selected --</option>
+          {#each availableScopes as scope}
+            <option value={scope.scope_id}>{scope.name} ({scope.system_type})</option>
+          {/each}
+        </select>
+        <p class="text-xs text-gray-500 mt-1">Associate this component with a defined system scope</p>
+      </div>
       <!-- Component ID -->
       <div>
         <label for="component_id" class="block text-sm font-medium {validationErrors.component_id ? 'text-red-700' : 'text-gray-700'} mb-1">Component ID *</label>
