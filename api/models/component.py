@@ -43,11 +43,13 @@ class ComponentBase(BaseModel):
     location: str = Field(..., description="Physical location (Internal/External)")
     trust_zone: TrustZone = Field(..., description="Security trust zone")
     connected_to: List[str] = Field(default_factory=list, description="Connected component IDs")
+    scope_id: Optional[str] = Field(None, description="Associated system scope ID")
 
 
 class ComponentCreate(ComponentBase):
     """Used for creating a new component"""
     component_id: str = Field(..., description="Unique component identifier")
+    # scope_id is inherited from ComponentBase
 
 
 class ComponentUpdate(ComponentBase):
@@ -61,6 +63,7 @@ class ComponentUpdate(ComponentBase):
     location: Optional[str] = None
     trust_zone: Optional[TrustZone] = None
     connected_to: Optional[List[str]] = None
+    scope_id: Optional[str] = None
 
 
 class Component(ComponentBase):

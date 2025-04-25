@@ -8,6 +8,7 @@ This directory contains Pydantic models for the QuickTARA API.
 - `analysis.py`: Models for threat analysis
 - `report.py`: Models for report generation
 - `review.py`: Models for risk review workflow
+- `scope.py`: Models for system scope definition
 
 ## Risk Review Workflow
 
@@ -29,11 +30,13 @@ Models for managing automotive system components:
 - `AssetType` - Enum for component types (ECU, Sensor, Gateway, etc.)
 - `SafetyLevel` - Enum for safety levels (ASIL A-D)
 - `TrustZone` - Enum for security trust zones
-- `ComponentBase` - Base attributes for components
+- `ComponentBase` - Base attributes for components including scope association
 - `ComponentCreate` - Model for creating new components
 - `ComponentUpdate` - Model for updating existing components
 - `Component` - Complete component model
 - `ComponentList` - List of components with pagination
+
+Each component can be associated with a system scope through the `scope_id` field, which establishes a relationship between the component and its parent scope.
 
 ## Analysis Models (`analysis.py`)
 
@@ -83,6 +86,33 @@ Models for risk review workflow:
 - `ReviewStatusResponse` - Response model for review status
 - `RiskForReview` - Model for a risk requiring review
 - `RisksForReviewResponse` - Response model for risks requiring review
+
+## Scope Models (`scope.py`)
+
+Models for defining system boundaries and assessment scope:
+
+- `SystemScope` - Defines a boundary for security assessment including:
+  - `name` - Name of the system or subsystem
+  - `system_type` - Type of system (subsystem, embedded, network, etc.)
+  - `description` - Detailed description of what's included in the scope
+  - `boundaries` - List of defined scope boundaries
+  - `objectives` - List of assessment objectives
+  - `stakeholders` - List of relevant stakeholders
+  - `scope_id` - Unique identifier for the scope
+
+- `ScopeCreate` - Model for creating new system scopes
+- `ScopeUpdate` - Model for updating existing scopes
+- `ScopeList` - List of scopes with pagination
+
+## Scope-Component Relationship
+
+Components are assigned to scopes through the `scope_id` field in the Component model. This relationship establishes a hierarchy where:
+
+1. A scope defines the system boundaries and objectives for assessment
+2. Components are then associated with that scope
+3. Analysis is performed on components within a specific scope
+
+This enables segmented analysis and reporting based on different system boundaries.
 
 ## Database Models
 
