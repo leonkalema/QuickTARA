@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import ComponentManager from './components/ComponentManager.svelte';
+  import AnalysisManager from './components/AnalysisManager.svelte';
   import SettingsManager from './components/settings/SettingsManager.svelte';
   import Navbar from './components/Navbar.svelte';
   
@@ -34,6 +35,8 @@
   <div class="container mx-auto px-4 max-w-7xl pb-8">
     {#if activePage === 'components'}
       <ComponentManager />
+    {:else if activePage === 'analysis'}
+      <AnalysisManager />
     {:else if activePage === 'settings'}
       <SettingsManager />
     {:else}
