@@ -1,4 +1,25 @@
 <script lang="ts">
+  /**
+   * ThreatAnalysisVisualizer Component
+   * 
+   * This component provides a comprehensive interface for performing STRIDE threat analysis
+   * on selected system components. It allows users to:
+   * 
+   * 1. Load and select components from the system architecture
+   * 2. Run threat analysis against selected components
+   * 3. View analysis results in multiple visualizations including:
+   *    - Component threat summary table
+   *    - Threat distribution by STRIDE category
+   *    - Detailed threat cards with risk information
+   *    - Risk scores and severity indicators
+   * 
+   * The component handles both API request/response formats and provides error handling
+   * and user feedback. It normalizes different API response structures to ensure consistent
+   * display regardless of backend changes.
+   * 
+   * Usage:
+   * <ThreatAnalysisVisualizer />
+   */
   import { onMount } from 'svelte';
   import { 
     performThreatAnalysis, 
@@ -16,6 +37,9 @@
   let loading = false;
   let analyzing = false;
   let error = '';
+  let isComponentPanelOpen = false;
+  let componentSearchTerm = '';
+  let componentTypeFilter = '';
   let components: Component[] = [];
   let analysisResult: ThreatAnalysisResult | null = null;
   
@@ -87,7 +111,21 @@
     return counts;
   }
   
-  // Process the API response to extract component threat profiles
+  /**
+   * Normalizes different API response formats into a consistent component threat profile structure
+   * 
+   * This function handles the variations in the API response structure that might occur as
+   * the backend evolves or different API endpoints are used. It extracts threat information
+   * from different possible structures and converts them into a standard ComponentThreatProfile
+   * format that can be consistently used throughout the UI.
+   * 
+   * The function handles two main response formats:
+   * 1. Direct component_threat_profiles array in the response
+   * 2. component_analyses array with either threat_matches or threats arrays
+   * 
+   * @param {any} analysisResult - The raw analysis result from the API
+   * @returns {ComponentThreatProfile[]} - Normalized array of component threat profiles
+   */
   function extractComponentThreatProfiles(analysisResult: any): ComponentThreatProfile[] {
     // If the result already has component_threat_profiles, return it directly
     if (analysisResult && Array.isArray(analysisResult.component_threat_profiles)) {
@@ -178,7 +216,11 @@
       // Set the components for display
       if (Array.isArray(result)) {
         components = result.filter(c => c && c.component_id);
-        console.log('Valid components loaded:', components);
+        console.log('Valid components loaded:', components.length);
+        
+        // Ensure filtered components are updated
+        filteredComponents = getFilteredComponents();
+        console.log('Initial filtered components:', filteredComponents.length);
       } else {
         console.error('Unexpected format from componentApi.getAll()');
         components = [];
@@ -285,6 +327,42 @@
     return components.find(comp => comp.component_id === id);
   }
   
+  // Component filtering and selection functions
+  function getFilteredComponents(): Component[] {
+    if (!components || !Array.isArray(components)) return [];
+    
+    return components.filter(component => {
+      // Filter by search term
+      const matchesSearch = !componentSearchTerm || 
+        (component.name && component.name.toLowerCase().includes(componentSearchTerm.toLowerCase())) ||
+        (component.type && component.type.toLowerCase().includes(componentSearchTerm.toLowerCase()));
+      
+      // Filter by component type
+      const matchesType = !componentTypeFilter || 
+        (component.type && component.type.toLowerCase().includes(componentTypeFilter.toLowerCase()));
+      
+      return matchesSearch && matchesType;
+    });
+  }
+  
+  function selectAllComponents() {
+    const filteredIds = filteredComponents.map(c => c.component_id);
+    // Create a new array with all current selections plus new ones, avoiding duplicates
+    const newSelections = [...new Set([...selectedComponentIds, ...filteredIds])];
+    selectedComponentIds = newSelections;
+  }
+  
+  function clearComponentSelection() {
+    // If no filter is applied, clear all selections
+    if (!componentSearchTerm && !componentTypeFilter) {
+      selectedComponentIds = [];
+    } else {
+      // Otherwise, only clear filtered components
+      const filteredIds = new Set(filteredComponents.map(c => c.component_id));
+      selectedComponentIds = selectedComponentIds.filter(id => !filteredIds.has(id));
+    }
+  }
+  
   // Get threat counts by component
   function getThreatCountsByComponent(): Record<string, number> {
     if (!analysisResult) return {};
@@ -310,8 +388,40 @@
   
 
 
+  // Define initial empty filtered components array
+  let filteredComponents: Component[] = [];
+  
+  // Update filtered components whenever search term, type filter, or components change
+  $: {
+    filteredComponents = getFilteredComponents();
+    console.log(`Filtered components: ${filteredComponents.length}`);
+  }
+  
+  // Auto-expand panel when search or filter is applied
+  $: if (componentSearchTerm || componentTypeFilter) {
+    isComponentPanelOpen = true;
+  }
+  
+  // Force the panel to open when components are loaded and there are none selected
+  $: if (components.length > 0 && selectedComponentIds.length === 0 && !loading) {
+    isComponentPanelOpen = true;
+  }
+  
+  // Auto-close component panel when search is applied and selections are made
+  $: if (componentSearchTerm && selectedComponentIds.length > 0) {
+    // Add a slight delay so the user can see what was selected
+    setTimeout(() => {
+      isComponentPanelOpen = false;
+    }, 300);
+  }
+  
+  // Auto-expand panel when first loaded if no components are selected
   onMount(() => {
     loadComponents();
+    // Automatically expand if no components selected yet
+    if (selectedComponentIds.length === 0) {
+      isComponentPanelOpen = true;
+    }
   });
 </script>
 
@@ -329,47 +439,210 @@
     </div>
   {:else}
     <div class="mb-6">
-      <h3 class="text-lg font-medium mb-3">Select Components to Analyze</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {#each components as component, index}
-          <!-- Make sure component has a component_id -->
-          {#if component && component.component_id}
-            <label 
-              class="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50 transition-colors
-                    ${selectedComponentIds.includes(component.component_id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}"
-            >
-              <input 
-                type="checkbox"
-                class="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 rounded"
-                checked={selectedComponentIds.includes(component.component_id)}
-                on:change={() => handleToggleComponent(component.component_id)}
-              />
-              <div>
-                <div class="font-medium">{component.name || 'Unnamed Component'}</div>
-                <div class="text-sm text-gray-500">{component.type || 'Unknown Type'}</div>
+      <!-- Collapsible Component Selection Panel -->
+      <div class="border rounded-lg overflow-hidden mb-4">
+        {#if !isComponentPanelOpen}
+          <!-- Collapsed View with Selection Summary -->
+          <div class="p-4 bg-white flex justify-between items-center cursor-pointer" on:click={() => isComponentPanelOpen = true}>
+            <div>
+              <h3 class="text-lg font-medium flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                Select Components for Analysis
+              </h3>
+              
+              {#if selectedComponentIds.length > 0}
+                <div class="mt-2 flex flex-wrap gap-2">
+                  {#each selectedComponentIds.slice(0, 5) as compId}
+                    {@const comp = getComponentById(compId)}
+                    {#if comp}
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {comp.name}
+                        <button on:click|stopPropagation={() => handleToggleComponent(compId)} class="ml-1.5 text-blue-400 hover:text-blue-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    {/if}
+                  {/each}
+                  
+                  {#if selectedComponentIds.length > 5}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      +{selectedComponentIds.length - 5} more
+                    </span>
+                  {/if}
+                </div>
+              {:else}
+                <p class="text-sm text-gray-500 mt-1">No components selected. Click to select components.</p>
+              {/if}
+            </div>
+            
+            <div class="flex items-center">
+              <span class="text-sm font-medium text-gray-600 mr-3">{selectedComponentIds.length} selected</span>
+              <button 
+                on:click|stopPropagation={runThreatAnalysis}
+                disabled={analyzing || !selectedComponentIds.length}
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center
+                       disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {#if analyzing}
+                  <Spinner size="sm" class="mr-2" />
+                  Analyzing...
+                {:else}
+                  Run Analysis
+                {/if}
+              </button>
+            </div>
+          </div>
+        {:else}
+          <!-- Expanded Panel -->
+          <div class="p-4 bg-white border-b">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-medium flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+                Select Components for Analysis
+              </h3>
+              <button 
+                on:click={() => isComponentPanelOpen = false}
+                class="text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Search and Filter -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-4">
+              <div class="relative flex-grow">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Search components..." 
+                  bind:value={componentSearchTerm}
+                  class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
               </div>
-            </label>
-          {/if}
-        {/each}
-      </div>
-      
-      <div class="mt-4 flex justify-end">
-        <button 
-          on:click={runThreatAnalysis}
-          disabled={analyzing || !selectedComponentIds.length}
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center
-                 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {#if analyzing}
-            <Spinner size="sm" class="mr-2" />
-            Analyzing...
-          {:else}
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M3.707 5.293a1 1 0 00-1.414 1.414l7 7a1 1 0 001.414 0l7-7a1 1 0 00-1.414-1.414L11 10.586V3a1 1 0 10-2 0v7.586l-5.293-5.293z" clip-rule="evenodd" />
-            </svg>
-            Run Analysis
-          {/if}
-        </button>
+              
+              <select 
+                bind:value={componentTypeFilter}
+                class="block w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                <option value="">All Types</option>
+                <option value="sensor">Sensor</option>
+                <option value="actuator">Actuator</option>
+                <option value="controller">Controller</option>
+                <option value="gateway">Gateway</option>
+                <option value="storage">Storage</option>
+                <option value="communication">Communication</option>
+                <option value="interface">Interface</option>
+                <option value="external">External Service</option>
+              </select>
+              
+              <div class="flex">
+                <button 
+                  on:click={selectAllComponents}
+                  class="px-3 py-2 bg-gray-100 text-gray-700 rounded-l-md border border-gray-300 text-sm hover:bg-gray-200"
+                >
+                  Select All
+                </button>
+                <button 
+                  on:click={clearComponentSelection}
+                  class="px-3 py-2 bg-gray-100 text-gray-700 rounded-r-md border-t border-r border-b border-gray-300 text-sm hover:bg-gray-200"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            
+            <!-- Component List with Virtual Scrolling -->
+            <div class="max-h-80 overflow-y-auto border rounded-md">
+              {#if loading}
+                <div class="p-8 text-center">
+                  <Spinner size="md" />
+                  <p class="mt-2 text-gray-500">Loading components...</p>
+                </div>
+              {:else if filteredComponents.length === 0}
+                <div class="p-4 text-center text-gray-500">
+                  {componentSearchTerm || componentTypeFilter
+                    ? 'No components match your search criteria'
+                    : 'No components available'}
+                </div>
+              {:else}
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
+                        <span class="sr-only">Select</span>
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    {#each filteredComponents as component}
+                      <tr class="hover:bg-gray-50 cursor-pointer" on:click={() => handleToggleComponent(component.component_id)}>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                          <input 
+                            type="checkbox"
+                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 rounded"
+                            checked={selectedComponentIds.includes(component.component_id)}
+                            on:change|stopPropagation={() => handleToggleComponent(component.component_id)}
+                          />
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                          <div class="text-sm font-medium text-gray-900">{component.name || 'Unnamed Component'}</div>
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                          <div class="text-sm text-gray-500">{component.type || 'Unknown Type'}</div>
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              {/if}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-4 flex justify-between">
+              <div>
+                <span class="text-sm text-gray-600">{selectedComponentIds.length} of {components.length} components selected</span>
+              </div>
+              <div class="flex space-x-3">
+                <button 
+                  on:click={() => isComponentPanelOpen = false}
+                  class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                >
+                  Done
+                </button>
+                <button 
+                  on:click={() => { isComponentPanelOpen = false; runThreatAnalysis(); }}
+                  disabled={analyzing || !selectedComponentIds.length}
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center
+                         disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {#if analyzing}
+                    <Spinner size="sm" class="mr-2" />
+                    Analyzing...
+                  {:else}
+                    Run Analysis
+                  {/if}
+                </button>
+              </div>
+            </div>
+          </div>
+        {/if}
       </div>
     </div>
     

@@ -245,7 +245,25 @@ export async function deleteThreatCatalogItem(id: string): Promise<void> {
 }
 
 /**
- * Perform threat analysis on selected components
+ * Performs a threat analysis on the selected components
+ * 
+ * This function sends the selected component IDs to the threat analysis API endpoint
+ * and returns the threat analysis results. The analysis identifies potential threats
+ * for each component based on its type, trust zone, and other properties using the
+ * STRIDE methodology (Spoofing, Tampering, Repudiation, Information Disclosure,
+ * Denial of Service, Elevation of Privilege).
+ * 
+ * @param {string[]} componentIds - Array of component IDs to analyze
+ * @param {ThreatCatalogItem[]} [options.customThreats] - Optional array of custom threats to include in the analysis
+ * @param {string} [options.riskFrameworkId] - Optional risk framework ID to use for the analysis
+ * @returns {Promise<ThreatAnalysisResult>} The threat analysis results containing threats mapped to components
+ * 
+ * @example
+ * // Analyze threats for specific components
+ * const analysisResult = await performThreatAnalysis(['COMP001', 'COMP002']);
+ * 
+ * // Handle the results
+ * console.log(`Found ${analysisResult.total_threats} threats`);
  */
 export async function performThreatAnalysis(
   componentIds: string[],

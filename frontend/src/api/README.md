@@ -488,12 +488,8 @@ async function deleteThreat(threatId: string) {
 // Perform STRIDE threat analysis on components
 async function analyzeThreatsByStride(componentIds: string[], riskFrameworkId?: string) {
   try {
-    const request: ThreatAnalysisRequest = {
-      component_ids: componentIds,
-      risk_framework_id: riskFrameworkId
-    };
-    
-    const analysis = await performThreatAnalysis(request);
+    // Simplified API call with direct component IDs
+    const analysis = await performThreatAnalysis(componentIds, [], riskFrameworkId);
     console.log('Threat analysis results:', analysis);
     return analysis;
   } catch (error) {
@@ -544,17 +540,59 @@ if (analysisResults) {
   console.log(`Total threats found: ${analysisResults.total_threats}`);
   console.log(`High risk threats: ${analysisResults.high_risk_threats}`);
   
-  // Process threats for each component
-  analysisResults.component_analyses.forEach(componentAnalysis => {
-    console.log(`${componentAnalysis.component_name}: ${componentAnalysis.total_threats_identified} threats`);
-    
-    // Access individual threat matches
-    componentAnalysis.threat_matches.forEach(match => {
-      console.log(`- ${match.title} (Risk score: ${match.calculated_risk_score})`);
+  // The API can return results in different formats, which are now normalized by the UI
+  
+  // If using component_analyses format (newer API version)
+  if (analysisResults.component_analyses) {
+    analysisResults.component_analyses.forEach(analysis => {
+      console.log(`${analysis.component_id}: ${analysis.threats?.length || 0} threats`);
+      
+      // Process threats for this component
+      if (analysis.threats) {
+        analysis.threats.forEach(threat => {
+          console.log(`- ${threat.title} (Risk: ${threat.risk_level})`);
+        });
+      }
     });
-  });
+  }
+  
+  // If using component_threat_profiles format (older API version)
+  if (analysisResults.component_threat_profiles) {
+    // Group threats by component
+    const threatsByComponent = {};
+    analysisResults.component_threat_profiles.forEach(profile => {
+      if (!threatsByComponent[profile.component_id]) {
+        threatsByComponent[profile.component_id] = [];
+      }
+      threatsByComponent[profile.component_id].push(profile);
+    });
+    
+    // Display threats by component
+    Object.entries(threatsByComponent).forEach(([componentId, profiles]) => {
+      console.log(`${componentId}: ${profiles.length} threats`);
+      profiles.forEach(profile => {
+        console.log(`- ${profile.title} (Risk score: ${profile.risk_score})`);
+      });
+    });
+  }
 }
 ```
+
+## Recent Updates (April 2025)
+
+### Threat Analysis Improvements
+
+The threat analysis functionality has been enhanced with the following features:
+
+1. **Simplified API Calls**: The `performThreatAnalysis` function now accepts component IDs directly and handles request formatting internally
+
+2. **Response Format Normalization**: The UI now normalizes different API response formats (both `component_analyses` and `component_threat_profiles` structures) into a consistent format for display
+
+3. **Comprehensive Documentation**: Added JSDoc comments to all API functions for better developer experience
+
+4. **Robust Error Handling**: Improved error handling for API responses with detailed error messages
+
+5. **Component Selection**: Enhanced component selection functionality for easier threat analysis
 
 ## Authentication
 
