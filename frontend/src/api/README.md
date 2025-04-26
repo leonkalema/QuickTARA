@@ -389,6 +389,173 @@ async function deleteFramework(frameworkId: string) {
 }
 ```
 
+### STRIDE Threat Catalog and Analysis
+
+The QuickTARA API provides a comprehensive threat catalog and STRIDE-based threat analysis system. This API allows you to manage predefined threats and perform automated threat analysis on your system components.
+
+```typescript
+import { 
+  getThreatCatalogItems,
+  getThreatCatalogItem,
+  createThreatCatalogItem,
+  updateThreatCatalogItem,
+  deleteThreatCatalogItem,
+  performThreatAnalysis,
+  type ThreatCatalogItem,
+  type ThreatCatalogCreate,
+  type ThreatCatalogUpdate,
+  type ThreatAnalysisRequest,
+  type ThreatAnalysisResponse,
+  StrideCategory,
+  ComponentType,
+  TrustZone,
+  AttackVector
+} from '../api/threat';
+import { handleApiError } from '../utils/error-handler';
+
+// Get all threat catalog items
+async function loadThreatCatalog() {
+  try {
+    const response = await getThreatCatalogItems();
+    console.log('Threat catalog items:', response.catalog_items);
+    return response.catalog_items;
+  } catch (error) {
+    handleApiError(error);
+    return [];
+  }
+}
+
+// Get threat catalog items by STRIDE category
+async function loadThreatsByCategory(category: StrideCategory) {
+  try {
+    const response = await getThreatCatalogItems(0, 100, category);
+    console.log(`${category} threats:`, response.catalog_items);
+    return response.catalog_items;
+  } catch (error) {
+    handleApiError(error);
+    return [];
+  }
+}
+
+// Get a specific threat by ID
+async function getThreat(threatId: string) {
+  try {
+    const threat = await getThreatCatalogItem(threatId);
+    console.log('Threat details:', threat);
+    return threat;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Create a new threat catalog item
+async function createThreat(threatData: ThreatCatalogCreate) {
+  try {
+    const threat = await createThreatCatalogItem(threatData);
+    console.log('Created threat:', threat);
+    return threat;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Update an existing threat
+async function updateThreat(threatId: string, updateData: ThreatCatalogUpdate) {
+  try {
+    const threat = await updateThreatCatalogItem(threatId, updateData);
+    console.log('Updated threat:', threat);
+    return threat;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Delete a threat from the catalog
+async function deleteThreat(threatId: string) {
+  try {
+    await deleteThreatCatalogItem(threatId);
+    console.log('Deleted threat:', threatId);
+    return true;
+  } catch (error) {
+    handleApiError(error);
+    return false;
+  }
+}
+
+// Perform STRIDE threat analysis on components
+async function analyzeThreatsByStride(componentIds: string[], riskFrameworkId?: string) {
+  try {
+    const request: ThreatAnalysisRequest = {
+      component_ids: componentIds,
+      risk_framework_id: riskFrameworkId
+    };
+    
+    const analysis = await performThreatAnalysis(request);
+    console.log('Threat analysis results:', analysis);
+    return analysis;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+```
+
+#### Example: Creating a New Threat Catalog Item
+
+```typescript
+// Example of creating a new threat for the catalog
+const newThreat: ThreatCatalogCreate = {
+  title: "Battery Data Tampering",
+  description: "An attacker manipulates the battery management data to cause overcharging or deep discharge",
+  stride_category: StrideCategory.TAMPERING,
+  applicable_component_types: [ComponentType.SENSOR, ComponentType.CONTROLLER],
+  applicable_trust_zones: [TrustZone.SECURE, TrustZone.TRUSTED],
+  attack_vectors: [AttackVector.PHYSICAL, AttackVector.CAN_BUS],
+  prerequisites: ["Physical access to vehicle", "CAN bus access"],
+  typical_likelihood: 3,
+  typical_severity: 5,
+  mitigation_strategies: [{
+    title: "Message authentication",
+    description: "Implement cryptographic message authentication for all battery management messages",
+    effectiveness: 4,
+    implementation_complexity: 3,
+    references: ["ISO 21434", "SAE J3061"]
+  }],
+  cwe_ids: ["CWE-345"],
+  capec_ids: ["CAPEC-176"],
+  examples: ["Compromised BMS firmware", "CAN bus spoofing"]
+};
+
+const createdThreat = await createThreat(newThreat);
+```
+
+#### Example: Analyzing Components for Threats
+
+```typescript
+// Analyze multiple components using STRIDE
+const componentIds = ["BMS001", "BMS002", "ECU003"];
+const analysisResults = await analyzeThreatsByStride(componentIds);
+
+// Access analysis results
+if (analysisResults) {
+  console.log(`Total threats found: ${analysisResults.total_threats}`);
+  console.log(`High risk threats: ${analysisResults.high_risk_threats}`);
+  
+  // Process threats for each component
+  analysisResults.component_analyses.forEach(componentAnalysis => {
+    console.log(`${componentAnalysis.component_name}: ${componentAnalysis.total_threats_identified} threats`);
+    
+    // Access individual threat matches
+    componentAnalysis.threat_matches.forEach(match => {
+      console.log(`- ${match.title} (Risk score: ${match.calculated_risk_score})`);
+    });
+  });
+}
+```
+
 ## Authentication
 
 If the API requires authentication, the client is set up to include credentials with requests using `credentials: 'include'`. This will send cookies along with the requests, which can be used for session-based authentication.

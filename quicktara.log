@@ -373,3 +373,75 @@ Falling back to direct table creation
 2025-04-26 01:25:27,597 - db.session - INFO - Database tables created successfully
 2025-04-26 01:25:27,597 - __main__ - INFO - Creating FastAPI application...
 2025-04-26 01:25:27,627 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=True)...
+2025-04-26 03:46:50,863 - __main__ - INFO - Initializing database...
+2025-04-26 03:46:50,864 - db.session - INFO - Running database migrations...
+2025-04-26 03:46:51,583 - db.session - WARNING - Failed to run migrations: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py:241: UserWarning: Revision add_scope_id_to_components referenced from add_scope_id_to_components -> b1e9c3d7a2f5 (head), Add risk framework table for risk calculation framework is not present
+  util.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 408, in upgrade
+    script.run_env()
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 103, in <module>
+    run_migrations_online()
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 97, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/migration.py", line 611, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 397, in upgrade
+    return script._upgrade_revs(revision, rev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 462, in _upgrade_revs
+    for script in reversed(list(revs))
+                           ^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 814, in iterate_revisions
+    revisions, heads = fn(
+                       ^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1447, in _collect_upgrade_revisions
+    for rev in self._parse_upgrade_target(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1234, in _parse_upgrade_target
+    return self.get_revisions(target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1145, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 245, in _revision_map
+    down_revision = map_[downrev]
+                    ~~~~^^^^^^^^^
+KeyError: 'add_scope_id_to_components'
+
+Falling back to direct table creation
+2025-04-26 03:46:51,583 - db.session - INFO - Creating database tables directly...
+2025-04-26 03:46:51,599 - db.session - INFO - Database tables created successfully
+2025-04-26 03:46:51,599 - __main__ - INFO - Creating FastAPI application...
+2025-04-26 03:46:51,639 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=True)...

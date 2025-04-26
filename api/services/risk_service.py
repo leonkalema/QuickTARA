@@ -319,3 +319,55 @@ def delete_risk_framework(db: Session, framework_id: str) -> bool:
     except Exception as e:
         logger.error(f"Error deleting risk framework: {str(e)}")
         raise
+
+
+def calculate_risk_level(risk_framework: Any, likelihood: int, severity: int) -> str:
+    """
+    Calculate the risk level (High/Medium/Low) based on likelihood and severity
+    using the provided risk framework configuration
+    
+    Args:
+        risk_framework: Risk framework configuration object or dictionary
+        likelihood: Likelihood score (1-5)
+        severity: Severity score (1-5)
+        
+    Returns:
+        Risk level string (High, Medium, or Low)
+    """
+    try:
+        # Calculate risk score (likelihood x severity)
+        risk_score = likelihood * severity
+        
+        # Handle different types of risk_framework input
+        if hasattr(risk_framework, 'risk_thresholds'):
+            thresholds = risk_framework.risk_thresholds
+        elif isinstance(risk_framework, dict) and 'risk_thresholds' in risk_framework:
+            thresholds = risk_framework['risk_thresholds']
+        else:
+            # Default thresholds if framework is not provided or invalid
+            thresholds = [
+                {"level": "Low", "max_score": 8},
+                {"level": "Medium", "max_score": 16},
+                {"level": "High", "max_score": 25}
+            ]
+        
+        # Sort thresholds by max_score in ascending order
+        sorted_thresholds = sorted(thresholds, key=lambda x: x.get('max_score', 0) if isinstance(x, dict) else 0)
+        
+        # Find the appropriate risk level based on risk score
+        for threshold in sorted_thresholds:
+            max_score = threshold.get('max_score', 0) if isinstance(threshold, dict) else 0
+            level = threshold.get('level', 'Unknown') if isinstance(threshold, dict) else 'Unknown'
+            
+            if risk_score <= max_score:
+                return level
+        
+        # If no matching threshold is found, return the highest level
+        if sorted_thresholds:
+            return sorted_thresholds[-1].get('level', 'High') if isinstance(sorted_thresholds[-1], dict) else 'High'
+        else:
+            return 'High'  # Default to high if no thresholds defined
+            
+    except Exception as e:
+        logger.error(f"Error calculating risk level: {str(e)}")
+        return 'Unknown'
