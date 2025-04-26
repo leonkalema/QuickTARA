@@ -184,13 +184,33 @@ def update_risk_framework(
         update_data = framework_update.dict(exclude_unset=True)
         for key, value in update_data.items():
             if key == 'impact_definitions' and value is not None:
-                setattr(db_framework, key, value.dict())
+                # Handle impact definitions which is a dictionary of lists
+                if hasattr(value, 'dict'):
+                    setattr(db_framework, key, value.dict())
+                else:
+                    # Already a dictionary
+                    setattr(db_framework, key, value)
             elif key == 'likelihood_definitions' and value is not None:
-                setattr(db_framework, key, [ld.dict() for ld in value])
+                # Handle likelihood definitions which is a list of objects
+                if all(hasattr(item, 'dict') for item in value):
+                    setattr(db_framework, key, [ld.dict() for ld in value])
+                else:
+                    # Already a list of dictionaries
+                    setattr(db_framework, key, value)
             elif key == 'risk_matrix' and value is not None:
-                setattr(db_framework, key, value.dict())
+                # Handle risk matrix which is an object
+                if hasattr(value, 'dict'):
+                    setattr(db_framework, key, value.dict())
+                else:
+                    # Already a dictionary
+                    setattr(db_framework, key, value)
             elif key == 'risk_thresholds' and value is not None:
-                setattr(db_framework, key, [rt.dict() for rt in value])
+                # Handle risk thresholds which is a list of objects
+                if all(hasattr(item, 'dict') for item in value):
+                    setattr(db_framework, key, [rt.dict() for rt in value])
+                else:
+                    # Already a list of dictionaries
+                    setattr(db_framework, key, value)
             elif value is not None:
                 setattr(db_framework, key, value)
         

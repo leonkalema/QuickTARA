@@ -4,6 +4,7 @@
     getRiskFrameworks, 
     getActiveRiskFramework,
     setRiskFrameworkActive,
+    deleteRiskFramework,
     type RiskFramework
   } from '../../api/risk';
   import RiskMatrixVisualization from './RiskMatrixVisualization.svelte';
@@ -15,7 +16,10 @@
   let isLoading = true;
   let error = '';
   let showForm = false;
+  let showDeleteConfirm = false;
+  let frameworkToDelete: RiskFramework | null = null;
   let editingFramework: RiskFramework | null = null;
+  let isDeleting = false;
   
   // Load risk frameworks on mount
   onMount(async () => {
@@ -80,6 +84,38 @@
     if (success) {
       loadFrameworks();
     }
+  }
+  
+  // Show delete confirmation
+  function confirmDelete(framework: RiskFramework) {
+    frameworkToDelete = framework;
+    showDeleteConfirm = true;
+  }
+  
+  // Handle delete confirmation
+  async function handleDeleteConfirm() {
+    if (!frameworkToDelete) return;
+    
+    try {
+      isDeleting = true;
+      error = '';
+      
+      await deleteRiskFramework(frameworkToDelete.framework_id);
+      showDeleteConfirm = false;
+      frameworkToDelete = null;
+      await loadFrameworks();
+    } catch (e: any) {
+      error = e.message || `Failed to delete framework: ${frameworkToDelete?.name || 'unknown'}`;
+      console.error('Error deleting framework:', e);
+    } finally {
+      isDeleting = false;
+    }
+  }
+  
+  // Cancel delete
+  function cancelDelete() {
+    showDeleteConfirm = false;
+    frameworkToDelete = null;
   }
 </script>
 
@@ -162,6 +198,12 @@
               >
                 Edit
               </button>
+              <button 
+                class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                on:click={() => confirmDelete(framework)}
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
@@ -193,6 +235,42 @@
             framework={editingFramework} 
             on:complete={handleFormComplete}
           />
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Delete confirmation modal -->
+  {#if showDeleteConfirm && frameworkToDelete}
+    <div class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Confirm Deletion</h2>
+        <p class="mb-6">Are you sure you want to delete the framework <strong>{frameworkToDelete.name}</strong>?</p>
+        
+        {#if frameworkToDelete.is_active}
+          <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+            <p class="text-yellow-700">
+              <strong>Warning:</strong> This is currently the active framework. Deleting it may affect risk calculations.
+            </p>
+          </div>
+        {/if}
+        
+        <div class="flex justify-end space-x-3">
+          <button 
+            class="px-4 py-2 border rounded-md" 
+            style="border-color: var(--color-border);"
+            on:click={cancelDelete}
+            disabled={isDeleting}
+          >
+            Cancel
+          </button>
+          <button 
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            on:click={handleDeleteConfirm}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </button>
         </div>
       </div>
     </div>
