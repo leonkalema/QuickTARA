@@ -30,6 +30,31 @@ export class ApiError extends Error {
     this.data = data;
     this.errors = errors;
   }
+
+  toString(): string {
+    if (this.data && typeof this.data === 'object') {
+      if (this.data.detail) {
+        return this.data.detail;
+      }
+      if (this.data.message) {
+        return this.data.message;
+      }
+      if (this.data.errors && Array.isArray(this.data.errors)) {
+        return this.data.errors.join(', ');
+      }
+    }
+    return this.message;
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+      status: this.status,
+      data: this.data,
+      errors: this.errors
+    };
+  }
 }
 
 /**

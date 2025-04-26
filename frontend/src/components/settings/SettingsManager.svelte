@@ -3,12 +3,14 @@
   import DatabaseSettings from './DatabaseSettings.svelte';
   import RiskFrameworkManager from '../risk/RiskFrameworkManager.svelte';
   import ThreatCatalogManager from '../threat/ThreatCatalogManager.svelte';
+  import VulnerabilityManager from '../vulnerability/VulnerabilityManager.svelte';
   
   // Settings tabs
   const tabs = [
     { id: 'database', label: 'Database' },
     { id: 'risk', label: 'Risk Framework' },
     { id: 'threats', label: 'Threat Catalog' },
+    { id: 'vulnerabilities', label: 'Vulnerabilities' },
     { id: 'general', label: 'General' },
     { id: 'appearance', label: 'Appearance' }
   ];
@@ -57,6 +59,14 @@
         <h2 class="text-xl font-semibold mb-4" style="color: var(--color-primary);">Threat Catalog Management</h2>
         <div style="background-color: var(--color-card-bg); border: 1px solid var(--color-border);" class="rounded-lg shadow-sm p-6">
           <ThreatCatalogManager />
+        </div>
+      </div>
+    {:else if activeTab === 'vulnerabilities'}
+      <!-- Vulnerability Catalog Management -->
+      <div>
+        <h2 class="text-xl font-semibold mb-4" style="color: var(--color-primary);">Vulnerability Catalog Management</h2>
+        <div style="background-color: var(--color-card-bg); border: 1px solid var(--color-border);" class="rounded-lg shadow-sm p-6">
+          <VulnerabilityManager />
         </div>
       </div>
     {:else if activeTab === 'general'}

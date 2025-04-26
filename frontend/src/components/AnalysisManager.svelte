@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, RefreshCw, BarChart, AlertTriangle, Shield, Activity, Search } from '@lucide/svelte';
+  import { Plus, RefreshCw, BarChart, AlertTriangle, Shield, Activity, Search, ShieldAlert } from '@lucide/svelte';
   import { analysisApi, type Analysis, AnalysisStatus } from '../api/analysis';
   import { componentApi } from '../api/components';
   import { safeApiCall } from '../utils/error-handler';
   import AnalysisForm from './AnalysisForm.svelte';
   import ThreatAnalysisVisualizer from './threat/ThreatAnalysisVisualizer.svelte';
+  import VulnerabilityAssessmentTab from './vulnerability/VulnerabilityAssessmentTab.svelte';
   
   // Analysis state
   let analyses: Analysis[] = [];
@@ -14,7 +15,7 @@
   let showForm = false;
   
   // Active tab management
-  let activeTab = 'general-analysis'; // 'general-analysis', 'threat-analysis'
+  let activeTab = 'general-analysis'; // 'general-analysis', 'threat-analysis', 'vulnerability-analysis'
   let selectedComponentIds: string[] = [];
   
   // Summary stats
@@ -124,6 +125,14 @@
       >
         <Shield class="h-5 w-5" />
         <span>Threat Analysis</span>
+      </button>
+      
+      <button
+        class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'vulnerability-analysis' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        on:click={() => activeTab = 'vulnerability-analysis'}
+      >
+        <ShieldAlert class="h-5 w-5" />
+        <span>Vulnerability Assessment</span>
       </button>
     </nav>
   </div>
@@ -303,6 +312,11 @@
   <!-- Threat Analysis Tab Content -->
   {#if activeTab === 'threat-analysis'}
     <ThreatAnalysisVisualizer bind:selectedComponentIds={selectedComponentIds} />
+  {/if}
+  
+  <!-- Vulnerability Assessment Tab Content -->
+  {#if activeTab === 'vulnerability-analysis'}
+    <VulnerabilityAssessmentTab />
   {/if}
 </div>
 
