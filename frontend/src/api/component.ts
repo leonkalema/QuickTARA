@@ -57,10 +57,43 @@ export interface ComponentUpdateRequest {
 
 /**
  * Get all components
+ * @param skip - Number of records to skip for pagination
+ * @param limit - Maximum number of records to return
  */
-export async function getComponents(): Promise<Component[]> {
-  const response: AxiosResponse<Component[]> = await apiClient.get('/components');
-  return response.data;
+export async function getComponents(skip: number = 0, limit: number = 100): Promise<Component[]> {
+  try {
+    // Use the exact API path from the curl example
+    const url = `http://127.0.0.1:8080/api/components?skip=${skip}&limit=${limit}`;
+    console.log('Fetching components from:', url);
+    
+    // Make a direct fetch call to the API
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Component API raw response:', data);
+    
+    // Handle the response format from your API
+    if (data && data.components && Array.isArray(data.components)) {
+      return data.components;
+    } else if (Array.isArray(data)) {
+      return data;
+    }
+    
+    console.warn('Could not find components in response');
+    return [];
+  } catch (error) {
+    console.error('Error fetching components:', error);
+    return []; // Return empty array on error
+  }
 }
 
 /**

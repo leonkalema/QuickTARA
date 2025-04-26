@@ -245,19 +245,30 @@ export async function deleteThreatCatalogItem(id: string): Promise<void> {
 }
 
 /**
- * Perform threat analysis on components
+ * Perform threat analysis on selected components
  */
 export async function performThreatAnalysis(
-  componentIds: string[] | ThreatAnalysisRequest
-): Promise<ThreatAnalysisResult> {
-  let request: ThreatAnalysisRequest;
-  
-  if (Array.isArray(componentIds)) {
-    request = { component_ids: componentIds };
-  } else {
-    request = componentIds;
+  componentIds: string[],
+  options?: {
+    customThreats?: ThreatCatalogItem[];
+    riskFrameworkId?: string;
   }
-  
-  const response: AxiosResponse<ThreatAnalysisResult> = await apiClient.post('/threat/analyze', request);
-  return response.data;
+): Promise<ThreatAnalysisResult> {
+  try {
+    // Simple request body with just component IDs
+    const requestBody = {
+      component_ids: componentIds,
+      // Adding optional fields only if explicitly provided
+      ...(options?.customThreats?.length ? { custom_threats: options.customThreats } : {}),
+      ...(options?.riskFrameworkId ? { risk_framework_id: options.riskFrameworkId } : {})
+    };
+
+    console.log('Sending threat analysis request:', requestBody);
+    const response: AxiosResponse<ThreatAnalysisResult> = await apiClient.post('/threat/analyze', requestBody);
+    console.log('Threat analysis response:', response.status);
+    return response.data;
+  } catch (error) {
+    console.error('Error in threat analysis:', error);
+    throw error; // Re-throw to allow handling in component
+  }
 }
