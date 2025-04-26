@@ -200,7 +200,7 @@ A task is considered done when:
 8. Implement Analysis UI
 9. Create STRIDE visualization
 10. Create attack path visualization
-11. Implement "Define Scope" feature
+11. ✅ Implement "Define Scope" feature
     - ✅ Create SystemScope data model and database schema:
       ```python
       # Database model (SQLAlchemy)
@@ -251,18 +251,80 @@ A task is considered done when:
       - ✅ GET /api/scope/{scope_id} (retrieve scope)
       - ✅ PUT /api/scope/{scope_id} (update scope)
       - ✅ GET /api/scope (list all scopes)
-      - Add scope_id parameter to component APIs
-      - Include scope information in analysis results
-    - Create scope management UI components:
-      - Add "Scope" navigation item to Navbar.svelte (first item)
-      - Create ScopeManager.svelte (main container)
-      - Create ScopeForm.svelte (create/edit form)
-      - Create TypeScript interface for scope data
-      - Update App.svelte to include the new scope page
-      - Create scope API client in /api/scope.ts
-    - Integrate scope with analysis workflow:
-      - Update component creation to include scope reference
-      - Include scope information in reports
-      - Add scope filtering to component list
-      - Update STRIDE analysis to consider system type
+      - ✅ Add scope_id parameter to component APIs
+      - ✅ Include scope information in analysis results
+    - ✅ Create scope management UI components:
+      - ✅ Add "Scope" navigation item to Navbar.svelte (first item)
+      - ✅ Create ScopeManager.svelte (main container)
+      - ✅ Create ScopeForm.svelte (create/edit form)
+      - ✅ Create TypeScript interface for scope data
+      - ✅ Update App.svelte to include the new scope page
+      - ✅ Create scope API client in /api/scope.ts
+    - ✅ Integrate scope with analysis workflow:
+      - ✅ Update component creation to include scope reference
+      - ✅ Include scope information in reports
+      - ✅ Add scope filtering to component list
+      - ✅ Update STRIDE analysis to consider system type
+
+12. Implement Analysis Phase (Modular Approach)
+
+   ### Step 1: Risk Calculation Framework Setup
+   - [ ] Backend Implementation:
+     - [ ] Create risk calculation models (impact categories, likelihood metrics)
+     - [ ] Implement API endpoint for risk framework configuration
+     - [ ] Add risk threshold definitions and storage
+     - [ ] Create API tests with curl for validation
+   - [ ] Frontend Implementation:
+     - [ ] Create risk matrix visualization component
+     - [ ] Implement risk framework configuration UI
+     - [ ] Add risk threshold visualization
+
+   ### Step 2: Threat Identification (STRIDE Analysis)
+   - [ ] Backend Implementation:
+     - [ ] Create STRIDE threat catalog database models
+     - [ ] Implement threat identification algorithm
+     - [ ] Create API endpoint for STRIDE analysis of components
+     - [ ] Add component-specific threat mapping
+     - [ ] Create API tests with curl for validation
+   - [ ] Frontend Implementation:
+     - [ ] Create STRIDE threat catalog component
+     - [ ] Implement threat category visualization
+     - [ ] Add threat detail view with description and examples
+
+   ### Step 3: Vulnerability Assessment
+   - [ ] Backend Implementation:
+     - [ ] Create vulnerability database models
+     - [ ] Implement vulnerability scanning algorithm
+     - [ ] Create API endpoint for vulnerability assessment
+     - [ ] Map vulnerabilities to CWE/CVE database references
+     - [ ] Create API tests with curl for validation
+   - [ ] Frontend Implementation:
+     - [ ] Create vulnerability list component
+     - [ ] Implement vulnerability details view
+     - [ ] Add severity visualization
+
+   ### Step 4: Attack Path Analysis
+   - [ ] Backend Implementation:
+     - [ ] Create attack path database models
+     - [ ] Implement algorithm to analyze component connections
+     - [ ] Create API endpoint for attack path generation
+     - [ ] Add attack chain detection logic
+     - [ ] Create API tests with curl for validation
+   - [ ] Frontend Implementation:
+     - [ ] Create interactive attack path visualization
+     - [ ] Implement attack chain display
+     - [ ] Add path filtering and highlighting options
+
+   ### Step 5: Final Risk Calculation
+   - [ ] Backend Implementation:
+     - [ ] Create combined risk assessment database models
+     - [ ] Implement algorithm to calculate final risk scores
+     - [ ] Create API endpoint for complete risk assessment
+     - [ ] Add risk prioritization logic
+     - [ ] Create API tests with curl for validation
+   - [ ] Frontend Implementation:
+     - [ ] Create risk dashboard component
+     - [ ] Implement risk detail view
+     - [ ] Add filtering and sorting by risk level
+     - [ ] Create printable risk report view
 

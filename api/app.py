@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 import logging
 from pathlib import Path
 
-from api.routes import components, analysis, reports, review, settings_routes, scope
+from api.routes import components, analysis, reports, review, settings_routes, scope, risk
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,7 @@ def create_app(settings=None):
     # Include all API routers
     app.include_router(scope.router, prefix="/api/scope", tags=["scope"])  # Add scope router first
     app.include_router(components.router, prefix="/api/components", tags=["components"])
+    app.include_router(risk.router, prefix="/api/risk", tags=["risk"])  # Add risk framework router
     app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])

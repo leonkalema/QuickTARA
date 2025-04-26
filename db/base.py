@@ -159,3 +159,24 @@ class SystemScope(Base):
     
     # Relationships
     components = relationship("Component", back_populates="scope")
+
+
+class RiskFramework(Base):
+    """SQLAlchemy model for risk calculation framework"""
+    __tablename__ = "risk_frameworks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    framework_id = Column(String, unique=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    version = Column(String, nullable=False)
+    impact_definitions = Column(JSON, nullable=False)  # Dict[str, List[ImpactDefinition]]
+    likelihood_definitions = Column(JSON, nullable=False)  # List[LikelihoodDefinition]
+    risk_matrix = Column(JSON, nullable=False)  # RiskMatrixDefinition
+    risk_thresholds = Column(JSON, nullable=False)  # List[RiskThreshold]
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    # Future: Relate to analyses that use this framework
