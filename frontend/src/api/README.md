@@ -11,6 +11,7 @@ This directory contains the API client functions used to interact with the Quick
 - `analysis.ts` - API client for threat analysis
 - `reports.ts` - API client for report generation and management
 - `review.ts` - API client for risk review workflow
+- `risk.ts` - API client for risk calculation framework management
 
 ## Usage
 
@@ -296,6 +297,96 @@ The API client uses configuration values from `src/config/index.ts`. You can mod
 // src/config/index.ts
 export const apiBaseUrl = 'http://localhost:8080/api'; // Development
 // export const apiBaseUrl = '/api'; // Production
+```
+
+### Working with Risk Frameworks
+
+```typescript
+import { 
+  getRiskFrameworks,
+  getActiveRiskFramework,
+  getRiskFramework,
+  createRiskFramework,
+  updateRiskFramework,
+  setRiskFrameworkActive,
+  deleteRiskFramework,
+  type RiskFramework,
+  type RiskFrameworkCreate,
+  type RiskFrameworkUpdate
+} from '../api/risk';
+import { handleApiError } from '../utils/error-handler';
+
+// Get all risk frameworks
+async function loadRiskFrameworks() {
+  try {
+    const response = await getRiskFrameworks();
+    console.log('Risk frameworks:', response.frameworks);
+    return response.frameworks;
+  } catch (error) {
+    handleApiError(error);
+    return [];
+  }
+}
+
+// Get the active risk framework
+async function getActive() {
+  try {
+    const framework = await getActiveRiskFramework();
+    console.log('Active framework:', framework);
+    return framework;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Create a new risk framework
+async function createNewFramework(frameworkData: RiskFrameworkCreate) {
+  try {
+    const framework = await createRiskFramework(frameworkData);
+    console.log('Created framework:', framework);
+    return framework;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Update an existing risk framework
+async function updateFramework(frameworkId: string, updateData: RiskFrameworkUpdate) {
+  try {
+    const framework = await updateRiskFramework(frameworkId, updateData);
+    console.log('Updated framework:', framework);
+    return framework;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Set a framework as active
+async function setActive(frameworkId: string) {
+  try {
+    const framework = await setRiskFrameworkActive(frameworkId);
+    console.log('Set active framework:', framework);
+    return framework;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Delete a risk framework
+async function deleteFramework(frameworkId: string) {
+  try {
+    await deleteRiskFramework(frameworkId);
+    console.log('Deleted framework:', frameworkId);
+    return true;
+  } catch (error) {
+    handleApiError(error);
+    return false;
+  }
+}
 ```
 
 ## Authentication

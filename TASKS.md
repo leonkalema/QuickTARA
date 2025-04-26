@@ -268,16 +268,16 @@ A task is considered done when:
 
 12. Implement Analysis Phase (Modular Approach)
 
-   ### Step 1: Risk Calculation Framework Setup
-   - [ ] Backend Implementation:
-     - [ ] Create risk calculation models (impact categories, likelihood metrics)
-     - [ ] Implement API endpoint for risk framework configuration
-     - [ ] Add risk threshold definitions and storage
-     - [ ] Create API tests with curl for validation
-   - [ ] Frontend Implementation:
-     - [ ] Create risk matrix visualization component
-     - [ ] Implement risk framework configuration UI
-     - [ ] Add risk threshold visualization
+   ### Step 1: Risk Calculation Framework Setup ✅
+   - [x] Backend Implementation:
+     - [x] Create risk calculation models (impact categories, likelihood metrics)
+     - [x] Implement API endpoint for risk framework configuration
+     - [x] Add risk threshold definitions and storage
+     - [x] Create API tests with curl for validation
+   - [x] Frontend Implementation:
+     - [x] Create risk matrix visualization component
+     - [x] Implement risk framework configuration UI
+     - [x] Add risk threshold visualization
 
    ### Step 2: Threat Identification (STRIDE Analysis)
    - [ ] Backend Implementation:
