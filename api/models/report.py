@@ -72,7 +72,7 @@ class Report(BaseModel):
     configuration: ReportConfiguration = Field(..., description="Report configuration options")
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ReportSummary(BaseModel):
@@ -86,7 +86,7 @@ class ReportSummary(BaseModel):
     created_at: datetime = Field(..., description="Creation timestamp")
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ReportList(BaseModel):

@@ -21,7 +21,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 # Import Base and models to ensure they're all included in the metadata
 from db.base import Base
 # Import all models that extend Base
-from db.base import Component, Analysis, ComponentAnalysis, Report, ReviewDecision
+from db.base import Component, Analysis, ComponentAnalysis, Report, ReviewDecision, SystemScope, RiskFramework
+from db.base import Vulnerability, VulnerabilityCWEMapping, VulnerabilityCVEMapping, VulnerabilityAssessment, VulnerabilityMitigation
 
 # Update the SQLAlchemy URL based on environment or settings file
 from db.session import get_database_url

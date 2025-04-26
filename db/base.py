@@ -180,3 +180,117 @@ class RiskFramework(Base):
     
     # Relationships
     # Future: Relate to analyses that use this framework
+
+
+class Vulnerability(Base):
+    """SQLAlchemy model for vulnerabilities"""
+    __tablename__ = "vulnerabilities"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    vulnerability_id = Column(String, unique=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    severity = Column(String, nullable=False)  # Low, Medium, High, Critical
+    cvss_score = Column(Float, nullable=True)
+    cvss_vector = Column(String, nullable=True)
+    affected_components = Column(JSON, nullable=True)  # Types of components this affects
+    attack_vector = Column(String, nullable=True)  # Network, Adjacent, Local, Physical
+    attack_complexity = Column(String, nullable=True)  # Low, High
+    privileges_required = Column(String, nullable=True)  # None, Low, High
+    user_interaction = Column(String, nullable=True)  # None, Required
+    scope = Column(String, nullable=True)  # Unchanged, Changed
+    confidentiality_impact = Column(String, nullable=True)  # None, Low, High
+    integrity_impact = Column(String, nullable=True)  # None, Low, High
+    availability_impact = Column(String, nullable=True)  # None, Low, High
+    exploitability_score = Column(Float, nullable=True)
+    impact_score = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    # Relationships
+    cwe_mappings = relationship("VulnerabilityCWEMapping", back_populates="vulnerability")
+    cve_mappings = relationship("VulnerabilityCVEMapping", back_populates="vulnerability")
+    mitigations = relationship("VulnerabilityMitigation", back_populates="vulnerability")
+    assessments = relationship("VulnerabilityAssessment", back_populates="vulnerability")
+
+
+class VulnerabilityCWEMapping(Base):
+    """SQLAlchemy model for vulnerability-CWE mappings"""
+    __tablename__ = "vulnerability_cwe_mapping"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    vulnerability_id = Column(String, ForeignKey("vulnerabilities.vulnerability_id"), nullable=False)
+    cwe_id = Column(String, nullable=False)
+    cwe_name = Column(String, nullable=True)
+    cwe_description = Column(Text, nullable=True)
+    relationship_type = Column(String, nullable=True)  # Direct, Parent, Child, Related
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # Relationships
+    vulnerability = relationship("Vulnerability", back_populates="cwe_mappings")
+
+
+class VulnerabilityCVEMapping(Base):
+    """SQLAlchemy model for vulnerability-CVE mappings"""
+    __tablename__ = "vulnerability_cve_mapping"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    vulnerability_id = Column(String, ForeignKey("vulnerabilities.vulnerability_id"), nullable=False)
+    cve_id = Column(String, nullable=False)
+    cve_description = Column(Text, nullable=True)
+    published_date = Column(DateTime, nullable=True)
+    last_modified = Column(DateTime, nullable=True)
+    cvss_version = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # Relationships
+    vulnerability = relationship("Vulnerability", back_populates="cve_mappings")
+
+
+class VulnerabilityAssessment(Base):
+    """SQLAlchemy model for vulnerability assessments"""
+    __tablename__ = "vulnerability_assessments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    assessment_id = Column(String, unique=True, index=True)
+    analysis_id = Column(String, ForeignKey("analyses.id"), nullable=False)
+    component_id = Column(String, ForeignKey("components.component_id"), nullable=False)
+    vulnerability_id = Column(String, ForeignKey("vulnerabilities.vulnerability_id"), nullable=False)
+    likelihood = Column(Integer, nullable=False)  # 1-5 scale
+    impact = Column(JSON, nullable=True)  # Impact scores (financial, safety, privacy)
+    risk_level = Column(String, nullable=False)  # Low, Medium, High, Critical
+    mitigation_status = Column(String, nullable=True)  # Not Started, In Progress, Mitigated
+    mitigation_notes = Column(Text, nullable=True)
+    confidence_level = Column(Float, nullable=True)  # 0-1 confidence score
+    detection_method = Column(String, nullable=True)  # Manual, Automated, Hybrid
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    # Relationships
+    analysis = relationship("Analysis", backref="vulnerability_assessments")
+    component = relationship("Component", backref="vulnerability_assessments")
+    vulnerability = relationship("Vulnerability", back_populates="assessments")
+
+
+class VulnerabilityMitigation(Base):
+    """SQLAlchemy model for vulnerability mitigations"""
+    __tablename__ = "vulnerability_mitigations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    mitigation_id = Column(String, unique=True, index=True)
+    vulnerability_id = Column(String, ForeignKey("vulnerabilities.vulnerability_id"), nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    mitigation_type = Column(String, nullable=True)  # Preventive, Detective, Corrective
+    effectiveness = Column(String, nullable=True)  # Low, Medium, High
+    implementation_cost = Column(String, nullable=True)  # Low, Medium, High
+    implementation_time = Column(String, nullable=True)  # Short, Medium, Long
+    prerequisites = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    # Relationships
+    vulnerability = relationship("Vulnerability", back_populates="mitigations")
+
+
+

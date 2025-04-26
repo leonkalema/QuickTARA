@@ -103,7 +103,7 @@ class RiskFrameworkConfiguration(BaseModel):
     is_active: bool = Field(default=True, description="Whether this framework is active")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class RiskFrameworkCreate(BaseModel):

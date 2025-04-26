@@ -1,3 +1,1 @@
-"""
-API routes package
-"""
+# This file makes routes a package

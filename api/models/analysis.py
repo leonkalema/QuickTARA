@@ -148,7 +148,7 @@ class Analysis(BaseModel):
     summary: AnalysisSummary = Field(..., description="Analysis summary")
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class AnalysisList(BaseModel):

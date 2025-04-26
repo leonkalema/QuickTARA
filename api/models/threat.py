@@ -85,7 +85,7 @@ class ThreatCatalogItem(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ThreatCatalogCreate(BaseModel):

@@ -71,7 +71,7 @@ class Component(ComponentBase):
     component_id: str = Field(..., description="Unique component identifier")
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ComponentList(BaseModel):
