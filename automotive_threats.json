@@ -1,0 +1,152 @@
+[
+  {
+    "title": "CAN Bus Message Injection",
+    "description": "An attacker with access to the CAN bus can inject malicious messages that mimic legitimate ECU communications, potentially causing vehicle subsystems to behave erratically or dangerously. This could affect steering, braking, or acceleration systems.",
+    "stride_category": "tampering",
+    "applicable_component_types": ["controller", "processing_unit", "communication"],
+    "applicable_trust_zones": ["untrusted", "trusted"],
+    "attack_vectors": ["can_bus", "physical", "bluetooth"],
+    "prerequisites": ["Physical access to CAN bus", "Knowledge of CAN message formats", "Lack of message authentication"],
+    "typical_likelihood": 3,
+    "typical_severity": 5,
+    "mitigation_strategies": [
+      {
+        "title": "Implement Message Authentication",
+        "description": "Use cryptographic authentication mechanisms like AUTOSAR SecOC or similar standards to authenticate messages on the CAN bus.",
+        "effectiveness": 5,
+        "implementation_complexity": 4,
+        "references": ["ISO 21434", "SAE J3061", "UNECE WP.29"]
+      },
+      {
+        "title": "Network Segmentation",
+        "description": "Separate critical vehicle functions into isolated network domains with secure gateways controlling message flow between domains.",
+        "effectiveness": 4,
+        "implementation_complexity": 3,
+        "references": ["ISO 26262", "AUTOSAR Secure Onboard Communication"]
+      }
+    ],
+    "cwe_ids": ["CWE-306", "CWE-346"],
+    "capec_ids": ["CAPEC-546", "CAPEC-549"],
+    "examples": ["Remote attack on Jeep Cherokee in 2015", "Tesla Model S CAN bus vulnerabilities"]
+  },
+  {
+    "title": "OTA Update System Compromise",
+    "description": "An attacker compromises the over-the-air (OTA) update system to inject malicious software into vehicle ECUs. This could allow persistent access and control of vehicle systems, potentially affecting safety critical functions.",
+    "stride_category": "tampering",
+    "applicable_component_types": ["controller", "gateway", "processing_unit"],
+    "applicable_trust_zones": ["trusted", "untrusted"],
+    "attack_vectors": ["network", "wifi", "supply_chain"],
+    "prerequisites": ["Weak update authentication", "Insufficient code signing", "Compromised update server"],
+    "typical_likelihood": 2,
+    "typical_severity": 5,
+    "mitigation_strategies": [
+      {
+        "title": "Secure Boot and Code Signing",
+        "description": "Implement secure boot processes with cryptographic code verification to ensure only authenticated code can be executed.",
+        "effectiveness": 5,
+        "implementation_complexity": 4,
+        "references": ["ENISA Good Practices for Security of Smart Cars", "ISO 21434"]
+      },
+      {
+        "title": "Update Server Hardening",
+        "description": "Secure update servers with strong access controls, regular security audits, and multiple verification steps for update packages.",
+        "effectiveness": 4,
+        "implementation_complexity": 3,
+        "references": ["NIST SP 800-40", "ISO/SAE 21434"]
+      }
+    ],
+    "cwe_ids": ["CWE-494", "CWE-829"],
+    "capec_ids": ["CAPEC-542", "CAPEC-186"],
+    "examples": ["Tesla firmware signing bypass", "Connected vehicle update server compromise"]
+  },
+  {
+    "title": "Keyless Entry System Replay Attack",
+    "description": "An attacker captures and replays radio signals from a key fob to unlock and potentially start a vehicle without authorization. This can be done using simple radio equipment to capture, store, and replay signals.",
+    "stride_category": "spoofing",
+    "applicable_component_types": ["sensor", "controller", "interface"],
+    "applicable_trust_zones": ["external", "untrusted"],
+    "attack_vectors": ["physical", "adjacent_network", "wifi"],
+    "prerequisites": ["Proximity to legitimate key fob", "No rolling code implementation", "Weak signal encryption"],
+    "typical_likelihood": 4,
+    "typical_severity": 4,
+    "mitigation_strategies": [
+      {
+        "title": "Implement Rolling Codes",
+        "description": "Use cryptographic rolling codes that change with each use to prevent replay attacks.",
+        "effectiveness": 4,
+        "implementation_complexity": 3,
+        "references": ["NIST SP 800-98", "ISO 21434"]
+      },
+      {
+        "title": "Distance-Bounding Protocols",
+        "description": "Implement distance-bounding protocols to verify the key is physically present within a certain range.",
+        "effectiveness": 5,
+        "implementation_complexity": 4,
+        "references": ["ISO/IEC 27562", "ETSI TS 103 645"]
+      }
+    ],
+    "cwe_ids": ["CWE-294", "CWE-330"],
+    "capec_ids": ["CAPEC-94", "CAPEC-636"],
+    "examples": ["Relay attacks on keyless entry systems in luxury vehicles", "Signal amplification attacks"]
+  },
+  {
+    "title": "Information Disclosure via Diagnostic Interface",
+    "description": "An attacker accesses the vehicle's OBD-II or diagnostic port to extract sensitive information such as vehicle configurations, firmware versions, or personal data. This information can be used to plan more sophisticated attacks.",
+    "stride_category": "info_disclosure",
+    "applicable_component_types": ["interface", "gateway", "storage"],
+    "applicable_trust_zones": ["trusted", "untrusted"],
+    "attack_vectors": ["physical", "can_bus", "usb"],
+    "prerequisites": ["Physical access to diagnostic port", "Knowledge of diagnostic protocols", "Lack of authentication"],
+    "typical_likelihood": 4,
+    "typical_severity": 3,
+    "mitigation_strategies": [
+      {
+        "title": "Access Control for Diagnostic Functions",
+        "description": "Implement strong authentication before allowing access to sensitive diagnostic commands or data.",
+        "effectiveness": 4,
+        "implementation_complexity": 3,
+        "references": ["ISO 14229", "SAE J2534"]
+      },
+      {
+        "title": "Data Minimization",
+        "description": "Limit the amount of sensitive information accessible through diagnostic interfaces, particularly for non-essential maintenance.",
+        "effectiveness": 3,
+        "implementation_complexity": 2,
+        "references": ["GDPR Article 5", "ISO 21434"]
+      }
+    ],
+    "cwe_ids": ["CWE-200", "CWE-522"],
+    "capec_ids": ["CAPEC-118", "CAPEC-150"],
+    "examples": ["Extraction of personally identifiable information from vehicle's infotainment system", "Vehicle configuration data disclosure"]
+  },
+  {
+    "title": "V2X Communication DoS Attack",
+    "description": "An attacker floods the vehicle-to-everything (V2X) communication channels with malicious traffic, preventing legitimate safety messages from being received or processed. This could disable cooperative safety features like collision warnings.",
+    "stride_category": "denial_of_service",
+    "applicable_component_types": ["communication", "processing_unit", "gateway"],
+    "applicable_trust_zones": ["external", "untrusted"],
+    "attack_vectors": ["wifi", "network", "adjacent_network"],
+    "prerequisites": ["V2X capabilities enabled", "Vulnerable V2X protocol implementation", "Radio signal access"],
+    "typical_likelihood": 3,
+    "typical_severity": 4,
+    "mitigation_strategies": [
+      {
+        "title": "Rate Limiting and Message Filtering",
+        "description": "Implement rate limiting on incoming V2X messages and filter out malformed or suspicious messages.",
+        "effectiveness": 3,
+        "implementation_complexity": 3,
+        "references": ["ETSI TS 103 097", "IEEE 1609.2"]
+      },
+      {
+        "title": "Adaptive Congestion Control",
+        "description": "Use adaptive algorithms to handle network congestion and prioritize critical safety messages.",
+        "effectiveness": 4,
+        "implementation_complexity": 4,
+        "references": ["ETSI TS 102 687", "SAE J2945/1"]
+      }
+    ],
+    "cwe_ids": ["CWE-400", "CWE-406"],
+    "capec_ids": ["CAPEC-482", "CAPEC-125"],
+    "examples": ["DoS attacks on connected vehicle testbeds", "V2X signal jamming in smart intersections"]
+  }
+]

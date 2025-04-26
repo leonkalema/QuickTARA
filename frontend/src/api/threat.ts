@@ -156,6 +156,32 @@ export interface ThreatAnalysisResponse {
   timestamp: string;
 }
 
+export interface ComponentThreatProfile {
+  component_id: string;
+  threat_id: string;
+  title: string;
+  description: string;
+  stride_category: StrideCategory;
+  likelihood: number;
+  severity: number;
+  risk_score: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  mitigation_strategies: MitigationStrategy[];
+}
+
+export interface ThreatAnalysisResult {
+  analysis_id: string;
+  component_threat_profiles: ComponentThreatProfile[];
+  total_components: number;
+  total_threats: number;
+  high_risk_threats: number;
+  medium_risk_threats: number;
+  low_risk_threats: number;
+  risk_framework_id: string;
+  risk_framework_name: string;
+  timestamp: string;
+}
+
 /**
  * Get all threat catalog items
  */
@@ -222,8 +248,16 @@ export async function deleteThreatCatalogItem(id: string): Promise<void> {
  * Perform threat analysis on components
  */
 export async function performThreatAnalysis(
-  request: ThreatAnalysisRequest
-): Promise<ThreatAnalysisResponse> {
-  const response: AxiosResponse<ThreatAnalysisResponse> = await apiClient.post('/threat/analyze', request);
+  componentIds: string[] | ThreatAnalysisRequest
+): Promise<ThreatAnalysisResult> {
+  let request: ThreatAnalysisRequest;
+  
+  if (Array.isArray(componentIds)) {
+    request = { component_ids: componentIds };
+  } else {
+    request = componentIds;
+  }
+  
+  const response: AxiosResponse<ThreatAnalysisResult> = await apiClient.post('/threat/analyze', request);
   return response.data;
 }

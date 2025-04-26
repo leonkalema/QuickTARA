@@ -5,12 +5,14 @@
   import SettingsManager from './components/settings/SettingsManager.svelte';
   import ScopeManager from './components/ScopeManager.svelte';
   import Navbar from './components/Navbar.svelte';
+  import Notifications from './components/ui/Notifications.svelte';
   
   // Active page state
   let activePage = 'scopes';
 </script>
 
 <main class="min-h-screen" style="background-color: var(--color-background);">
+  <Notifications />
   <Navbar bind:activePage={activePage} />
   
   <!-- Section header for each page - visually connects with the navbar -->

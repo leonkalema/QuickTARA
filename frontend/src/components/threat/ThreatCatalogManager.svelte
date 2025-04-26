@@ -8,6 +8,19 @@
   import ThreatCatalogDetails from './ThreatCatalogDetails.svelte';
   import { fade } from 'svelte/transition';
   
+  // Function to test direct API access
+  async function testDirectApiAccess() {
+    try {
+      const response = await fetch('http://127.0.0.1:8080/api/threat/catalog?skip=0&limit=100');
+      const data = await response.json();
+      console.log('Direct API response:', data);
+      return data;
+    } catch (err) {
+      console.error('Direct API access error:', err);
+      return null;
+    }
+  }
+
   // State variables
   let catalogItems: ThreatCatalogItem[] = [];
   let loading = true;
@@ -78,8 +91,57 @@
     error = '';
     
     try {
+      // Try direct API access first to debug the response format
+      const directResult = await testDirectApiAccess();
+      console.log('Direct API test result:', directResult);
+      
+      // Use the normal API client
       const result = await getThreatCatalogItems(0, 100);
-      catalogItems = result.catalog_items;
+      console.log('API client response:', result);
+      
+      // Initialize as empty array
+      let items: ThreatCatalogItem[] = [];
+      
+      // Handle different possible response formats
+      if (result && result.catalog_items && Array.isArray(result.catalog_items)) {
+        // Standard format with catalog_items property
+        items = result.catalog_items;
+      } else if (Array.isArray(result)) {
+        // Direct array format
+        items = result;
+      } else if (result && typeof result === 'object') {
+        // Try to find an array property in the response object
+        const arrayProps = Object.entries(result)
+          .filter(([_, value]) => Array.isArray(value))
+          .map(([key, value]) => ({ key, value }));
+          
+        if (arrayProps.length > 0) {
+          // Use the first array property found
+          console.log(`Found array in property: ${arrayProps[0].key}`);
+          items = arrayProps[0].value as ThreatCatalogItem[];
+        } else {
+          // Check if the object itself looks like a single threat item
+          if (result && typeof result === 'object' && 'id' in result && 'title' in result) {
+            items = [result as unknown as ThreatCatalogItem];
+          } else {
+            console.warn('Could not find threat items in response');
+          }
+        }
+      }
+      
+      // Filter out any null/undefined items
+      catalogItems = items.filter(item => item && item.id != null);
+      console.log('Final processed catalog items:', catalogItems);
+
+      // If items are still empty, try fallback loading
+      if (catalogItems.length === 0 && directResult) {
+        // Try to extract from direct API result as a last resort
+        if (Array.isArray(directResult)) {
+          catalogItems = directResult;
+        } else if (directResult.catalog_items && Array.isArray(directResult.catalog_items)) {
+          catalogItems = directResult.catalog_items;
+        }
+      }
     } catch (err) {
       console.error('Error loading threat catalog:', err);
       error = 'Failed to load threat catalog';
@@ -107,8 +169,8 @@
   
   // Filter functions
   $: filteredCatalogItems = filterByCategory 
-    ? catalogItems.filter(item => item.stride_category === filterByCategory) 
-    : catalogItems;
+    ? catalogItems.filter(item => item && item.stride_category === filterByCategory) 
+    : catalogItems.filter(item => item !== null && item !== undefined);
   
   // Load items on mount
   onMount(() => {
@@ -182,45 +244,45 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
-          {#each filteredCatalogItems as item (item.id)}
+          {#each filteredCatalogItems as item (item?.id || Math.random().toString(36))}
             <tr transition:fade={{ duration: 200 }} class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600" 
                      on:click={() => handleViewClick(item)}>
-                  {item.title}
+                  {item?.title || 'Untitled'}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                  {item.stride_category === StrideCategory.SPOOFING ? 'bg-purple-100 text-purple-800' : 
-                   item.stride_category === StrideCategory.TAMPERING ? 'bg-yellow-100 text-yellow-800' : 
-                   item.stride_category === StrideCategory.REPUDIATION ? 'bg-blue-100 text-blue-800' : 
-                   item.stride_category === StrideCategory.INFO_DISCLOSURE ? 'bg-green-100 text-green-800' : 
-                   item.stride_category === StrideCategory.DENIAL_OF_SERVICE ? 'bg-red-100 text-red-800' : 
+                <span class="px-2 py-1 rounded-full text-xs font-medium
+                   ${item?.stride_category === StrideCategory.SPOOFING ? 'bg-purple-100 text-purple-800' : 
+                   item?.stride_category === StrideCategory.TAMPERING ? 'bg-yellow-100 text-yellow-800' : 
+                   item?.stride_category === StrideCategory.REPUDIATION ? 'bg-blue-100 text-blue-800' : 
+                   item?.stride_category === StrideCategory.INFO_DISCLOSURE ? 'bg-green-100 text-green-800' : 
+                   item?.stride_category === StrideCategory.DENIAL_OF_SERVICE ? 'bg-red-100 text-red-800' : 
                    'bg-orange-100 text-orange-800'}">
-                  {strideCategoryNames[item.stride_category]}
+                  {strideCategoryNames[item?.stride_category] || 'Unknown'}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="relative w-20 h-4 bg-gray-200 rounded-full overflow-hidden">
                     <div class="absolute top-0 left-0 h-full rounded-full 
-                      {item.typical_likelihood <= 2 ? 'bg-green-500' : 
-                      item.typical_likelihood <= 4 ? 'bg-yellow-500' : 'bg-red-500'}"
-                      style="width: {item.typical_likelihood * 20}%"></div>
+                      {(item?.typical_likelihood || 0) <= 2 ? 'bg-green-500' : 
+                      (item?.typical_likelihood || 0) <= 4 ? 'bg-yellow-500' : 'bg-red-500'}"
+                      style="width: {(item?.typical_likelihood || 0) * 20}%"></div>
                   </div>
-                  <span class="ml-2 text-sm text-gray-700">{item.typical_likelihood}</span>
+                  <span class="ml-2 text-sm text-gray-700">{item?.typical_likelihood || 0}</span>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="relative w-20 h-4 bg-gray-200 rounded-full overflow-hidden">
                     <div class="absolute top-0 left-0 h-full rounded-full 
-                      {item.typical_severity <= 2 ? 'bg-green-500' : 
-                      item.typical_severity <= 4 ? 'bg-yellow-500' : 'bg-red-500'}"
-                      style="width: {item.typical_severity * 20}%"></div>
+                      {(item?.typical_severity || 0) <= 2 ? 'bg-green-500' : 
+                      (item?.typical_severity || 0) <= 4 ? 'bg-yellow-500' : 'bg-red-500'}"
+                      style="width: {(item?.typical_severity || 0) * 20}%"></div>
                   </div>
-                  <span class="ml-2 text-sm text-gray-700">{item.typical_severity}</span>
+                  <span class="ml-2 text-sm text-gray-700">{item?.typical_severity || 0}</span>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

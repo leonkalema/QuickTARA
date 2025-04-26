@@ -1,16 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, RefreshCw, BarChart, AlertTriangle, Shield } from '@lucide/svelte';
+  import { Plus, RefreshCw, BarChart, AlertTriangle, Shield, Activity, Search } from '@lucide/svelte';
   import { analysisApi, type Analysis, AnalysisStatus } from '../api/analysis';
   import { componentApi } from '../api/components';
   import { safeApiCall } from '../utils/error-handler';
   import AnalysisForm from './AnalysisForm.svelte';
+  import ThreatAnalysisVisualizer from './threat/ThreatAnalysisVisualizer.svelte';
   
   // Analysis state
   let analyses: Analysis[] = [];
   let isLoading = true;
   let error = '';
   let showForm = false;
+  
+  // Active tab management
+  let activeTab = 'general-analysis'; // 'general-analysis', 'threat-analysis'
+  let selectedComponentIds: string[] = [];
   
   // Summary stats
   let stats = {
@@ -101,7 +106,30 @@
   }
 </script>
 
-<div>
+<div class="space-y-6">
+  <!-- Tab Navigation -->
+  <div class="border-b border-gray-200">
+    <nav class="-mb-px flex space-x-8" aria-label="Analysis sections">
+      <button
+        class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'general-analysis' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        on:click={() => activeTab = 'general-analysis'}
+      >
+        <Activity class="h-5 w-5" />
+        <span>Component Analysis</span>
+      </button>
+      
+      <button
+        class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'threat-analysis' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        on:click={() => activeTab = 'threat-analysis'}
+      >
+        <Shield class="h-5 w-5" />
+        <span>Threat Analysis</span>
+      </button>
+    </nav>
+  </div>
+
+  {#if activeTab === 'general-analysis'}
+  <!-- General Analysis Content -->
   <!-- Stats cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
     <!-- Analysis Count -->
@@ -269,6 +297,12 @@
         />
       </div>
     </div>
+  {/if}
+  {/if}
+  
+  <!-- Threat Analysis Tab Content -->
+  {#if activeTab === 'threat-analysis'}
+    <ThreatAnalysisVisualizer bind:selectedComponentIds={selectedComponentIds} />
   {/if}
 </div>
 
