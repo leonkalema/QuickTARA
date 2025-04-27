@@ -9,6 +9,7 @@ This directory contains Pydantic models for the QuickTARA API.
 - `report.py`: Models for report generation
 - `review.py`: Models for risk review workflow
 - `scope.py`: Models for system scope definition
+- `attack_path.py`: Models for attack path analysis
 
 ## Risk Review Workflow
 
@@ -114,6 +115,27 @@ Components are assigned to scopes through the `scope_id` field in the Component 
 
 This enables segmented analysis and reporting based on different system boundaries.
 
+## Attack Path Models (`attack_path.py`)
+
+Models for analyzing and visualizing attack paths and chains between components:
+
+- `AttackPathType` - Enum for types of attack paths (Direct, Multi-Step, Lateral, Privilege Escalation)
+- `AttackStepType` - Enum for types of attack steps (Initial Access, Execution, Persistence, etc.)
+- `AttackComplexity` - Enum for attack complexity levels (Low, Medium, High)
+- `StepBase` - Base model for attack steps
+- `StepCreate` - Create model for attack steps
+- `Step` - Model for attack steps with ID and timestamps
+- `PathBase` - Base model for attack paths
+- `PathCreate` - Create model for attack paths with steps
+- `Path` - Model for attack paths with steps
+- `ChainBase` - Base model for attack chains
+- `ChainCreate` - Create model for attack chains
+- `Chain` - Model for attack chains
+- `AttackPathRequest` - Request model for generating attack paths
+- `AttackPathList` - List of attack paths with pagination
+- `AttackChainList` - List of attack chains with pagination
+- `AttackPathAnalysisResult` - Result of an attack path analysis
+
 ## Database Models
 
-These Pydantic models are used for API request/response handling and validation. The corresponding SQLAlchemy models for database operations are defined in `/db/base.py`.
+These Pydantic models are used for API request/response handling and validation. The corresponding SQLAlchemy models for database operations are defined in `/db/base.py`. For the attack path analysis models, the database models are in `/db/attack_path.py`.

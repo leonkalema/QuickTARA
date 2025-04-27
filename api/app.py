@@ -7,9 +7,18 @@ from fastapi.staticfiles import StaticFiles
 import logging
 from pathlib import Path
 
+# Set up logger
+logger = logging.getLogger(__name__)
+
+# Import all routers
 from api.routes import components, analysis, reports, review, settings_routes, scope, risk, threat, vulnerability
 
-logger = logging.getLogger(__name__)
+# Import attack path router - handle with try/except to prevent startup failure
+try:
+    from api.routers import attack_path
+except ImportError as e:
+    logger.warning(f"Could not import attack_path router: {str(e)}")
+    attack_path = None
 
 def create_app(settings=None):
     """
@@ -53,6 +62,10 @@ def create_app(settings=None):
     app.include_router(threat.router, prefix="/api/threat", tags=["threat"])  # Add threat analysis router
     app.include_router(vulnerability.router, prefix="/api/vulnerability", tags=["vulnerability"])  # Add vulnerability assessment router
     app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
+    
+    # Add attack path analysis router if available
+    if attack_path is not None:
+        app.include_router(attack_path.router, prefix="/api", tags=["attack-path-analysis"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["settings"])
