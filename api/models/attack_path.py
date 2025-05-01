@@ -100,9 +100,10 @@ class ChainBase(BaseModel):
     """Base model for attack chains"""
     name: str = Field(..., description="Name of the attack chain")
     description: str = Field(..., description="Description of the attack chain")
-    entry_points: List[str] = Field(..., description="Component IDs of entry points")
-    targets: List[str] = Field(..., description="Component IDs of targets")
+    entry_point_id: str = Field(..., description="Component ID of the primary entry point")
+    final_target_id: str = Field(..., description="Component ID of the final target")
     attack_goal: str = Field(..., description="The goal of the attack")
+    total_steps: int = Field(..., description="Total number of steps in the chain")
     complexity: AttackComplexity = Field(..., description="Complexity of the attack chain")
     success_likelihood: float = Field(..., ge=0.0, le=1.0, description="Likelihood of successful exploitation")
     impact: Dict[str, int] = Field(..., description="Impact ratings (e.g., confidentiality, integrity, availability)")
@@ -127,17 +128,82 @@ class Chain(ChainBase):
     
     class Config:
         from_attributes = True
+        
+    @classmethod
+    def from_db_model(cls, db_model):
+        """Create API model from database model"""
+        return cls(
+            chain_id=db_model.chain_id,
+            name=db_model.name,
+            description=db_model.description,
+            entry_point_id=db_model.entry_points[0] if db_model.entry_points else "",
+            final_target_id=db_model.targets[0] if db_model.targets else "",
+            attack_goal=db_model.attack_goal,
+            total_steps=sum(len(p.steps) for p in db_model.paths) if db_model.paths else 0,
+            complexity=db_model.complexity,
+            success_likelihood=db_model.success_likelihood,
+            impact=db_model.impact,
+            risk_score=db_model.risk_score,
+            analysis_id=db_model.analysis_id,
+            scope_id=db_model.scope_id,
+            created_at=db_model.created_at,
+            updated_at=db_model.updated_at,
+            paths=db_model.paths
+        )
+
+
+class AttackPathAssumption(BaseModel):
+    """Model for attack path assumptions"""
+    assumption_id: str = Field(..., description="Unique identifier for this assumption")
+    description: str = Field(..., description="Description of the assumption")
+    type: str = Field(..., description="Type of assumption (e.g., 'physical_access', 'network_access')")
+
+
+class AttackPathConstraint(BaseModel):
+    """Model for attack path constraints"""
+    constraint_id: str = Field(..., description="Unique identifier for this constraint")
+    description: str = Field(..., description="Description of the constraint")
+    type: str = Field(..., description="Type of constraint (e.g., 'exclude_physical', 'require_local')")
+
+
+class ThreatScenario(BaseModel):
+    """Model for predefined threat scenarios"""
+    scenario_id: str = Field(..., description="Unique identifier for this threat scenario")
+    name: str = Field(..., description="Name of the threat scenario")
+    description: str = Field(..., description="Description of the threat scenario")
+    threat_type: str = Field(..., description="Type of threat (e.g., 'spoofing', 'tampering')")
+    likelihood: float = Field(..., ge=0.0, le=1.0, description="Likelihood of this threat occurring")
 
 
 class AttackPathRequest(BaseModel):
     """Request model for generating attack paths"""
+    # Primary component to analyze (focal point of the analysis)
+    primary_component_id: str = Field(..., description="ID of the primary component to analyze")
+    
+    # Component IDs to include in the analysis
     component_ids: List[str] = Field(..., description="IDs of components to analyze")
+    
+    # Analysis metadata
     analysis_id: Optional[str] = Field(None, description="Optional existing analysis ID")
     scope_id: Optional[str] = Field(None, description="Optional scope ID")
+    
+    # Entry points and targets
     entry_point_ids: Optional[List[str]] = Field(None, description="Optional specific entry points")
     target_ids: Optional[List[str]] = Field(None, description="Optional specific targets")
+    
+    # Analysis parameters
     include_chains: bool = Field(True, description="Whether to generate attack chains")
     max_depth: Optional[int] = Field(5, description="Maximum path depth to consider")
+    
+    # Analysis context
+    assumptions: Optional[List[AttackPathAssumption]] = Field(default_factory=list, 
+                                                         description="Assumptions for this analysis")
+    constraints: Optional[List[AttackPathConstraint]] = Field(default_factory=list, 
+                                                          description="Constraints for this analysis")
+    threat_scenarios: Optional[List[ThreatScenario]] = Field(default_factory=list, 
+                                                          description="Predefined threat scenarios to consider")
+    vulnerability_ids: Optional[List[str]] = Field(default_factory=list,
+                                               description="IDs of vulnerabilities to consider in the analysis")
 
 
 class AttackPathList(BaseModel):
@@ -148,7 +214,7 @@ class AttackPathList(BaseModel):
 
 class AttackChainList(BaseModel):
     """List of attack chains"""
-    chains: List[Chain] = Field(..., description="List of attack chains")
+    chains: List[Dict[str, Any]] = Field(..., description="List of attack chains")
     total: int = Field(..., description="Total number of chains")
 
 

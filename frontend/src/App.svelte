@@ -5,6 +5,7 @@
   import SettingsManager from './components/settings/SettingsManager.svelte';
   import ScopeManager from './components/ScopeManager.svelte';
   import VulnerabilityManager from './components/vulnerability/VulnerabilityManager.svelte';
+  import AttackPathManager from './components/attack-path/AttackPathManager.svelte';
   import Navbar from './components/Navbar.svelte';
   import Notifications from './components/ui/Notifications.svelte';
   
@@ -28,6 +29,8 @@
           Analysis Dashboard
         {:else if activePage === 'vulnerabilities'}
           Vulnerability Management
+        {:else if activePage === 'attack-paths'}
+          Attack Path Analysis
         {:else if activePage === 'review'}
           Risk Review Dashboard
         {:else if activePage === 'reports'}
@@ -49,6 +52,8 @@
       <AnalysisManager />
     {:else if activePage === 'vulnerabilities'}
       <VulnerabilityManager />
+    {:else if activePage === 'attack-paths'}
+      <AttackPathManager />
     {:else if activePage === 'settings'}
       <SettingsManager />
     {:else}

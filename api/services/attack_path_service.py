@@ -9,11 +9,12 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from db.attack_path import AttackPath, AttackStep, AttackChain, chain_paths
-from db.base import Component
+from db.base import Component, Vulnerability, VulnerabilityAssessment, Analysis
 from api.models.attack_path import (
     AttackPathType, AttackStepType, AttackComplexity,
     PathCreate, StepCreate, ChainCreate, 
-    AttackPathRequest, AttackPathAnalysisResult
+    AttackPathRequest, AttackPathAssumption, AttackPathConstraint,
+    ThreatScenario, AttackPathAnalysisResult
 )
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class AttackPathService:
         
         This is the main entry point for attack path analysis.
         """
-        logger.info(f"Generating attack paths for {len(request.component_ids)} components")
+        logger.info(f"Generating attack paths for {len(request.component_ids)} components, primary component: {request.primary_component_id}")
         
         # Get analysis ID or generate a new one
         analysis_id = request.analysis_id or f"attack_analysis_{uuid.uuid4().hex}"
@@ -41,26 +42,58 @@ class AttackPathService:
         if not components:
             raise ValueError("No valid components found for analysis")
             
+        # Validate the primary component exists
+        primary_component = next((c for c in components if c.component_id == request.primary_component_id), None)
+        if not primary_component:
+            raise ValueError(f"Primary component {request.primary_component_id} not found in the analysis set")
+        
+        # Log the analysis context
+        logger.info(f"Analysis context: {len(request.assumptions)} assumptions, "
+                   f"{len(request.constraints)} constraints, "
+                   f"{len(request.threat_scenarios)} threat scenarios, "
+                   f"{len(request.vulnerability_ids)} vulnerabilities")
+        
+        # Process assumptions and constraints
+        applied_assumptions = self._process_assumptions(request.assumptions)
+        applied_constraints = self._process_constraints(request.constraints)
+        
+        # Get vulnerability data if provided
+        vulnerabilities = self._get_vulnerabilities(request.vulnerability_ids)
+        vulnerability_map = {v.vulnerability_id: v for v in vulnerabilities}
+        
         # Identify entry points and targets
         entry_points = self._identify_entry_points(components, request.entry_point_ids)
         targets = self._identify_targets(components, request.target_ids)
         
+        # Fallback handling – if heuristics fail, fall back to sensible defaults instead of erroring
         if not entry_points:
-            raise ValueError("No valid entry points identified")
+            logger.warning("No entry points identified via heuristics – falling back to primary component as entry point")
+            entry_points = [primary_component]
         if not targets:
-            raise ValueError("No valid targets identified")
-            
+            logger.warning("No target components identified via heuristics – falling back to all components as targets")
+            targets = [c for c in components if c != primary_component] or [primary_component]
+        
+        # Apply constraints to the component set if needed
+        if applied_constraints:
+            components = self._apply_constraints(components, applied_constraints)
+        
         # Build component graph
         component_graph = self._build_component_graph(components)
         
-        # Generate attack paths
+        # Apply threat scenarios to adjust attack likelihood if provided
+        if request.threat_scenarios:
+            component_graph = self._apply_threat_scenarios(component_graph, request.threat_scenarios)
+        
+        # Generate attack paths with vulnerability integration
         paths = self._generate_paths(
             component_graph, 
             entry_points, 
             targets, 
             analysis_id, 
             request.scope_id,
-            request.max_depth
+            request.max_depth,
+            primary_component_id=request.primary_component_id,
+            vulnerability_map=vulnerability_map
         )
         
         # If requested, generate attack chains
@@ -68,7 +101,7 @@ class AttackPathService:
         if request.include_chains and paths:
             chains = self._generate_chains(paths, analysis_id, request.scope_id)
             
-        # Create and save result
+        # Create and save result with additional context
         result = self._create_analysis_result(
             analysis_id=analysis_id,
             components=components,
@@ -76,7 +109,11 @@ class AttackPathService:
             targets=targets,
             paths=paths,
             chains=chains,
-            scope_id=request.scope_id
+            scope_id=request.scope_id,
+            primary_component_id=request.primary_component_id,
+            applied_assumptions=applied_assumptions,
+            applied_constraints=applied_constraints,
+            threat_scenarios=request.threat_scenarios
         )
         
         return result
@@ -84,6 +121,136 @@ class AttackPathService:
     def _get_components(self, component_ids: List[str]) -> List[Component]:
         """Get components from database by their IDs"""
         return self.db.query(Component).filter(Component.component_id.in_(component_ids)).all()
+        
+    def _get_vulnerabilities(self, vulnerability_ids: List[str]) -> List[Vulnerability]:
+        """Get vulnerabilities from database by their IDs"""
+        if not vulnerability_ids:
+            return []
+        return self.db.query(Vulnerability).filter(Vulnerability.vulnerability_id.in_(vulnerability_ids)).all()
+    
+    def _process_assumptions(self, assumptions: List[AttackPathAssumption]) -> Dict[str, Any]:
+        """
+        Process analysis assumptions and convert them to a format usable during analysis.
+        
+        Returns a dictionary of processed assumptions with their implications for the analysis.
+        """
+        processed = {}
+        
+        for assumption in assumptions:
+            if assumption.type == "physical_access":
+                processed["physical_access"] = True
+            elif assumption.type == "local_network_access":
+                processed["local_network_access"] = True
+            elif assumption.type == "remote_access":
+                processed["remote_access"] = True
+            elif assumption.type == "authenticated_user":
+                processed["authenticated_user"] = True
+            elif assumption.type == "skilled_attacker":
+                # This affects the complexity calculations
+                processed["attacker_skill_level"] = "high"
+            elif assumption.type == "amateur_attacker":
+                processed["attacker_skill_level"] = "low"
+            # Add other assumption types as needed
+            
+        return processed
+    
+    def _process_constraints(self, constraints: List[AttackPathConstraint]) -> Dict[str, Any]:
+        """
+        Process analysis constraints and convert them to a format usable during analysis.
+        
+        Returns a dictionary of processed constraints with their implications for the analysis.
+        """
+        processed = {}
+        
+        for constraint in constraints:
+            if constraint.type == "exclude_physical_access":
+                processed["exclude_physical_access"] = True
+            elif constraint.type == "exclude_remote_access":
+                processed["exclude_remote_access"] = True
+            elif constraint.type == "require_local_access":
+                processed["require_local_access"] = True
+            elif constraint.type == "require_authentication":
+                processed["require_authentication"] = True
+            elif constraint.type == "exclude_component_type":
+                if "excluded_component_types" not in processed:
+                    processed["excluded_component_types"] = []
+                if constraint.description and ":" in constraint.description:
+                    component_type = constraint.description.split(":")[1].strip()
+                    processed["excluded_component_types"].append(component_type)
+            # Add other constraint types as needed
+            
+        return processed
+    
+    def _apply_constraints(self, components: List[Component], constraints: Dict[str, Any]) -> List[Component]:
+        """
+        Apply constraints to filter or modify the component set.
+        
+        Returns the filtered component list based on constraints.
+        """
+        if not constraints:
+            return components
+            
+        filtered_components = components.copy()
+        
+        # Apply component type exclusions
+        if "excluded_component_types" in constraints:
+            excluded_types = constraints["excluded_component_types"]
+            filtered_components = [c for c in filtered_components 
+                                 if c.type.lower() not in [t.lower() for t in excluded_types]]
+        
+        # Apply other constraints as needed
+        # For example, if we're excluding physical access, we might filter out components
+        # that are only accessible physically
+        
+        return filtered_components
+    
+    def _apply_threat_scenarios(self, graph: nx.DiGraph, threat_scenarios: List[ThreatScenario]) -> nx.DiGraph:
+        """
+        Apply threat scenarios to modify the attack graph.
+        
+        This could adjust edge weights, add new attack vectors, etc. based on the threat scenarios.
+        """
+        # Create a working copy of the graph
+        modified_graph = graph.copy()
+        
+        # Apply each threat scenario
+        for scenario in threat_scenarios:
+            # Adjust edge attributes based on threat type
+            if scenario.threat_type.lower() == "spoofing":
+                # For spoofing threats, adjust authentication-related edges
+                for u, v, attr in modified_graph.edges(data=True):
+                    # If this connection might be vulnerable to spoofing
+                    src_node = modified_graph.nodes[u]
+                    dst_node = modified_graph.nodes[v]
+                    
+                    # If either node has interfaces vulnerable to spoofing
+                    src_interfaces = str(src_node.get('interfaces', '')).lower()
+                    dst_interfaces = str(dst_node.get('interfaces', '')).lower()
+                    
+                    spoofing_vulnerable = any(i in src_interfaces or i in dst_interfaces 
+                                              for i in ['can', 'bluetooth', 'wifi', 'wireless'])
+                    
+                    if spoofing_vulnerable:
+                        # Reduce complexity (making attack easier) by the scenario likelihood
+                        if attr.get('complexity') == 'HIGH':
+                            attr['complexity'] = 'MEDIUM' if scenario.likelihood > 0.5 else 'HIGH'
+                        elif attr.get('complexity') == 'MEDIUM':
+                            attr['complexity'] = 'LOW' if scenario.likelihood > 0.7 else 'MEDIUM'
+            
+            elif scenario.threat_type.lower() == "tampering":
+                # For tampering threats, adjust integrity-related edges
+                for u, v, attr in modified_graph.edges(data=True):
+                    # If this connection might be vulnerable to tampering
+                    if attr.get('trust_boundary', False):
+                        # Reduce complexity based on likelihood
+                        if attr.get('complexity') == 'HIGH':
+                            attr['complexity'] = 'MEDIUM' if scenario.likelihood > 0.6 else 'HIGH'
+                        elif attr.get('complexity') == 'MEDIUM':
+                            attr['complexity'] = 'LOW' if scenario.likelihood > 0.8 else 'MEDIUM'
+            
+            # Add more threat types (elevation of privilege, denial of service, etc.)
+            
+        return modified_graph
         
     def _identify_entry_points(
         self, 
@@ -289,7 +456,9 @@ class AttackPathService:
         targets: List[Component],
         analysis_id: str,
         scope_id: Optional[str] = None,
-        max_depth: int = 5
+        max_depth: int = 5,
+        primary_component_id: Optional[str] = None,
+        vulnerability_map: Optional[Dict[str, Vulnerability]] = None
     ) -> List[AttackPath]:
         """
         Generate attack paths between entry points and targets.
@@ -371,9 +540,19 @@ class AttackPathService:
                         step_desc = self._create_step_description(j, component, step_type, path_nodes, component_graph)
                         
                         # Determine relevant vulnerabilities and threats
-                        # This would normally query the vulnerability database
-                        # For demonstration, we're using empty lists
+                        # If we have vulnerability data, use it
                         vulnerability_ids = []
+                        if vulnerability_map:
+                            # Get vulnerability assessments for this component
+                            component_vulns = self.db.query(VulnerabilityAssessment).filter(
+                                VulnerabilityAssessment.component_id == node_id
+                            ).all()
+                            
+                            # Extract vulnerability IDs that we have data for
+                            candidate_vuln_ids = [va.vulnerability_id for va in component_vulns]
+                            vulnerability_ids = [vid for vid in candidate_vuln_ids if vid in vulnerability_map]
+                            
+                        # Get threat IDs related to this step
                         threat_ids = []
                         
                         step = AttackStep(
@@ -392,8 +571,8 @@ class AttackPathService:
                     self.db.add(path)
                     attack_paths.append(path)
         
-        if attack_paths:
-            self.db.commit()
+        # Always commit to ensure analysis metadata is saved, even if no paths were found
+        self.db.commit()
         
         return attack_paths
         
@@ -776,7 +955,10 @@ class AttackPathService:
     def _create_analysis_result(self, analysis_id: str, components: List[Component],
                               entry_points: List[Component], targets: List[Component],
                               paths: List[AttackPath], chains: List[AttackChain],
-                              scope_id: Optional[str] = None) -> AttackPathAnalysisResult:
+                              scope_id: Optional[str] = None, primary_component_id: Optional[str] = None,
+                              applied_assumptions: Optional[Dict[str, Any]] = None,
+                              applied_constraints: Optional[Dict[str, Any]] = None,
+                              threat_scenarios: Optional[List[ThreatScenario]] = None) -> AttackPathAnalysisResult:
         """
         Create an analysis result object from the computed paths and chains.
         """
@@ -806,6 +988,24 @@ class AttackPathService:
             for t in targets
         ]
         
+        # Persist analysis metadata using existing Analysis ORM model
+        try:
+            existing_analysis = self.db.query(Analysis).filter(Analysis.id == analysis_id).first()
+            if not existing_analysis:
+                new_analysis = Analysis(
+                    id=analysis_id,
+                    name=f"Attack Path Analysis {analysis_id[:8]}",
+                    description="Auto-generated analysis record",
+                    total_components=len(components),
+                    created_at=datetime.now(),
+                    updated_at=datetime.now(),
+                )
+                self.db.add(new_analysis)
+                self.db.commit()
+        except Exception as e:
+            logger.error(f"Failed to persist analysis metadata: {e}")
+        
+        # Return the API model regardless of database save success
         return AttackPathAnalysisResult(
             analysis_id=analysis_id,
             component_count=len(components),

@@ -12,6 +12,7 @@ This directory contains the API client functions used to interact with the Quick
 - `reports.ts` - API client for report generation and management
 - `review.ts` - API client for risk review workflow
 - `risk.ts` - API client for risk calculation framework management
+- `attackPath.ts` - API client for attack path analysis
 
 ## Usage
 
@@ -579,6 +580,109 @@ if (analysisResults) {
 ```
 
 ## Recent Updates (April 2025)
+
+### Attack Path Endpoints Update
+
+The attack path API endpoints have been standardized and now follow a consistent pattern with other API endpoints:
+
+1. **New Endpoint Structure**:
+   - `/api/attack-paths` - List and create attack paths
+   - `/api/attack-paths/{path_id}` - Get a specific attack path
+   - `/api/attack-paths/chains` - List attack chains
+   - `/api/attack-paths/chains/{chain_id}` - Get a specific attack chain
+
+2. **Previous Structure** (no longer in use):
+   - `/api/analysis/attack-paths`
+   - `/api/analysis/attack-paths/{path_id}`
+   - `/api/analysis/attack-chains`
+   - `/api/analysis/attack-chains/{chain_id}`
+
+3. **Frontend Integration**: The frontend API client in `attackPath.ts` has been updated to use the new endpoints
+
+### Working with Attack Paths
+
+```typescript
+import { 
+  generateAttackPaths,
+  getAttackPaths,
+  getAttackPath,
+  getAttackChains,
+  getAttackChain,
+  type AttackPathRequest,
+  type AttackPath,
+  type AttackChain,
+  type AttackPathList,
+  type AttackChainList,
+  type AttackPathAnalysisResult
+} from '../api/attackPath';
+import { handleApiError } from '../utils/error-handler';
+
+// Generate attack paths for a set of components
+async function analyzeAttackPaths(componentIds: string[]) {
+  try {
+    const request: AttackPathRequest = {
+      component_ids: componentIds,
+      include_chains: true,
+      max_depth: 5
+    };
+    
+    const result = await generateAttackPaths(request);
+    console.log('Attack path analysis result:', result);
+    return result;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Get all attack paths
+async function loadAttackPaths(analysisId?: string) {
+  try {
+    const response = await getAttackPaths(analysisId);
+    console.log('Attack paths:', response.paths);
+    return response.paths;
+  } catch (error) {
+    handleApiError(error);
+    return [];
+  }
+}
+
+// Get a specific attack path
+async function loadAttackPath(pathId: string) {
+  try {
+    const path = await getAttackPath(pathId);
+    console.log('Attack path details:', path);
+    return path;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+
+// Get all attack chains
+async function loadAttackChains(analysisId?: string) {
+  try {
+    const response = await getAttackChains(analysisId);
+    console.log('Attack chains:', response.chains);
+    return response.chains;
+  } catch (error) {
+    handleApiError(error);
+    return [];
+  }
+}
+
+// Get a specific attack chain
+async function loadAttackChain(chainId: string) {
+  try {
+    const chain = await getAttackChain(chainId);
+    console.log('Attack chain details:', chain);
+    return chain;
+  } catch (error) {
+    handleApiError(error);
+    return null;
+  }
+}
+```
 
 ### Threat Analysis Improvements
 

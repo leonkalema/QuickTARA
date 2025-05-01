@@ -20,9 +20,9 @@ echo "Using analysis ID: $ANALYSIS_ID"
 
 # Test 1: Get Attack Paths
 echo -e "\n${GREEN}Test 1: Get Attack Paths${NC}"
-echo "GET $BASE_URL/analysis/attack-paths"
+echo "GET $BASE_URL/attack-paths"
 
-RESPONSE=$(curl -s -X GET "$BASE_URL/analysis/attack-paths")
+RESPONSE=$(curl -s -X GET "$BASE_URL/attack-paths")
 
 echo "Response:"
 echo "$RESPONSE" | jq '.'
@@ -32,19 +32,19 @@ PATH_ID="path_sample1"
 
 # Test 2: Get a Specific Attack Path
 echo -e "\n${GREEN}Test 3: Get a Specific Attack Path${NC}"
-echo "GET $BASE_URL/analysis/attack-paths/$PATH_ID"
+echo "GET $BASE_URL/attack-paths/$PATH_ID"
 
 RESPONSE=$(curl -s -X GET \
-  "$BASE_URL/analysis/attack-paths/$PATH_ID")
+  "$BASE_URL/attack-paths/$PATH_ID")
 
 echo "Response:"
 echo "$RESPONSE" | jq '.'
 
 # Test 3: Get Attack Chains
 echo -e "\n${GREEN}Test 4: Get Attack Chains${NC}"
-echo "GET $BASE_URL/analysis/attack-chains?analysis_id=$ANALYSIS_ID"
+echo "GET $BASE_URL/attack-paths/chains?analysis_id=$ANALYSIS_ID"
 
-RESPONSE=$(curl -s -X GET "$BASE_URL/analysis/attack-chains")
+RESPONSE=$(curl -s -X GET "$BASE_URL/attack-paths/chains")
 
 echo "Response:"
 echo "$RESPONSE" | jq '.'
@@ -54,10 +54,10 @@ CHAIN_ID="chain_sample1"
 
 # Test 4: Get a Specific Attack Chain
 echo -e "\n${GREEN}Test 5: Get a Specific Attack Chain${NC}"
-echo "GET $BASE_URL/analysis/attack-chains/$CHAIN_ID"
+echo "GET $BASE_URL/attack-paths/chains/$CHAIN_ID"
 
 RESPONSE=$(curl -s -X GET \
-  "$BASE_URL/analysis/attack-chains/$CHAIN_ID")
+  "$BASE_URL/attack-paths/chains/$CHAIN_ID")
 
 echo "Response:"
 echo "$RESPONSE" | jq '.'

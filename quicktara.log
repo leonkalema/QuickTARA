@@ -589,3 +589,505 @@ Falling back to direct table creation
 2025-04-27 00:30:51,613 - db.session - INFO - Database tables created successfully
 2025-04-27 00:30:51,613 - __main__ - INFO - Creating FastAPI application...
 2025-04-27 00:30:51,720 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=True)...
+2025-04-28 12:08:33,359 - __main__ - INFO - Initializing database...
+2025-04-28 12:08:33,360 - db.session - INFO - Running database migrations...
+2025-04-28 12:08:34,121 - db.session - WARNING - Failed to run migrations: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py:241: UserWarning: Revision 002 referenced from 002 -> 003 (head), Add vulnerability tables is not present
+  util.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 408, in upgrade
+    script.run_env()
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 104, in <module>
+    run_migrations_online()
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 98, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/migration.py", line 611, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 397, in upgrade
+    return script._upgrade_revs(revision, rev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 462, in _upgrade_revs
+    for script in reversed(list(revs))
+                           ^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 814, in iterate_revisions
+    revisions, heads = fn(
+                       ^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1447, in _collect_upgrade_revisions
+    for rev in self._parse_upgrade_target(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1234, in _parse_upgrade_target
+    return self.get_revisions(target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1145, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 245, in _revision_map
+    down_revision = map_[downrev]
+                    ~~~~^^^^^^^^^
+KeyError: '002'
+
+Falling back to direct table creation
+2025-04-28 12:08:34,121 - db.session - INFO - Creating database tables directly...
+2025-04-28 12:08:34,127 - db.session - INFO - Database tables created successfully
+2025-04-28 12:08:34,127 - __main__ - INFO - Creating FastAPI application...
+2025-04-28 12:08:34,237 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=True)...
+2025-05-01 15:11:46,064 - __main__ - INFO - Initializing database...
+2025-05-01 15:11:46,065 - db.session - INFO - Running database migrations...
+2025-05-01 15:11:46,796 - db.session - WARNING - Failed to run migrations: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py:241: UserWarning: Revision 002 referenced from 002 -> 003 (head), Add vulnerability tables is not present
+  util.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 408, in upgrade
+    script.run_env()
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 104, in <module>
+    run_migrations_online()
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 98, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/migration.py", line 611, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 397, in upgrade
+    return script._upgrade_revs(revision, rev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 462, in _upgrade_revs
+    for script in reversed(list(revs))
+                           ^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 814, in iterate_revisions
+    revisions, heads = fn(
+                       ^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1447, in _collect_upgrade_revisions
+    for rev in self._parse_upgrade_target(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1234, in _parse_upgrade_target
+    return self.get_revisions(target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1145, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 245, in _revision_map
+    down_revision = map_[downrev]
+                    ~~~~^^^^^^^^^
+KeyError: '002'
+
+Falling back to direct table creation
+2025-05-01 15:11:46,796 - db.session - INFO - Creating database tables directly...
+2025-05-01 15:11:46,802 - db.session - INFO - Database tables created successfully
+2025-05-01 15:11:46,802 - __main__ - INFO - Creating FastAPI application...
+2025-05-01 15:11:46,911 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=False)...
+2025-05-01 15:15:53,788 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS002
+2025-05-01 15:15:53,793 - api.services.attack_path_service - INFO - Analysis context: 3 assumptions, 3 constraints, 4 threat scenarios, 4 vulnerabilities
+2025-05-01 17:05:16,801 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:05:16,812 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:11:37,368 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS002
+2025-05-01 17:11:37,369 - api.services.attack_path_service - INFO - Analysis context: 3 assumptions, 3 constraints, 5 threat scenarios, 4 vulnerabilities
+2025-05-01 17:11:44,532 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:11:44,537 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:36:59,383 - api.services.attack_path_service - INFO - Generating attack paths for 3 components, primary component: ECU001
+2025-05-01 17:37:20,106 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 17:37:20,107 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 0 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 17:37:50,115 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:37:50,126 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:40:42,430 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS002
+2025-05-01 17:40:42,431 - api.services.attack_path_service - INFO - Analysis context: 3 assumptions, 3 constraints, 5 threat scenarios, 4 vulnerabilities
+2025-05-01 17:46:41,785 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:46:41,803 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 17:49:59,172 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS002
+2025-05-01 17:49:59,173 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 1 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 18:04:26,310 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS002
+2025-05-01 18:04:26,325 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 1 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 19:07:38,537 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 19:07:38,538 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 0 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 19:10:02,558 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 19:10:02,559 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 0 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 19:22:59,144 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 19:22:59,158 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 19:39:22,180 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 19:39:22,197 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 20:32:20,130 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 20:32:20,131 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 0 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 20:35:21,680 - __main__ - INFO - Initializing database...
+2025-05-01 20:35:21,680 - db.session - INFO - Running database migrations...
+2025-05-01 20:35:22,452 - db.session - WARNING - Failed to run migrations: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py:241: UserWarning: Revision 002 referenced from 002 -> 003 (head), Add vulnerability tables is not present
+  util.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 408, in upgrade
+    script.run_env()
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 104, in <module>
+    run_migrations_online()
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 98, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/migration.py", line 611, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 397, in upgrade
+    return script._upgrade_revs(revision, rev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 462, in _upgrade_revs
+    for script in reversed(list(revs))
+                           ^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 814, in iterate_revisions
+    revisions, heads = fn(
+                       ^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1447, in _collect_upgrade_revisions
+    for rev in self._parse_upgrade_target(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1234, in _parse_upgrade_target
+    return self.get_revisions(target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1145, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 245, in _revision_map
+    down_revision = map_[downrev]
+                    ~~~~^^^^^^^^^
+KeyError: '002'
+
+Falling back to direct table creation
+2025-05-01 20:35:22,453 - db.session - INFO - Creating database tables directly...
+2025-05-01 20:35:22,459 - db.session - INFO - Database tables created successfully
+2025-05-01 20:35:22,459 - __main__ - INFO - Creating FastAPI application...
+2025-05-01 20:35:22,574 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=False)...
+2025-05-01 20:37:21,847 - __main__ - INFO - Initializing database...
+2025-05-01 20:37:21,847 - db.session - INFO - Running database migrations...
+2025-05-01 20:37:22,586 - db.session - WARNING - Failed to run migrations: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py:241: UserWarning: Revision 002 referenced from 002 -> 003 (head), Add vulnerability tables is not present
+  util.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 408, in upgrade
+    script.run_env()
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 104, in <module>
+    run_migrations_online()
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 98, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/migration.py", line 611, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 397, in upgrade
+    return script._upgrade_revs(revision, rev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 462, in _upgrade_revs
+    for script in reversed(list(revs))
+                           ^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 814, in iterate_revisions
+    revisions, heads = fn(
+                       ^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1447, in _collect_upgrade_revisions
+    for rev in self._parse_upgrade_target(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1234, in _parse_upgrade_target
+    return self.get_revisions(target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1145, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 245, in _revision_map
+    down_revision = map_[downrev]
+                    ~~~~^^^^^^^^^
+KeyError: '002'
+
+Falling back to direct table creation
+2025-05-01 20:37:22,586 - db.session - INFO - Creating database tables directly...
+2025-05-01 20:37:22,592 - db.session - INFO - Database tables created successfully
+2025-05-01 20:37:22,592 - __main__ - INFO - Creating FastAPI application...
+2025-05-01 20:37:22,703 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=False)...
+2025-05-01 20:39:46,973 - __main__ - INFO - Initializing database...
+2025-05-01 20:39:46,974 - db.session - INFO - Running database migrations...
+2025-05-01 20:39:47,628 - db.session - WARNING - Failed to run migrations: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py:241: UserWarning: Revision 002 referenced from 002 -> 003 (head), Add vulnerability tables is not present
+  util.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 408, in upgrade
+    script.run_env()
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 104, in <module>
+    run_migrations_online()
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 98, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/migration.py", line 611, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 397, in upgrade
+    return script._upgrade_revs(revision, rev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 462, in _upgrade_revs
+    for script in reversed(list(revs))
+                           ^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 814, in iterate_revisions
+    revisions, heads = fn(
+                       ^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1447, in _collect_upgrade_revisions
+    for rev in self._parse_upgrade_target(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1234, in _parse_upgrade_target
+    return self.get_revisions(target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1145, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 245, in _revision_map
+    down_revision = map_[downrev]
+                    ~~~~^^^^^^^^^
+KeyError: '002'
+
+Falling back to direct table creation
+2025-05-01 20:39:47,628 - db.session - INFO - Creating database tables directly...
+2025-05-01 20:39:47,634 - db.session - INFO - Database tables created successfully
+2025-05-01 20:39:47,634 - __main__ - INFO - Creating FastAPI application...
+2025-05-01 20:39:47,742 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=False)...
+2025-05-01 23:37:04,970 - __main__ - INFO - Initializing database...
+2025-05-01 23:37:04,971 - db.session - INFO - Running database migrations...
+2025-05-01 23:37:05,739 - db.session - WARNING - Failed to run migrations: INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py:241: UserWarning: Revision 002 referenced from 002 -> 003 (head), Add vulnerability tables is not present
+  util.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 408, in upgrade
+    script.run_env()
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 104, in <module>
+    run_migrations_online()
+  File "/Users/leon/Dev/quicktara/db/migrations/env.py", line 98, in run_migrations_online
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/environment.py", line 946, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/runtime/migration.py", line 611, in run_migrations
+    for step in self._migrations_fn(heads, self):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/command.py", line 397, in upgrade
+    return script._upgrade_revs(revision, rev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 462, in _upgrade_revs
+    for script in reversed(list(revs))
+                           ^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 814, in iterate_revisions
+    revisions, heads = fn(
+                       ^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1447, in _collect_upgrade_revisions
+    for rev in self._parse_upgrade_target(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 1234, in _parse_upgrade_target
+    return self.get_revisions(target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 544, in get_revisions
+    resolved_id, branch_label = self._resolve_revision_number(id_)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 768, in _resolve_revision_number
+    self._revision_map
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1145, in __get__
+    obj.__dict__[self.__name__] = result = self.fget(obj)
+                                           ^^^^^^^^^^^^^^
+  File "/Users/leon/Dev/quicktara/.venv/lib/python3.11/site-packages/alembic/script/revision.py", line 245, in _revision_map
+    down_revision = map_[downrev]
+                    ~~~~^^^^^^^^^
+KeyError: '002'
+
+Falling back to direct table creation
+2025-05-01 23:37:05,740 - db.session - INFO - Creating database tables directly...
+2025-05-01 23:37:05,746 - db.session - INFO - Database tables created successfully
+2025-05-01 23:37:05,746 - __main__ - INFO - Creating FastAPI application...
+2025-05-01 23:37:05,856 - __main__ - INFO - Starting server on 127.0.0.1:8080 (debug=False)...
+2025-05-01 23:37:44,294 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 23:37:44,298 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 0 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 23:37:44,298 - api.services.attack_path_service - WARNING - No entry points identified via heuristics – falling back to primary component as entry point
+2025-05-01 23:41:49,526 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 23:41:49,528 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 0 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-01 23:41:49,528 - api.services.attack_path_service - WARNING - No entry points identified via heuristics – falling back to primary component as entry point
+2025-05-01 23:44:59,140 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 23:44:59,158 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 23:47:07,572 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 23:47:07,574 - api.services.attack_path_service - INFO - Analysis context: 1 assumptions, 1 constraints, 5 threat scenarios, 3 vulnerabilities
+2025-05-01 23:52:28,256 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 23:52:32,047 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 23:52:38,861 - api.routes.scope - INFO - Found 1 scopes
+2025-05-01 23:53:26,556 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 23:53:26,557 - api.services.attack_path_service - INFO - Analysis context: 3 assumptions, 3 constraints, 5 threat scenarios, 4 vulnerabilities
+2025-05-01 23:58:35,578 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS001
+2025-05-01 23:58:35,580 - api.services.attack_path_service - INFO - Analysis context: 2 assumptions, 2 constraints, 5 threat scenarios, 4 vulnerabilities
+2025-05-01 23:58:35,582 - api.routes.attack_path - ERROR - Error generating attack paths: source node BMS002 not in graph
+2025-05-02 00:00:37,151 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS002
+2025-05-02 00:00:37,153 - api.services.attack_path_service - INFO - Analysis context: 2 assumptions, 2 constraints, 5 threat scenarios, 4 vulnerabilities
+2025-05-02 00:00:52,024 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:00:54,171 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:02:19,968 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:02:32,040 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:02:32,067 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:02:34,720 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:02:37,922 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:02:37,927 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:02:38,959 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:03:51,372 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: BMS002
+2025-05-02 00:03:51,373 - api.services.attack_path_service - INFO - Analysis context: 2 assumptions, 2 constraints, 5 threat scenarios, 5 vulnerabilities
+2025-05-02 00:03:51,375 - api.routes.attack_path - ERROR - Error generating attack paths: source node BMS002 not in graph
+2025-05-02 00:05:47,702 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:05:49,383 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:07:27,276 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:11:26,675 - api.services.attack_path_service - INFO - Generating attack paths for 2 components, primary component: ECU_BRK01
+2025-05-02 00:11:26,677 - api.services.attack_path_service - INFO - Analysis context: 0 assumptions, 0 constraints, 0 threat scenarios, 0 vulnerabilities
+2025-05-02 00:11:37,497 - api.routes.scope - INFO - Found 1 scopes
+2025-05-02 00:11:37,514 - api.routes.scope - INFO - Found 1 scopes

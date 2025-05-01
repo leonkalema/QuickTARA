@@ -60,7 +60,7 @@ export interface ComponentUpdateRequest {
  * @param skip - Number of records to skip for pagination
  * @param limit - Maximum number of records to return
  */
-export async function getComponents(skip: number = 0, limit: number = 100): Promise<Component[]> {
+export async function getComponents(skip: number = 0, limit: number = 100): Promise<any> {
   try {
     // Use the exact API path from the curl example
     const url = `http://127.0.0.1:8080/api/components?skip=${skip}&limit=${limit}`;
@@ -82,17 +82,29 @@ export async function getComponents(skip: number = 0, limit: number = 100): Prom
     console.log('Component API raw response:', data);
     
     // Handle the response format from your API
+    let components = [];
     if (data && data.components && Array.isArray(data.components)) {
-      return data.components;
+      components = data.components;
     } else if (Array.isArray(data)) {
-      return data;
+      components = data;
     }
     
-    console.warn('Could not find components in response');
-    return [];
+    // Map the components to ensure they have component_id property
+    // This fixes the issue with the AttackPathForm.svelte component
+    const mappedComponents = components.map(comp => ({
+      ...comp,
+      component_id: comp.component_id || comp.id // Use component_id if exists, otherwise use id
+    }));
+    
+    console.log('Mapped components for UI:', mappedComponents);
+    
+    return {
+      components: mappedComponents,
+      total: mappedComponents.length
+    };
   } catch (error) {
     console.error('Error fetching components:', error);
-    return []; // Return empty array on error
+    return { components: [], total: 0 }; // Return empty array on error
   }
 }
 

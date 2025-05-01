@@ -94,7 +94,9 @@ export const apiClient = {
    * @returns Promise with response data
    */
   async request<T>(endpoint: string, options: RequestOptions): Promise<T> {
-    const url = `${apiBaseUrl}${endpoint}`;
+    // Handle both absolute and relative URLs
+    const url = endpoint.startsWith('http') ? endpoint : `${apiBaseUrl}${endpoint}`;
+    console.log(`API Request: ${options.method} ${url}`);
 
     // Default headers
     const headers: Record<string, string> = {
@@ -115,15 +117,17 @@ export const apiClient = {
     }
 
     try {
-      const response = await fetch(url, {
-        method: options.method,
-        headers,
-        body,
-        credentials: 'same-origin', // Only send credentials for same-origin requests
-      });
-
-      // Handle non-2xx responses
-      if (!response.ok) {
+    const response = await fetch(url, {
+    method: options.method,
+    headers,
+    body,
+    credentials: 'omit', // Don't send credentials for cross-origin requests
+    });
+        
+    console.log(`API Response: ${options.method} ${url} - Status: ${response.status}`);
+    
+        // Handle non-2xx responses
+        if (!response.ok) {
         let errorData: any = {};
         let errorMessage = `API Error: ${response.status} ${response.statusText}`;
 
