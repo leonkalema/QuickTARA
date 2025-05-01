@@ -1,0 +1,45 @@
+# QuickTARA – Git ignore rules
+
+# --------------------------------
+# Project-specific
+# --------------------------------
+# Do NOT track the local data directory or its contents
+# (analysis results, sample datasets, etc.)
+data/
+
+# --------------------------------
+# Python
+# --------------------------------
+# Virtual-envs / packaging
+.venv/
+ENV/
+venv/
+*.egg-info/
+
+# Byte-code / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# --------------------------------
+# Node / frontend
+# --------------------------------
+node_modules/
+frontend/node_modules/
+.DS_Store
+
+# Build output
+build/
+dist/
+frontend/dist/
+
+# --------------------------------
+# IDE/Editor
+# --------------------------------
+.idea/
+.vscode/
