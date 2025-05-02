@@ -1,7 +1,7 @@
 """
 API routes for threat catalog and STRIDE analysis
 """
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -64,6 +64,15 @@ async def list_catalog_items(
     )
     return {"catalog_items": items, "total": len(items)}
 
+# Insert bulk endpoint right after /catalog (list/create) routes to ensure it is matched before /catalog/{threat_id}
+@router.post("/catalog/bulk", status_code=status.HTTP_201_CREATED)
+async def bulk_create_catalog_items(
+    threats: List[ThreatCatalogCreate],
+    db: Session = Depends(get_db)
+):
+    """Bulk create threat catalog items"""
+    created_items = [create_threat_catalog_item(db, t) for t in threats]
+    return {"inserted": len(created_items), "catalog_items": created_items}
 
 @router.get("/catalog/{threat_id}", response_model=ThreatCatalogItem)
 async def get_catalog_item(threat_id: str, db: Session = Depends(get_db)):

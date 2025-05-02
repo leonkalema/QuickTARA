@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Spoof ECU Message",
+    "description": "An attacker injects forged CAN messages to impersonate a legitimate Electronic Control Unit (ECU).",
+    "stride_category": "spoofing",
+    "applicable_component_types": ["controller", "gateway"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["can_bus"],
+    "prerequisites": ["Access to vehicle CAN network"],
+    "typical_likelihood": 3,
+    "typical_severity": 4,
+    "mitigation_strategies": [],
+    "cwe_ids": ["CWE-1241"],
+    "capec_ids": ["CAPEC-117"],
+    "examples": ["2010 Jeep Cherokee CAN injection demonstration"]
+  },
+  {
+    "title": "Tamper Firmware Over-the-Air Update",
+    "description": "Malicious actor modifies the firmware package during OTA update, introducing backdoor code.",
+    "stride_category": "tampering",
+    "applicable_component_types": ["gateway", "storage"],
+    "applicable_trust_zones": ["external", "untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": ["Ability to intercept OTA communication"],
+    "typical_likelihood": 2,
+    "typical_severity": 5,
+    "mitigation_strategies": [],
+    "cwe_ids": ["CWE-494"],
+    "capec_ids": ["CAPEC-494"],
+    "examples": ["2018 infotainment firmware hijack"]
+  }
+]

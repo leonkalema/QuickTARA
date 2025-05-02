@@ -20,97 +20,92 @@ This checklist walks through a **complete Threat Analysis & Risk Assessment (TAR
 
 ---
 
-## 1. Item Definition (ID)
+## 1. Scope Definition (ID)
 
-| Task | QuickTARA Support | Status |
-|------|------------------|--------|
-| Define the **Item** (vehicle feature/function) | `components` API + Component Manager UI | [ ] |
-| List **Operational Scenarios & Use Cases** | Free-text notes or import CSV | [ ] |
-| Identify **Assets & Stakeholders** | Asset model TBD | [ ] |
-
----
-
-## 2. Cybersecurity Goals (CSG)
-
-| Step | Action | Responsible Artefact / Module | Status |
-|------|--------|-------------------------------|--------|
-| 2.1 | Import **Safety Goals** (from ISO-26262 HARA) | Attach PDF excerpts or CSV to `data/` | [ ] |
-| 2.2 | Map Safety Goals → **Assets** | Asset list (TBD) | [ ] |
-| 2.3 | Derive **Cybersecurity Goals** (CSG) | `core/cybersecurity_goals.py` | [ ] |
-| 2.4 | Assign **CIAA properties** (Conf., Integ., Avail., Auth.) | CSG model fields | [ ] |
-| 2.5 | Review & Approve CSGs with stakeholders | Meeting minutes | [ ] |
+| Step | Action | Tool / Artefact | Depends On | Status |
+|------|--------|-----------------|------------|--------|
+| 1.1 | Define **Item** (vehicle function) | Component Manager UI | Preparation | [ ] |
+| 1.2 | List **Operational Scenarios** | Use-case docs, CSV import | 1.1 | [ ] |
+| 1.3 | Identify **Assets & Stakeholders** | Asset list | 1.1 | [ ] |
 
 ---
 
-## 3. System Decomposition (SD)
+## 2. Component Modelling (SD)
 
-| Step | Action | QuickTARA Feature | Status |
-|------|--------|------------------|--------|
-| 3.1 | Create / import **Components** | `POST /api/components` or CSV import | [ ] |
-| 3.2 | Specify **Interfaces** & **Protocols** | Component `interfaces` field | [ ] |
-| 3.3 | Define **Trust Zones** & physical **Location** | Component attributes | [ ] |
-| 3.4 | Link **Connections** (`connected_to`) | Component graph builder | [ ] |
-| 3.5 | Validate graph integrity (no orphans / loops) | `ComponentService.validate_graph()` | [ ] |
+| Step | Action | QuickTARA Feature | Depends On | Status |
+|------|--------|------------------|------------|--------|
+| 2.1 | Create / import **Components** | `POST /api/components` or CSV | 1.x | [ ] |
+| 2.2 | Add **Interfaces & Protocols** | Component `interfaces` | 2.1 | [ ] |
+| 2.3 | Define **Trust Zones & Location** | Component attrs | 2.1 | [ ] |
+| 2.4 | Link **Connections** | `connected_to` graph | 2.1 | [ ] |
+| 2.5 | Validate graph integrity | `ComponentService.validate_graph()` | 2.4 | [ ] |
 
 ---
 
-## 4. Threat & Vulnerability Identification (TVI)
+## 3. Threat Analysis (STRIDE / HEAVENS)
 
-| Step | Action | QuickTARA Tooling | Status |
-|------|--------|------------------|--------|
-| 4.1 | Run **STRIDE** analysis per component | `core/stride_analysis.py` | [ ] |
-| 4.2 | Document **Assumptions** & **Constraints** | Attack Path form fields | [ ] |
-| 4.3 | Import **Known Vulnerabilities** (CVE/CWE) | `db/threat_catalog.py`; Vuln service | [ ] |
-| 4.4 | Perform **Automated Scan** (optional) | `vulnerability_service.scan()` | [ ] |
-| 4.5 | Map findings to Components & Interfaces | Vulnerability model relations | [ ] |
-| 4.6 | Review & deduplicate threats | Threat dashboard | [ ] |
+| Step | Action | Module | Depends On | Status |
+|------|--------|--------|------------|--------|
+| 3.1 | Run **STRIDE** per component/interface | `core/stride_analysis.py` | 2.x | [ ] |
+| 3.2 | Review generated **Threat Scenarios** | Threat dashboard | 3.1 | [ ] |
+| 3.3 | Capture **Assumptions & Constraints** | Attack Path form fields | 3.2 | [ ] |
+
+---
+
+## 4. Vulnerability Analysis
+
+| Step | Action | Tooling | Depends On | Status |
+|------|--------|---------|------------|--------|
+| 4.1 | Import **Known CVE/CWE** data | `db/threat_catalog.py` | 2.x | [ ] |
+| 4.2 | Run **Automated Scans** (SAST/DAST) | `vulnerability_service.scan()` | 2.1 | [ ] |
+| 4.3 | Map vulns to components & interfaces | Vulnerability relations | 4.1/4.2 | [ ] |
+| 4.4 | Deduplicate & triage vulnerabilities | Vuln dashboard | 4.3 | [ ] |
 
 ---
 
 ## 5. Attack Path Analysis (APA)
 
-| Step | Action | Endpoint / UI | Status |
-|------|--------|--------------|--------|
-| 5.1 | Select **Analysis Scenario** (component set) | Attack Path Manager UI | [ ] |
-| 5.2 | Configure **Depth**, **Entry / Target IDs** (if needed) | Form inputs | [ ] |
-| 5.3 | Submit **POST /api/attack-paths** | `AttackPathService.generate()` | [ ] |
-| 5.4 | Inspect **Paths & Chains** list | AttackPathList + Visualization | [ ] |
-| 5.5 | Flag **High-Risk** paths (>= threshold) | Service auto-label | [ ] |
-| 5.6 | Iterate with new constraints until satisfied | Repeat 5.1-5.5 | [ ] |
+| Step | Action | Endpoint / UI | Depends On | Status |
+|------|--------|--------------|------------|--------|
+| 5.1 | Select **Component Set** / Scenario | Attack Path Manager UI | 2.x, 3.x, 4.x | [ ] |
+| 5.2 | Configure **Depth / Entry / Target** | Form inputs | 5.1 | [ ] |
+| 5.3 | Submit **POST /api/attack-paths** | `AttackPathService.generate()` | 5.2 | [ ] |
+| 5.4 | Review **Paths & Chains** | Visualizer | 5.3 | [ ] |
+| 5.5 | Iterate with constraints / updated vulns | Repeat cycle | 5.4 | [ ] |
 
 ---
 
 ## 6. Risk Assessment (RA)
 
-| Step | Action | Module | Status |
-|------|--------|--------|--------|
-| 6.1 | Quantify **Likelihood** per threat | `risk_service.calculate_likelihood()` | [ ] |
-| 6.2 | Quantify **Impact** (safety, financial, privacy) | Same service | [ ] |
-| 6.3 | Compute **Risk Level** (matrix) | `risk_service.risk_matrix()` | [ ] |
-| 6.4 | Decide **Treatment** (mitigate, transfer, accept) | Risk record field | [ ] |
-| 6.5 | Document **Residual Risk** justification | CHECK.md updates | [ ] |
+| Step | Action | Module | Depends On | Status |
+|------|--------|--------|------------|--------|
+| 6.1 | Calculate **Likelihood** | `risk_service.calculate_likelihood()` | 5.4 | [ ] |
+| 6.2 | Calculate **Impact** | `risk_service` | 5.4 | [ ] |
+| 6.3 | Determine **Risk Level** | matrix | 6.1/6.2 | [ ] |
+| 6.4 | Decide **Treatment** | Risk record | 6.3 | [ ] |
+| 6.5 | Document **Residual Risk** | CHECK.md | 6.4 | [ ] |
 
 ---
 
 ## 7. Verification & Validation (VV)
 
-| Step | Action | Artefact | Status |
-|------|--------|----------|--------|
-| 7.1 | Trace CSG → Requirements → Tests | Traceability matrix | [ ] |
-| 7.2 | Plan **Pen-Test / Fuzzing** | Security test plan | [ ] |
-| 7.3 | Execute tests & record findings | Test reports | [ ] |
-| 7.4 | Verify risk mitigations effective | Re-run Risk Assessment | [ ] |
+| Step | Action | Artefact | Depends On | Status |
+|------|--------|----------|------------|--------|
+| 7.1 | Map CSG → Requirements → Tests | Traceability | 6.x | [ ] |
+| 7.2 | Plan **Pen-Tests / Fuzzing** | Test plan | 6.x | [ ] |
+| 7.3 | Execute tests & collect evidence | Test reports | 7.2 | [ ] |
+| 7.4 | Verify mitigations effective | Re-run RA | 7.3 | [ ] |
 
 ---
 
 ## 8. Documentation & Release (DR)
 
-| Step | Action | Tool / Evidence | Status |
-|------|--------|-----------------|--------|
-| 8.1 | Generate **TARA Report** PDF/JSON | `ReportService.export()` | [ ] |
-| 8.2 | Store artefacts in **BOM / evidence repo** | External repo | [ ] |
-| 8.3 | Obtain **Stakeholder Sign-off** | Signed minutes | [ ] |
-| 8.4 | Release to production & handover | Release checklist | [ ] |
+| Step | Action | Evidence | Depends On | Status |
+|------|--------|----------|------------|--------|
+| 8.1 | Generate **TARA Report** | `ReportService.export()` | 6.x | [ ] |
+| 8.2 | Store artefacts in BOM | Repo / SharePoint | 8.1 | [ ] |
+| 8.3 | Obtain **Stakeholder Sign-off** | Signed minutes | 8.2 | [ ] |
+| 8.4 | Release & handover | Release checklist | 8.3 | [ ] |
 
 ---
 

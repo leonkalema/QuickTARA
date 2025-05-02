@@ -2,7 +2,6 @@
  * API client for threat catalog and STRIDE analysis
  */
 import { apiClient } from './index';
-import type { AxiosResponse } from 'axios';
 
 // Enums
 export enum StrideCategory {
@@ -192,38 +191,38 @@ export async function getThreatCatalogItems(
   componentType?: ComponentType,
   trustZone?: TrustZone
 ): Promise<ThreatCatalogList> {
-  let params: Record<string, any> = { skip, limit };
-  
-  if (strideCategory) {
-    params.stride_category = strideCategory;
-  }
-  
-  if (componentType) {
-    params.component_type = componentType;
-  }
-  
-  if (trustZone) {
-    params.trust_zone = trustZone;
-  }
-  
-  const response: AxiosResponse<ThreatCatalogList> = await apiClient.get('/threat/catalog', { params });
-  return response.data;
+  const qs = new URLSearchParams();
+  qs.append('skip', String(skip));
+  qs.append('limit', String(limit));
+  if (strideCategory) qs.append('stride_category', strideCategory);
+  if (componentType) qs.append('component_type', componentType);
+  if (trustZone) qs.append('trust_zone', trustZone);
+
+  return await apiClient.get<ThreatCatalogList>(`/threat/catalog?${qs.toString()}`);
 }
 
 /**
  * Get a threat catalog item by ID
  */
 export async function getThreatCatalogItem(id: string): Promise<ThreatCatalogItem> {
-  const response: AxiosResponse<ThreatCatalogItem> = await apiClient.get(`/threat/catalog/${id}`);
-  return response.data;
+  return await apiClient.get<ThreatCatalogItem>(`/threat/catalog/${id}`);
 }
 
 /**
  * Create a new threat catalog item
  */
 export async function createThreatCatalogItem(threat: ThreatCatalogCreate): Promise<ThreatCatalogItem> {
-  const response: AxiosResponse<ThreatCatalogItem> = await apiClient.post('/threat/catalog', threat);
-  return response.data;
+  return await apiClient.post<ThreatCatalogItem>('/threat/catalog', threat);
+}
+
+/**
+ * Bulk create new threat catalog items
+ */
+export async function bulkCreateThreatCatalogItems(
+  threats: ThreatCatalogCreate[]
+): Promise<ThreatCatalogItem[]> {
+  const res = await apiClient.post<{ inserted: number; catalog_items: ThreatCatalogItem[] }>('/threat/catalog/bulk', threats);
+  return res.catalog_items;
 }
 
 /**
@@ -233,8 +232,7 @@ export async function updateThreatCatalogItem(
   id: string,
   threatUpdate: ThreatCatalogUpdate
 ): Promise<ThreatCatalogItem> {
-  const response: AxiosResponse<ThreatCatalogItem> = await apiClient.put(`/threat/catalog/${id}`, threatUpdate);
-  return response.data;
+  return await apiClient.put<ThreatCatalogItem>(`/threat/catalog/${id}`, threatUpdate);
 }
 
 /**
@@ -282,9 +280,9 @@ export async function performThreatAnalysis(
     };
 
     console.log('Sending threat analysis request:', requestBody);
-    const response: AxiosResponse<ThreatAnalysisResult> = await apiClient.post('/threat/analyze', requestBody);
-    console.log('Threat analysis response:', response.status);
-    return response.data;
+    const response: ThreatAnalysisResult = await apiClient.post('/threat/analyze', requestBody);
+    console.log('Threat analysis response:', response);
+    return response;
   } catch (error) {
     console.error('Error in threat analysis:', error);
     throw error; // Re-throw to allow handling in component

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getThreatCatalogItems, deleteThreatCatalogItem, type ThreatCatalogItem, StrideCategory } from '../../api/threat';
+  import { getThreatCatalogItems, deleteThreatCatalogItem, type ThreatCatalogItem, StrideCategory, bulkCreateThreatCatalogItems } from '../../api/threat';
   import { showNotification } from '../../stores/notification';
   import Spinner from '../ui/Spinner.svelte';
   import Modal from '../ui/Modal.svelte';
@@ -32,6 +32,7 @@
   let showEditForm = false;
   let showDetails = false;
   let filterByCategory: string = '';
+  let importing = false;
   
   // STRIDE category display names
   const strideCategoryNames = {
@@ -151,6 +152,28 @@
     }
   }
   
+  async function handleFileImport(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      importing = true;
+      const text = await file.text();
+      const threatsParsed = JSON.parse(text);
+      // Ensure array
+      const threatsArray = Array.isArray(threatsParsed) ? threatsParsed : [threatsParsed];
+      const created = await bulkCreateThreatCatalogItems(threatsArray);
+      catalogItems = [...catalogItems, ...created];
+      showNotification(`${created.length} threats imported successfully`, 'success');
+    } catch (err) {
+      console.error('Bulk import failed', err);
+      showNotification('Bulk import failed', 'error');
+    } finally {
+      importing = false;
+      // Reset the input value so same file can be uploaded again if desired
+      (event.target as HTMLInputElement).value = '';
+    }
+  }
+  
   function handleThreatCreated(event: CustomEvent<ThreatCatalogItem>) {
     const newThreat = event.detail;
     catalogItems = [...catalogItems, newThreat];
@@ -205,6 +228,14 @@
       </svg>
       Add New Threat
     </button>
+    <label class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M4 3a2 2 0 00-2 2v3a1 1 0 001 1h14a1 1 0 001-1V5a2 2 0 00-2-2H4z" />
+        <path d="M3 9a1 1 0 011-1h12a1 1 0 011 1v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+      </svg>
+      {importing ? 'Importing...' : 'Import JSON'}
+      <input type="file" accept="application/json" hidden on:change={handleFileImport} />
+    </label>
   </div>
   
   {#if loading}
