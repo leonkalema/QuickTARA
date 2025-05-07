@@ -32,6 +32,13 @@ class Component(Base):
     location = Column(String, nullable=False)
     trust_zone = Column(String, nullable=False)
     
+    # Security properties (C-I-A)
+    confidentiality = Column(String, default="Medium")
+    integrity = Column(String, default="Medium")
+    availability = Column(String, default="Medium")
+    authenticity_required = Column(Boolean, default=False)
+    authorization_required = Column(Boolean, default=False)
+    
     # Relationships
     connected_to = relationship(
         "Component",

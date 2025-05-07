@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import { X, Save, Plus, Trash2 } from '@lucide/svelte';
+  import SecurityPropertiesWizard from './SecurityPropertiesWizard.svelte';
   import { scopeApi, type SystemScope } from '../api/scope';
   import { safeApiCall } from '../utils/error-handler';
   
@@ -10,9 +11,31 @@
   const trustZones = ['Critical', 'Boundary', 'Standard', 'Untrusted'];
   const locations = ['Internal', 'External'];
   
+  // Define component type
+  type ComponentType = {
+    component_id: string;
+    name: string;
+    type: string;
+    safety_level: string;
+    interfaces: string[];
+    access_points: string[];
+    data_types: string[];
+    location: string;
+    trust_zone: string;
+    connected_to: string[];
+    scope_id: string;
+    // Security properties
+    confidentiality: string;
+    integrity: string;
+    availability: string;
+    authenticity_required: boolean;
+    authorization_required: boolean;
+    [key: string]: string | string[] | boolean;
+  };
+  
   // Component input
   export let editMode = false;
-  export let component = {
+  export let component: ComponentType = {
     component_id: '',
     name: '',
     type: componentTypes[0],
@@ -23,7 +46,13 @@
     location: locations[0],
     trust_zone: trustZones[0],
     connected_to: [''],
-    scope_id: ''
+    scope_id: '',
+    // Security properties
+    confidentiality: 'Medium',
+    integrity: 'Medium',
+    availability: 'Medium',
+    authenticity_required: false,
+    authorization_required: false
   };
   
   // Available components for connection selection
@@ -85,6 +114,22 @@
     return Object.keys(validationErrors).length === 0;
   }
   
+  // Map wizard-selected values to backend enum strings (Title-case / "N/A")
+  function normalizeSecurityLevel(level: string): string {
+    switch (level?.toUpperCase()) {
+      case 'HIGH':
+        return 'High';
+      case 'MEDIUM':
+        return 'Medium';
+      case 'LOW':
+        return 'Low';
+      case 'NOT_APPLICABLE':
+        return 'N/A';
+      default:
+        return level;
+    }
+  }
+  
   function handleSubmit() {
     // Validate the form
     if (!validateForm()) {
@@ -105,8 +150,12 @@
       // Normalize ID and name
       component_id: component.component_id.trim(),
       name: component.name.trim(),
-      // Include scope ID if selected
-      scope_id: component.scope_id || null,
+      // Convert security level strings to backend accepted values
+      confidentiality: normalizeSecurityLevel(component.confidentiality as string),
+      integrity: normalizeSecurityLevel(component.integrity as string),
+      availability: normalizeSecurityLevel(component.availability as string),
+      // Include scope ID only if provided
+      scope_id: component.scope_id || undefined,
       // Normalize and deduplicate arrays
       interfaces: normalizeArray(component.interfaces),
       access_points: normalizeArray(component.access_points),
@@ -428,6 +477,23 @@
         {/each}
       </div>
       <p class="text-xs text-gray-500 mt-1">Select components this component is connected to</p>
+    </div>
+    
+    <!-- Security Properties Wizard -->
+    <div>
+      <h3 class="text-sm font-medium text-gray-700 mb-2">Security Properties</h3>
+      <SecurityPropertiesWizard 
+        values={{
+          confidentiality: component.confidentiality,
+          integrity: component.integrity,
+          availability: component.availability,
+          authenticity_required: component.authenticity_required,
+          authorization_required: component.authorization_required
+        }}
+        onChange={(property, value) => {
+          component[property] = value;
+        }}
+      />
     </div>
     
     <div class="flex justify-end space-x-3 pt-4 border-t">

@@ -30,7 +30,14 @@ def create_component(db: Session, component: ComponentCreate) -> Component:
         access_points=json.dumps(component.access_points),
         data_types=json.dumps(component.data_types),
         location=component.location,
-        trust_zone=component.trust_zone
+        trust_zone=component.trust_zone,
+        scope_id=component.scope_id,
+        # Add security properties (C-I-A)
+        confidentiality=component.confidentiality,
+        integrity=component.integrity, 
+        availability=component.availability,
+        authenticity_required=component.authenticity_required,
+        authorization_required=component.authorization_required
     )
     
     # Add to database
@@ -48,6 +55,7 @@ def create_component(db: Session, component: ComponentCreate) -> Component:
     if connected_components:
         db_component.connected_to = connected_components
         db.commit()
+        db.refresh(db_component)
     
     return _db_component_to_schema(db_component)
 
@@ -74,29 +82,58 @@ def get_components(db: Session, skip: int = 0, limit: int = 100) -> List[Compone
     except Exception as e:
         # Handle the case where schema might be outdated
         try:
-            # Try a direct SQL query that doesn't use the new scope_id column
+            # Try a more complete SQL query that includes all fields
             from sqlalchemy import text
             result = db.execute(text(
-                "SELECT component_id, name, type, safety_level, interfaces, "
-                "access_points, data_types, location, trust_zone "
-                "FROM components LIMIT :limit OFFSET :skip"
+                "SELECT c.component_id, c.name, c.type, c.safety_level, c.interfaces, "
+                "c.access_points, c.data_types, c.location, c.trust_zone, "
+                "c.scope_id, c.confidentiality, c.integrity, c.availability, "
+                "c.authenticity_required, c.authorization_required "
+                "FROM components c LIMIT :limit OFFSET :skip"
             ), {"skip": skip, "limit": limit})
             
+            # Get connected components with a separate query for each component
             components = []
             for row in result:
-                # Create a minimal component from the raw SQL result
+                # Get connected components for this component
+                connected_to = []
+                try:
+                    connections = db.execute(text(
+                        "SELECT connected_to_id FROM component_connections "
+                        "WHERE component_id = :component_id"
+                    ), {"component_id": row[0]})
+                    connected_to = [conn[0] for conn in connections]
+                except Exception:
+                    # If connections query fails, leave as empty list
+                    pass
+                
+                # Normalize security properties to title case (High, Medium, Low, N/A)
+                def normalize_security_level(value):
+                    if not value:
+                        return "Medium"  # Default
+                    # Convert to title case (first letter uppercase, rest lowercase)
+                    if value.upper() == "N/A":
+                        return "N/A"
+                    return value.title()
+                
+                # Create a complete component from the raw SQL result
                 component = Component(
                     component_id=row[0],
                     name=row[1],
                     type=row[2],
                     safety_level=row[3],
-                    interfaces=json.loads(row[4]) if row[4] else [],
-                    access_points=json.loads(row[5]) if row[5] else [],
-                    data_types=json.loads(row[6]) if row[6] else [],
+                    interfaces=_parse_json_list(row[4]),
+                    access_points=_parse_json_list(row[5]),
+                    data_types=_parse_json_list(row[6]),
                     location=row[7] or "",
                     trust_zone=row[8] or "",
-                    connected_to=[],  # Can't fetch many-to-many without ORM
-                    scope_id=None  # No scope_id in database yet
+                    scope_id=row[9],  # Include scope_id
+                    confidentiality=normalize_security_level(row[10]),  # Normalize CIA properties
+                    integrity=normalize_security_level(row[11]),
+                    availability=normalize_security_level(row[12]),
+                    authenticity_required=bool(row[13]) if row[13] is not None else False,
+                    authorization_required=bool(row[14]) if row[14] is not None else False,
+                    connected_to=connected_to  # Include connected components
                 )
                 components.append(component)
             return components
@@ -156,11 +193,17 @@ def update_component(db: Session, component_id: str, component: ComponentUpdate)
                 connected_components.append(connected)
         db_component.connected_to = connected_components
     
+    # Relationship and simple attribute updates
+    if "scope_id" in update_data:
+        db_component.scope_id = update_data.pop("scope_id")
+    
     # Update other attributes
     for key, value in update_data.items():
         setattr(db_component, key, value)
     
     db.commit()
+    db.refresh(db_component)
+    # Refresh again to get connections and scope relationship updates
     db.refresh(db_component)
     
     return _db_component_to_schema(db_component)
@@ -205,6 +248,18 @@ def import_components_from_csv(db: Session, csv_content: str) -> Dict[str, Any]:
                 "connected_to": [c.strip() for c in row["connected_to"].split("|") if c.strip()],
             }
             
+            # Parse security properties if present in CSV
+            if "confidentiality" in row:
+                component_data["confidentiality"] = row["confidentiality"].strip()
+            if "integrity" in row:
+                component_data["integrity"] = row["integrity"].strip()
+            if "availability" in row:
+                component_data["availability"] = row["availability"].strip()
+            if "authenticity_required" in row:
+                component_data["authenticity_required"] = row["authenticity_required"].lower() == "true"
+            if "authorization_required" in row:
+                component_data["authorization_required"] = row["authorization_required"].lower() == "true"
+            
             component = ComponentCreate(**component_data)
             
             # Check if component already exists
@@ -239,7 +294,10 @@ def export_components_to_csv(db: Session) -> str:
     output = StringIO()
     fieldnames = [
         "component_id", "name", "type", "safety_level", "interfaces",
-        "access_points", "data_types", "location", "trust_zone", "connected_to"
+        "access_points", "data_types", "location", "trust_zone", "connected_to",
+        # Add security properties
+        "confidentiality", "integrity", "availability",
+        "authenticity_required", "authorization_required"
     ]
     
     writer = csv.DictWriter(output, fieldnames=fieldnames)
@@ -257,9 +315,37 @@ def export_components_to_csv(db: Session) -> str:
             "location": component.location,
             "trust_zone": component.trust_zone,
             "connected_to": "|".join(component.connected_to),
+            # Add security properties
+            "confidentiality": component.confidentiality,
+            "integrity": component.integrity,
+            "availability": component.availability,
+            "authenticity_required": str(component.authenticity_required).lower(),
+            "authorization_required": str(component.authorization_required).lower(),
         })
     
     return output.getvalue()
+
+
+def _parse_json_list(val: str):
+    """Return a Python list from a column that may contain JSON or double-encoded JSON."""
+    if not val:
+        return []
+    try:
+        parsed = json.loads(val)
+        # If the first load still returns a string (double-encoded), try again
+        if isinstance(parsed, str):
+            try:
+                parsed = json.loads(parsed)
+            except Exception:
+                pass
+        if isinstance(parsed, list):
+            return parsed
+    except Exception:
+        pass
+    # Fall back to treating comma-separated string as list
+    if isinstance(val, str):
+        return [v.strip() for v in val.split(',') if v.strip()]
+    return []
 
 
 def _db_component_to_schema(db_component: DBComponent) -> Component:
@@ -267,15 +353,22 @@ def _db_component_to_schema(db_component: DBComponent) -> Component:
     Convert DB component to Pydantic schema
     """
     # Parse JSON fields
-    interfaces = json.loads(db_component.interfaces) if db_component.interfaces else []
-    access_points = json.loads(db_component.access_points) if db_component.access_points else []
-    data_types = json.loads(db_component.data_types) if db_component.data_types else []
+    interfaces = _parse_json_list(db_component.interfaces)
+    access_points = _parse_json_list(db_component.access_points)
+    data_types = _parse_json_list(db_component.data_types)
     
     # Get connected component IDs
     connected_to = [c.component_id for c in db_component.connected_to]
     
     # Handle scope_id (may not exist in database yet)
     scope_id = getattr(db_component, 'scope_id', None)
+    
+    # Get CIA security properties, with fallbacks for older database records
+    confidentiality = getattr(db_component, 'confidentiality', "Medium")
+    integrity = getattr(db_component, 'integrity', "Medium")
+    availability = getattr(db_component, 'availability', "Medium")
+    authenticity_required = getattr(db_component, 'authenticity_required', False)
+    authorization_required = getattr(db_component, 'authorization_required', False)
     
     return Component(
         component_id=db_component.component_id,
@@ -289,4 +382,10 @@ def _db_component_to_schema(db_component: DBComponent) -> Component:
         trust_zone=db_component.trust_zone,
         connected_to=connected_to,
         scope_id=scope_id,
+        # Include CIA security properties
+        confidentiality=confidentiality,
+        integrity=integrity,
+        availability=availability,
+        authenticity_required=authenticity_required,
+        authorization_required=authorization_required
     )
