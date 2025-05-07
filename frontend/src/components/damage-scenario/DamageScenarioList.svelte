@@ -173,7 +173,7 @@
                     <Edit size={16} />
                   </button>
                   <button 
-                    on:click={() => handleDelete(scenario)}
+                    on:click={() => dispatch('delete', scenario)}
                     class="text-red-600 hover:text-red-900"
                     title="Delete scenario"
                   >

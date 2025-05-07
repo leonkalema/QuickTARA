@@ -16,7 +16,7 @@
   let showForm = false;
   
   // Active tab management
-  let activeTab = 'general-analysis'; // 'general-analysis', 'threat-analysis', 'vulnerability-analysis', 'damage-scenarios'
+  let activeTab = 'damage-scenarios'; // 'damage-scenarios', 'general-analysis', 'threat-analysis', 'vulnerability-analysis'
   let selectedComponentIds: string[] = [];
   
   // Summary stats
@@ -113,6 +113,14 @@
   <div class="border-b border-gray-200">
     <nav class="-mb-px flex space-x-8" aria-label="Analysis sections">
       <button
+        class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'damage-scenarios' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        on:click={() => activeTab = 'damage-scenarios'}
+      >
+        <Zap class="h-5 w-5" />
+        <span>Damage Scenarios</span>
+      </button>
+      
+      <button
         class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'general-analysis' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
         on:click={() => activeTab = 'general-analysis'}
       >
@@ -134,14 +142,6 @@
       >
         <ShieldAlert class="h-5 w-5" />
         <span>Vulnerability Assessment</span>
-      </button>
-      
-      <button
-        class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'damage-scenarios' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-        on:click={() => activeTab = 'damage-scenarios'}
-      >
-        <Zap class="h-5 w-5" />
-        <span>Damage Scenarios</span>
       </button>
     </nav>
   </div>
