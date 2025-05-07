@@ -54,6 +54,13 @@ class Component(Base):
     # Scope relationship
     scope_id = Column(String, ForeignKey("system_scopes.scope_id"), nullable=True)
     scope = relationship("SystemScope", back_populates="components")
+    
+    # Damage scenarios relationship
+    damage_scenarios = relationship(
+        "DamageScenario",
+        secondary="component_damage_scenario",
+        back_populates="affected_components"
+    )
 
 
 class Analysis(Base):
@@ -166,6 +173,7 @@ class SystemScope(Base):
     
     # Relationships
     components = relationship("Component", back_populates="scope")
+    damage_scenarios = relationship("DamageScenario", back_populates="scope")
 
 
 class RiskFramework(Base):
