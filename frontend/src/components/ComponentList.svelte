@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, Upload, Download, RefreshCw, AlertCircle } from '@lucide/svelte';
+  import { Plus, Upload, Download, RefreshCw, AlertCircle, X, Edit } from '@lucide/svelte';
   import ComponentCard from './ComponentCard.svelte';
   import ComponentFilter from './ComponentFilter.svelte';
   import ComponentForm from './ComponentForm.svelte';
@@ -15,6 +15,7 @@
   let error = '';
   let showForm = false;
   let editingComponent: any = null;
+  let viewingComponent: any = null;
   let showImportModal = false;
   
   // Filter state
@@ -84,8 +85,15 @@
     showForm = true;
   }
   
+  function handleViewComponent(component: any) {
+    viewingComponent = { ...component };
+    editingComponent = null;
+    showForm = true;
+  }
+
   function handleEditComponent(component: any) {
     editingComponent = { ...component };
+    viewingComponent = null;
     showForm = true;
   }
   
@@ -133,6 +141,7 @@
   function handleFormCancel() {
     showForm = false;
     editingComponent = null;
+    viewingComponent = null;
   }
   
   export function handleOpenImport() {
@@ -203,6 +212,7 @@
         {#each filteredComponents as component (component.component_id)}
           <ComponentCard 
             {component}
+            on:view={() => handleViewComponent(component)}
             on:edit={() => handleEditComponent(component)}
             on:delete={() => handleDeleteComponent(component.component_id)} 
           />
@@ -217,18 +227,168 @@
     {/if}
   </div>
   
-  <!-- Component Form Dialog (only shown when showForm is true) -->
+  <!-- Component Form Slide-in Panel (only shown when showForm is true) -->
   {#if showForm}
-    <!-- Improved modal backdrop with blur effect and warmer overlay -->
-    <div class="fixed inset-0 backdrop-blur-sm bg-neutral-900/40 flex items-center justify-center z-50 p-4 transition-opacity duration-200">
-      <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <ComponentForm 
-          editMode={!!editingComponent}
-          component={editingComponent || undefined}
-          availableComponents={components}
-          on:submit={handleFormSubmit}
-          on:cancel={handleFormCancel}
-        />
+    <!-- Semi-transparent backdrop with accessibility attributes -->
+    <div 
+      class="fixed inset-0 bg-neutral-900/40 z-40 transition-opacity duration-200" 
+      on:click={handleFormCancel}
+      on:keydown={(e) => e.key === 'Escape' && handleFormCancel()}
+      role="button"
+      tabindex="0"
+      aria-label="Close panel"
+    ></div>
+    
+    <!-- Slide-in panel from the right -->
+    <div class="fixed inset-y-0 right-0 w-full md:w-2/3 lg:w-1/2 xl:w-2/5 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out overflow-auto" 
+         style="border-left: 1px solid var(--color-border);">
+      <div class="h-full overflow-y-auto">
+        {#if viewingComponent}
+          <!-- Component View Template - Cleaner and more concise -->
+          <div class="p-6 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+              <div>
+                <h2 class="text-xl font-bold text-gray-900">Component Details</h2>
+                <p class="text-sm text-gray-500 mt-1">{viewingComponent.component_id}</p>
+              </div>
+              <button 
+                on:click={handleFormCancel}
+                class="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div class="overflow-y-auto flex-grow">
+              <!-- Basic Info Card -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                <h3 class="font-medium text-gray-900 mb-3">Basic Information</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm text-gray-500">Name</p>
+                    <p class="font-medium">{viewingComponent.name}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500">Type</p>
+                    <p class="font-medium">{viewingComponent.type}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500">Safety Level</p>
+                    <p class="font-medium">{viewingComponent.safety_level}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500">Trust Zone</p>
+                    <p class="font-medium">{viewingComponent.trust_zone}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500">Location</p>
+                    <p class="font-medium">{viewingComponent.location}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500">Scope</p>
+                    <p class="font-medium">{viewingComponent.scope_id || 'None'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Security Properties Card -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                <h3 class="font-medium text-gray-900 mb-3">Security Properties</h3>
+                <div class="grid grid-cols-3 gap-4 mb-3">
+                  <div>
+                    <p class="text-sm text-gray-500">Confidentiality</p>
+                    <p class="font-medium">{viewingComponent.confidentiality}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500">Integrity</p>
+                    <p class="font-medium">{viewingComponent.integrity}</p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500">Availability</p>
+                    <p class="font-medium">{viewingComponent.availability}</p>
+                  </div>
+                </div>
+                <div class="flex gap-6">
+                  <div class="flex items-center">
+                    <input type="checkbox" checked={viewingComponent.authenticity_required} disabled class="mr-2" />
+                    <p class="text-sm">Authenticity Required</p>
+                  </div>
+                  <div class="flex items-center">
+                    <input type="checkbox" checked={viewingComponent.authorization_required} disabled class="mr-2" />
+                    <p class="text-sm">Authorization Required</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Interfaces & Connections -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
+                <h3 class="font-medium text-gray-900 mb-3">Interfaces</h3>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  {#if viewingComponent.interfaces && viewingComponent.interfaces.length > 0}
+                    {#each viewingComponent.interfaces.filter(i => i) as interfaceItem}
+                      <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{interfaceItem}</span>
+                    {/each}
+                  {:else}
+                    <p class="text-sm text-gray-500">No interfaces defined</p>
+                  {/if}
+                </div>
+                
+                <h3 class="font-medium text-gray-900 mb-3 mt-4">Access Points</h3>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  {#if viewingComponent.access_points && viewingComponent.access_points.length > 0 && viewingComponent.access_points[0]}
+                    {#each viewingComponent.access_points.filter(a => a) as accessPoint}
+                      <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{accessPoint}</span>
+                    {/each}
+                  {:else}
+                    <p class="text-sm text-gray-500">No access points defined</p>
+                  {/if}
+                </div>
+                
+                <h3 class="font-medium text-gray-900 mb-3 mt-4">Data Types</h3>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  {#if viewingComponent.data_types && viewingComponent.data_types.length > 0 && viewingComponent.data_types[0]}
+                    {#each viewingComponent.data_types.filter(d => d) as dataType}
+                      <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{dataType}</span>
+                    {/each}
+                  {:else}
+                    <p class="text-sm text-gray-500">No data types defined</p>
+                  {/if}
+                </div>
+                
+                <h3 class="font-medium text-gray-900 mb-3 mt-4">Connected To</h3>
+                <div class="flex flex-wrap gap-2">
+                  {#if viewingComponent.connected_to && viewingComponent.connected_to.length > 0 && viewingComponent.connected_to[0]}
+                    {#each viewingComponent.connected_to.filter(c => c) as connectedId}
+                      <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{connectedId}</span>
+                    {/each}
+                  {:else}
+                    <p class="text-sm text-gray-500">Not connected to any components</p>
+                  {/if}
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t flex justify-end">
+              <button 
+                on:click={() => {
+                  editingComponent = { ...viewingComponent };
+                  viewingComponent = null;
+                }}
+                class="btn btn-primary flex items-center gap-2">
+                <Edit size={16} />
+                Edit Component
+              </button>
+            </div>
+          </div>
+        {:else}
+          <!-- Regular Component Form for editing/creating -->
+          <ComponentForm 
+            editMode={!!editingComponent}
+            component={editingComponent || undefined}
+            availableComponents={components}
+            on:submit={handleFormSubmit}
+            on:cancel={handleFormCancel}
+          />
+        {/if}
       </div>
     </div>
   {/if}

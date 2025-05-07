@@ -35,6 +35,7 @@
   
   // Component input
   export let editMode = false;
+  export let viewMode = false;
   export let component: ComponentType = {
     component_id: '',
     name: '',
@@ -184,11 +185,22 @@
   }
 </script>
 
-<div class="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto border border-gray-100">
+<div class="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto border border-gray-100 {viewMode ? 'view-mode' : ''}">
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-bold text-gray-900">
-      {editMode ? 'Edit Component' : 'Add New Component'}
-    </h2>
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">
+        {#if viewMode}
+          View Component
+        {:else if editMode}
+          Edit Component
+        {:else}
+          Add New Component
+        {/if}
+      </h2>
+      {#if viewMode}
+        <p class="text-sm text-gray-500 mt-1">Read-only view</p>
+      {/if}
+    </div>
     <button 
       on:click={handleCancel}
       class="p-1.5 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
@@ -205,6 +217,7 @@
           id="scope_id" 
           bind:value={component.scope_id}
           class="w-full rounded-md"
+          disabled={viewMode}
         >
           <option value="">-- No Scope Selected --</option>
           {#each availableScopes as scope}
@@ -220,10 +233,9 @@
           type="text" 
           id="component_id" 
           bind:value={component.component_id}
-          required
-          disabled={editMode}
-          class="w-full rounded-md {validationErrors.component_id ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}"
           placeholder="component-001"
+          disabled={viewMode || editMode}
+          class="w-full rounded-md {validationErrors.component_id ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}"
         />
         {#if validationErrors.component_id}
           <p class="text-xs text-red-600 mt-1">{validationErrors.component_id}</p>
@@ -237,6 +249,7 @@
           type="text" 
           id="name" 
           bind:value={component.name}
+          disabled={viewMode}
           required
           class="w-full rounded-md {validationErrors.name ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}"
           placeholder="Engine Control Unit"
@@ -252,6 +265,7 @@
         <select 
           id="type" 
           bind:value={component.type}
+          disabled={viewMode}
           required
           class="w-full rounded-md {validationErrors.type ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}">
           <option value="" disabled>Select a type</option>
@@ -270,6 +284,7 @@
         <select 
           id="safety_level" 
           bind:value={component.safety_level}
+          disabled={viewMode}
           required
           class="w-full rounded-md {validationErrors.safety_level ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}">
           <option value="" disabled>Select safety level</option>
@@ -288,6 +303,7 @@
         <select 
           id="location" 
           bind:value={component.location}
+          disabled={viewMode}
           required
           class="w-full rounded-md">
           {#each locations as location}
@@ -302,6 +318,7 @@
         <select 
           id="trust_zone" 
           bind:value={component.trust_zone}
+          disabled={viewMode}
           required
           class="w-full rounded-md {validationErrors.trust_zone ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}">
           <option value="" disabled>Select trust zone</option>
@@ -327,6 +344,7 @@
               type="text" 
               id={`interface-${index}`}
               bind:value={component.interfaces[index]}
+              disabled={viewMode}
               on:input={() => component.interfaces = updateItem(component.interfaces, index, component.interfaces[index])}
               class="flex-1 rounded-md {validationErrors.interfaces ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-200' : ''}"
               placeholder="CAN, Ethernet, etc."
@@ -336,6 +354,7 @@
               <button 
                 type="button"
                 on:click={() => component.interfaces = addItem(component.interfaces)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
               >
                 <Plus size={16} />
@@ -344,6 +363,7 @@
               <button 
                 type="button"
                 on:click={() => component.interfaces = removeItem(component.interfaces, index)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 rounded-md transition-colors"
               >
                 <Trash2 size={16} />
@@ -370,6 +390,7 @@
               type="text" 
               id={`access-point-${index}`}
               bind:value={component.access_points[index]}
+              disabled={viewMode}
               on:input={() => component.access_points = updateItem(component.access_points, index, component.access_points[index])}
               class="flex-1 rounded-md"
               placeholder="OBD Port, USB, etc."
@@ -379,6 +400,7 @@
               <button 
                 type="button"
                 on:click={() => component.access_points = addItem(component.access_points)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
               >
                 <Plus size={16} />
@@ -387,6 +409,7 @@
               <button 
                 type="button"
                 on:click={() => component.access_points = removeItem(component.access_points, index)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 rounded-md transition-colors"
               >
                 <Trash2 size={16} />
@@ -409,6 +432,7 @@
               type="text" 
               id={`data-type-${index}`}
               bind:value={component.data_types[index]}
+              disabled={viewMode}
               on:input={() => component.data_types = updateItem(component.data_types, index, component.data_types[index])}
               class="flex-1 rounded-md"
               placeholder="Control Commands, Sensor Data, etc."
@@ -418,6 +442,7 @@
               <button 
                 type="button"
                 on:click={() => component.data_types = addItem(component.data_types)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
               >
                 <Plus size={16} />
@@ -426,6 +451,7 @@
               <button 
                 type="button"
                 on:click={() => component.data_types = removeItem(component.data_types, index)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 rounded-md transition-colors"
               >
                 <Trash2 size={16} />
@@ -447,6 +473,7 @@
             <select 
               id={`connected-to-${index}`}
               bind:value={component.connected_to[index]}
+              disabled={viewMode}
               on:change={() => component.connected_to = updateItem(component.connected_to, index, component.connected_to[index])}
               class="flex-1 rounded-md"
               aria-label={`Connected Component ${index + 1}`}>
@@ -460,6 +487,7 @@
               <button 
                 type="button"
                 on:click={() => component.connected_to = addItem(component.connected_to)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
               >
                 <Plus size={16} />
@@ -468,6 +496,7 @@
               <button 
                 type="button"
                 on:click={() => component.connected_to = removeItem(component.connected_to, index)}
+                disabled={viewMode}
                 class="p-2 bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 rounded-md transition-colors"
               >
                 <Trash2 size={16} />
@@ -493,6 +522,7 @@
         onChange={(property, value) => {
           component[property] = value;
         }}
+        readOnly={viewMode}
       />
     </div>
     
@@ -501,15 +531,18 @@
         type="button"
         on:click={handleCancel} 
         class="btn px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-        Cancel
+        {viewMode ? 'Close' : 'Cancel'}
       </button>
-      <button 
-        type="submit"
-        class="btn btn-primary flex items-center gap-2" 
-        disabled={Object.keys(validationErrors).length > 0}>
-        <Save size={16} />
-        {editMode ? 'Update Component' : 'Save Component'}
-      </button>
+      
+      {#if !viewMode}
+        <button 
+          type="submit"
+          class="btn btn-primary flex items-center gap-2" 
+          disabled={Object.keys(validationErrors).length > 0}>
+          <Save size={16} />
+          {editMode ? 'Update Component' : 'Save Component'}
+        </button>
+      {/if}
     </div>
   </form>
 </div>

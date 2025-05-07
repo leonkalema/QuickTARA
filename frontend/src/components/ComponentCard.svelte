@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { Shield, AlertTriangle, Settings, Edit, Trash2, Target } from '@lucide/svelte';
+  import { Shield, AlertTriangle, Settings, Edit, Trash2, Target, Eye } from '@lucide/svelte';
   import { scopeApi, type SystemScope } from '../api/scope';
   import { safeApiCall } from '../utils/error-handler';
   
@@ -72,6 +72,12 @@
 
   const Icon = getTypeIcon(component.type);
 
+  // Function to handle view action
+  function handleView() {
+    // Dispatch view event
+    dispatch('view', component);
+  }
+
   // Function to handle edit action
   function handleEdit() {
     // Dispatch edit event
@@ -122,6 +128,11 @@
       {component.trust_zone}
     </span>
     <div class="flex space-x-2">
+      <button 
+        on:click={handleView}
+        class="p-1.5 rounded-full transition-colors" style="color: var(--color-secondary); hover:background-color: rgba(59, 126, 161, 0.1);">
+        <Eye size={18} />
+      </button>
       <button 
         on:click={handleEdit}
         class="p-1.5 rounded-full transition-colors" style="color: var(--color-primary); hover:background-color: rgba(59, 126, 161, 0.1);">

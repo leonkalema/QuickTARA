@@ -4,26 +4,27 @@
   
   // Define the security properties interface
   export let values = {
-    confidentiality: 'MEDIUM',
-    integrity: 'MEDIUM',
-    availability: 'MEDIUM',
+    confidentiality: 'Medium',
+    integrity: 'Medium',
+    availability: 'Medium',
     authenticity_required: false,
     authorization_required: false
   };
   
   export let onChange: (property: string, value: any) => void;
+  export let readOnly = false;
   
   // Security level options
   const securityLevels = [
-    { value: 'HIGH', label: 'High' },
-    { value: 'MEDIUM', label: 'Medium' },
-    { value: 'LOW', label: 'Low' },
-    { value: 'NOT_APPLICABLE', label: 'Not Applicable' }
+    { value: 'High', label: 'High' },
+    { value: 'Medium', label: 'Medium' },
+    { value: 'Low', label: 'Low' },
+    { value: 'N/A', label: 'Not Applicable' }
   ];
   
   // Helper function to get description based on security level
   function getConfidentialityDescription(level: string): string {
-    switch(level) {
+    switch(level?.toUpperCase()) {
       case 'HIGH':
         return 'Example: Personal data, key material, authentication data';
       case 'MEDIUM':
@@ -36,7 +37,7 @@
   }
   
   function getIntegrityDescription(level: string): string {
-    switch(level) {
+    switch(level?.toUpperCase()) {
       case 'HIGH':
         return 'Example: Brake control, steering inputs, safety-critical sensors';
       case 'MEDIUM':
@@ -49,7 +50,7 @@
   }
   
   function getAvailabilityDescription(level: string): string {
-    switch(level) {
+    switch(level?.toUpperCase()) {
       case 'HIGH':
         return 'Example: Emergency systems, fail-safe components, core ECUs';
       case 'MEDIUM':
@@ -77,13 +78,14 @@
     </div>
     <select 
       value={values.confidentiality} 
-      on:change={(e) => onChange('confidentiality', e.target.value)}
+      on:change={(e) => onChange('confidentiality', (e.target as HTMLSelectElement).value)}
       class="w-full rounded-md mb-2"
+      disabled={readOnly}
     >
-      <option value="HIGH">Yes, severe harm (High)</option>
-      <option value="MEDIUM">Yes, moderate harm (Medium)</option>
-      <option value="LOW">Minimal harm (Low)</option>
-      <option value="NOT_APPLICABLE">Not applicable</option>
+      <option value="High">Yes, severe harm (High)</option>
+      <option value="Medium">Yes, moderate harm (Medium)</option>
+      <option value="Low">Minimal harm (Low)</option>
+      <option value="N/A">Not applicable</option>
     </select>
     <p class="helper-text text-xs text-gray-600">
       {getConfidentialityDescription(values.confidentiality)}
@@ -102,13 +104,14 @@
     </div>
     <select 
       value={values.integrity} 
-      on:change={(e) => onChange('integrity', e.target.value)}
+      on:change={(e) => onChange('integrity', (e.target as HTMLSelectElement).value)}
       class="w-full rounded-md mb-2"
+      disabled={readOnly}
     >
-      <option value="HIGH">Yes, safety-critical impacts (High)</option>
-      <option value="MEDIUM">Yes, operational impacts (Medium)</option>
-      <option value="LOW">Minimal impact (Low)</option>
-      <option value="NOT_APPLICABLE">Not applicable</option>
+      <option value="High">Yes, safety-critical impacts (High)</option>
+      <option value="Medium">Yes, operational impacts (Medium)</option>
+      <option value="Low">Minimal impact (Low)</option>
+      <option value="N/A">Not applicable</option>
     </select>
     <p class="helper-text text-xs text-gray-600">
       {getIntegrityDescription(values.integrity)}
@@ -127,13 +130,14 @@
     </div>
     <select 
       value={values.availability} 
-      on:change={(e) => onChange('availability', e.target.value)}
+      on:change={(e) => onChange('availability', (e.target as HTMLSelectElement).value)}
       class="w-full rounded-md mb-2"
+      disabled={readOnly}
     >
-      <option value="HIGH">Yes, must always be available (High)</option>
-      <option value="MEDIUM">Yes, limited downtime acceptable (Medium)</option>
-      <option value="LOW">Non-critical operation (Low)</option>
-      <option value="NOT_APPLICABLE">Not applicable</option>
+      <option value="High">Yes, must always be available (High)</option>
+      <option value="Medium">Yes, limited downtime acceptable (Medium)</option>
+      <option value="Low">Non-critical operation (Low)</option>
+      <option value="N/A">Not applicable</option>
     </select>
     <p class="helper-text text-xs text-gray-600">
       {getAvailabilityDescription(values.availability)}
@@ -146,8 +150,9 @@
       <input 
         type="checkbox" 
         checked={values.authenticity_required}
-        on:change={(e) => onChange('authenticity_required', e.target.checked)}
+        on:change={(e) => onChange('authenticity_required', (e.target as HTMLInputElement).checked)}
         class="mt-1 mr-2"
+        disabled={readOnly}
       />
       <div>
         <p class="font-medium text-gray-700">Does this component need to verify the source of data it receives?</p>
@@ -164,8 +169,9 @@
       <input 
         type="checkbox" 
         checked={values.authorization_required}
-        on:change={(e) => onChange('authorization_required', e.target.checked)}
+        on:change={(e) => onChange('authorization_required', (e.target as HTMLInputElement).checked)}
         class="mt-1 mr-2"
+        disabled={readOnly}
       />
       <div>
         <p class="font-medium text-gray-700">Should this component restrict who/what can access it?</p>
