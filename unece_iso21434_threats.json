@@ -1,0 +1,162 @@
+[
+  {
+    "title": "UNECE/ISO Threat 01",
+    "description": "Placeholder description for threat 01 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "spoofing",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 02",
+    "description": "Placeholder description for threat 02 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "tampering",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 03",
+    "description": "Placeholder description for threat 03 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "repudiation",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 04",
+    "description": "Placeholder description for threat 04 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "info_disclosure",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 05",
+    "description": "Placeholder description for threat 05 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "denial_of_service",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 06",
+    "description": "Placeholder description for threat 06 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "elevation_of_privilege",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 07",
+    "description": "Placeholder description for threat 07 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "spoofing",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 08",
+    "description": "Placeholder description for threat 08 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "tampering",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 09",
+    "description": "Placeholder description for threat 09 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "repudiation",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  ,
+  {
+    "title": "UNECE/ISO Threat 10",
+    "description": "Placeholder description for threat 10 derived from UNECE R155 Annex 5 / ISO 21434 Annex.",
+    "stride_category": "info_disclosure",
+    "applicable_component_types": ["controller"],
+    "applicable_trust_zones": ["untrusted"],
+    "attack_vectors": ["network"],
+    "prerequisites": [],
+    "typical_likelihood": 3,
+    "typical_severity": 3,
+    "mitigation_strategies": [],
+    "cwe_ids": [],
+    "capec_ids": [],
+    "examples": []
+  }
+  // ... Continue similarly up to 70 entries
+]
