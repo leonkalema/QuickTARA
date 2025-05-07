@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, Upload, Download, RefreshCw, AlertCircle, X, Edit } from '@lucide/svelte';
+  import { Plus, Upload, Download, RefreshCw, AlertCircle, X, Edit, Trash2, AlertTriangle } from '@lucide/svelte';
+  import { showSuccess, showError, showInfo, showWarning } from './ToastManager.svelte';
   import ComponentCard from './ComponentCard.svelte';
   import ComponentFilter from './ComponentFilter.svelte';
   import ComponentForm from './ComponentForm.svelte';
@@ -17,6 +18,8 @@
   let editingComponent: any = null;
   let viewingComponent: any = null;
   let showImportModal = false;
+  let showDeleteModal = false;
+  let componentToDelete: any = null;
   
   // Filter state
   let filters = {
@@ -97,42 +100,65 @@
     showForm = true;
   }
   
-  async function handleDeleteComponent(componentId: string) {
-    if (confirm(`Are you sure you want to delete this component: ${componentId}?`)) {
-      const success = await safeApiCall(() => componentApi.delete(componentId));
-      
-      if (success) {
-        components = components.filter(c => c.component_id !== componentId);
-        applyFilters();
-      }
+  function showDeleteConfirmation(component: any) {
+    componentToDelete = component;
+    showDeleteModal = true;
+  }
+  
+  async function confirmDelete() {
+    if (!componentToDelete) return;
+    
+    const componentId = componentToDelete.component_id;
+    const componentName = componentToDelete.name;
+    const success = await safeApiCall(() => componentApi.delete(componentId));
+    
+    if (success) {
+      components = components.filter(c => c.component_id !== componentId);
+      applyFilters();
+      showSuccess(`Component "${componentName}" was successfully deleted`);
+    } else {
+      showError('Failed to delete component');
     }
+    
+    // Close the modal
+    showDeleteModal = false;
+    componentToDelete = null;
+  }
+  
+  function cancelDelete() {
+    showDeleteModal = false;
+    componentToDelete = null;
   }
   
   async function handleFormSubmit(event: CustomEvent) {
-    const componentData = event.detail;
+    const component = event.detail;
+    let success;
+    const isNew = !component.component_id;
     
-    if (editingComponent) {
+    if (!isNew) {
       // Update existing component
-      const updatedComponent = await safeApiCall(() => 
-        componentApi.update(componentData.component_id, componentData)
-      );
-      
-      if (updatedComponent) {
-        components = components.map(c => 
-          c.component_id === updatedComponent.component_id ? updatedComponent : c
-        );
-        showForm = false;
+      success = await safeApiCall(() => componentApi.update(component.component_id, component));
+      if (success) {
+        showSuccess(`Component "${component.name}" was successfully updated`);
+      } else {
+        showError('Failed to update component');
       }
     } else {
       // Create new component
-      const newComponent = await safeApiCall(() => 
-        componentApi.create(componentData)
-      );
-      
-      if (newComponent) {
-        components = [...components, newComponent];
-        showForm = false;
+      success = await safeApiCall(() => componentApi.create(component));
+      if (success) {
+        showSuccess(`Component "${component.name}" was successfully created`);
+      } else {
+        showError('Failed to create component');
       }
+    }
+    
+    if (success) {
+      // Reload all components to get the updated list
+      await loadComponents();
+      showForm = false;
+      editingComponent = null;
+      viewingComponent = null;
     }
     
     applyFilters();
@@ -214,7 +240,7 @@
             {component}
             on:view={() => handleViewComponent(component)}
             on:edit={() => handleEditComponent(component)}
-            on:delete={() => handleDeleteComponent(component.component_id)} 
+            on:delete={() => showDeleteConfirmation(component)} 
           />
         {/each}
       </div>
@@ -324,7 +350,7 @@
                 <h3 class="font-medium text-gray-900 mb-3">Interfaces</h3>
                 <div class="flex flex-wrap gap-2 mb-4">
                   {#if viewingComponent.interfaces && viewingComponent.interfaces.length > 0}
-                    {#each viewingComponent.interfaces.filter(i => i) as interfaceItem}
+                    {#each viewingComponent.interfaces.filter((i: string) => i) as interfaceItem}
                       <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{interfaceItem}</span>
                     {/each}
                   {:else}
@@ -335,7 +361,7 @@
                 <h3 class="font-medium text-gray-900 mb-3 mt-4">Access Points</h3>
                 <div class="flex flex-wrap gap-2 mb-4">
                   {#if viewingComponent.access_points && viewingComponent.access_points.length > 0 && viewingComponent.access_points[0]}
-                    {#each viewingComponent.access_points.filter(a => a) as accessPoint}
+                    {#each viewingComponent.access_points.filter((a: string) => a) as accessPoint}
                       <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{accessPoint}</span>
                     {/each}
                   {:else}
@@ -346,7 +372,7 @@
                 <h3 class="font-medium text-gray-900 mb-3 mt-4">Data Types</h3>
                 <div class="flex flex-wrap gap-2 mb-4">
                   {#if viewingComponent.data_types && viewingComponent.data_types.length > 0 && viewingComponent.data_types[0]}
-                    {#each viewingComponent.data_types.filter(d => d) as dataType}
+                    {#each viewingComponent.data_types.filter((d: string) => d) as dataType}
                       <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{dataType}</span>
                     {/each}
                   {:else}
@@ -357,7 +383,7 @@
                 <h3 class="font-medium text-gray-900 mb-3 mt-4">Connected To</h3>
                 <div class="flex flex-wrap gap-2">
                   {#if viewingComponent.connected_to && viewingComponent.connected_to.length > 0 && viewingComponent.connected_to[0]}
-                    {#each viewingComponent.connected_to.filter(c => c) as connectedId}
+                    {#each viewingComponent.connected_to.filter((c: string) => c) as connectedId}
                       <span class="px-2 py-1 bg-white border border-gray-200 rounded text-sm">{connectedId}</span>
                     {/each}
                   {:else}
@@ -399,4 +425,57 @@
     on:close={handleImportClose}
     on:import={handleImportSuccess}
   />
+  
+  <!-- Delete Confirmation Modal -->
+  {#if showDeleteModal && componentToDelete}
+    <div class="fixed inset-0 bg-neutral-900/40 z-50 flex items-center justify-center transition-opacity duration-200">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
+        <div class="p-5 border-b border-gray-200">
+          <div class="flex items-center">
+            <div class="bg-red-100 p-2 rounded-full mr-3">
+              <AlertTriangle size={24} class="text-red-600" />
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Delete Component</h3>
+          </div>
+        </div>
+        
+        <div class="p-5">
+          <p class="text-gray-700 mb-2">Are you sure you want to delete this component?</p>
+          <p class="font-medium text-gray-900 mb-1">{componentToDelete.name}</p>
+          <p class="text-sm text-gray-500 mb-4">{componentToDelete.component_id}</p>
+          
+          <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <AlertTriangle size={20} class="text-red-600" />
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-red-700">
+                  This action cannot be undone. This will permanently delete the component and remove all associated data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="px-5 py-4 bg-gray-50 flex justify-end space-x-3">
+          <button 
+            type="button"
+            on:click={cancelDelete}
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="button"
+            on:click={confirmDelete}
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2"
+          >
+            <Trash2 size={16} />
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>

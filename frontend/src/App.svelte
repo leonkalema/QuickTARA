@@ -8,6 +8,7 @@
   import AttackPathManager from './components/attack-path/AttackPathManager.svelte';
   import Navbar from './components/Navbar.svelte';
   import Notifications from './components/ui/Notifications.svelte';
+  import ToastManager from './components/ToastManager.svelte';
   
   // Active page state
   let activePage = 'scopes';
@@ -15,6 +16,7 @@
 
 <main class="min-h-screen" style="background-color: var(--color-background);">
   <Notifications />
+  <ToastManager />
   <Navbar bind:activePage={activePage} />
   
   <!-- Section header for each page - visually connects with the navbar -->
