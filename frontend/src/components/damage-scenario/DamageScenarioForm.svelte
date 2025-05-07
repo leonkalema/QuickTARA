@@ -42,6 +42,8 @@
   };
   let propagationSuggestions: PropagationSuggestion[] = [];
   let scopes: Scope[] = [];
+  // Keep full component list to avoid extra API round-trips
+  let allComponents: Component[] = [];
   let components: Component[] = [];
   let showPropagationSuggestions = false;
   let formErrors: Record<string, string> = {};
@@ -96,7 +98,11 @@
       }
       
       if (componentsResult) {
-        components = Array.isArray(componentsResult) ? componentsResult : [];
+        allComponents = Array.isArray(componentsResult) ? componentsResult : [];
+        // Initial component list filtered by current scope (if any)
+        components = formData.scope_id
+          ? allComponents.filter(c => c.scope_id === formData.scope_id)
+          : allComponents;
         
         // If no primary component is selected and we have components, select the first one
         if (!formData.primary_component_id && components.length > 0) {
@@ -107,11 +113,6 @@
             formData.affected_component_ids = [...formData.affected_component_ids, components[0].component_id];
           }
         }
-      }
-      
-      // If a scope is selected, load components for that scope
-      if (formData.scope_id) {
-        await loadComponentsForScope(formData.scope_id);
       }
       
       // If we have a primary component, get propagation suggestions
@@ -247,36 +248,15 @@
   }
   
   /**
-   * Load components for a specific scope
+   * Load components for a specific scope – client-side filtering only
    */
   async function loadComponentsForScope(scopeId: string) {
-    try {
-      const scopeComponents = await safeApiCall(() => scopeApi.getComponents(scopeId));
-      if (scopeComponents && Array.isArray(scopeComponents)) {
-        components = scopeComponents;
-        
-        // Update primary component if it's not in the new component list
-        if (formData.primary_component_id && !components.some(c => c.component_id === formData.primary_component_id)) {
-          formData.primary_component_id = components.length > 0 ? components[0].component_id : '';
-        }
-        
-        // Filter affected components to only include those in the new component list
-        formData.affected_component_ids = formData.affected_component_ids.filter(id => 
-          components.some(c => c.component_id === id)
-        );
-        
-        // Add primary component to affected components if it's not already there
-        if (formData.primary_component_id && !formData.affected_component_ids.includes(formData.primary_component_id)) {
-          formData.affected_component_ids = [...formData.affected_component_ids, formData.primary_component_id];
-        }
-      }
-    } catch (err) {
-      console.error(`Error loading components for scope ${scopeId}:`, err);
-    }
+    // No extra network call – just filter the cached list
+    components = scopeId ? allComponents.filter(c => c.scope_id === scopeId) : allComponents;
   }
   
   function getComponentName(componentId: string): string {
-    const component = components.find(c => c.component_id === componentId);
+    const component = allComponents.find(c => c.component_id === componentId);
     return component ? component.name : 'Unknown Component';
   }
 </script>
