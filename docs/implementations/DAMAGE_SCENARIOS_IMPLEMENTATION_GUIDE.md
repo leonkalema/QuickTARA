@@ -330,15 +330,416 @@ class Scope(Base):
 
 ### Frontend Components
 
+The frontend implementation consists of several key components that work together to provide a complete damage scenario management interface. These components are integrated into the Analysis section of the application as a new tab.
+
+#### API Client (damage-scenarios.ts)
+
+The API client provides type-safe access to the damage scenarios backend API:
+
+```typescript
+// Key interfaces and enums
+export enum DamageCategory {
+  PHYSICAL = "Physical",
+  OPERATIONAL = "Operational",
+  FINANCIAL = "Financial",
+  PRIVACY = "Privacy",
+  SAFETY = "Safety",
+  ENVIRONMENTAL = "Environmental",
+  REPUTATIONAL = "Reputational",
+  LEGAL = "Legal",
+  OTHER = "Other"
+}
+
+export enum ImpactType {
+  DIRECT = "Direct",
+  INDIRECT = "Indirect",
+  CASCADING = "Cascading"
+}
+
+export enum SeverityLevel {
+  LOW = "Low",
+  MEDIUM = "Medium",
+  HIGH = "High",
+  CRITICAL = "Critical"
+}
+
+export interface DamageScenario {
+  scenario_id: string;
+  name: string;
+  description: string;
+  damage_category: DamageCategory;
+  impact_type: ImpactType;
+  confidentiality_impact: boolean;
+  integrity_impact: boolean;
+  availability_impact: boolean;
+  severity: SeverityLevel;
+  impact_details?: Record<string, any>;
+  scope_id: string;
+  primary_component_id: string;
+  affected_component_ids: string[];
+  version: number;
+  revision_notes?: string;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// API service methods
+export const damageScenarioApi = {
+  async getAll(options?: {...}): Promise<DamageScenarioList> {...},
+  async getById(id: string): Promise<DamageScenario> {...},
+  async create(scenario: DamageScenarioCreate): Promise<DamageScenario> {...},
+  async update(id: string, scenario: DamageScenarioUpdate): Promise<DamageScenario> {...},
+  async delete(id: string): Promise<void> {...},
+  async getPropagationSuggestions(componentId: string, impacts: {...}): Promise<PropagationSuggestionResponse> {...}
+}
+```
+
 #### DamageScenarioManager.svelte
 
 Main container component that manages the overall damage scenario workflow:
 
 ```svelte
 <script lang="ts">
+  // Imports and state management
   import { onMount } from 'svelte';
-  import DamageScenarioList from './DamageScenarioList.svelte';
-  import DamageScenarioForm from './DamageScenarioForm.svelte';
+  import { damageScenarioApi, type DamageScenario } from '../../api/damage-scenarios';
+  import { safeApiCall } from '../../utils/error-handler';
+  import { showSuccess, showError } from '../ToastManager.svelte';
+  
+  // State variables
+  let scenarios: DamageScenario[] = [];
+  let totalScenarios: number = 0;
+  let isLoading = true;
+  let showForm = false;
+  let editingScenario: DamageScenario | null = null;
+  
+  // Stats tracking
+  let stats = {
+    totalScenarios: 0,
+    criticalScenarios: 0,
+    highScenarios: 0,
+    directImpacts: 0,
+    cascadingImpacts: 0
+  };
+  
+  // Load scenarios on component mount
+  onMount(async () => {
+    await loadDamageScenarios();
+  });
+  
+  // CRUD operations for damage scenarios
+  async function loadDamageScenarios() { /* ... */ }
+  function handleCreateScenario() { /* ... */ }
+  async function handleFormSubmit(event: CustomEvent) { /* ... */ }
+  async function handleDeleteScenario(scenario: DamageScenario) { /* ... */ }
+</script>
+
+<!-- UI Template -->
+<div class="space-y-6">
+  <!-- Stats cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <!-- Various metric cards for statistics -->
+  </div>
+  
+  <!-- Action bar with buttons -->
+  <div class="flex justify-between items-center mb-6">...</div>
+  
+  <!-- Filters section -->
+  <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">...</div>
+  
+  <!-- Damage Scenario List component -->
+  <DamageScenarioListComponent 
+    scenarios={scenarios}
+    totalScenarios={totalScenarios}
+    currentPage={currentPage}
+    pageSize={pageSize}
+    isLoading={isLoading}
+    error={error}
+    on:edit={(e: CustomEvent<DamageScenario>) => handleEditScenario(e.detail)}
+    on:delete={(e: CustomEvent<DamageScenario>) => handleDeleteScenario(e.detail)}
+    on:pageChange={(e: CustomEvent<number>) => handlePageChange(e.detail)}
+  />
+  
+  <!-- Damage Scenario Form Dialog -->
+  {#if showForm}
+    <div class="fixed inset-0 backdrop-blur-sm bg-neutral-900/40 flex items-center justify-center z-50 p-4">
+      <DamageScenarioForm
+        scenario={editingScenario}
+        scopeId={selectedScopeId || undefined}
+        componentId={selectedComponentId || undefined}
+        on:submit={handleFormSubmit}
+        on:cancel={handleFormCancel}
+      />
+    </div>
+  {/if}
+</div>
+```
+
+The DamageScenarioManager serves as the main container for the damage scenarios functionality. It handles:
+
+- Loading and displaying damage scenarios with filtering and pagination
+- Creating, editing, and deleting damage scenarios
+- Displaying statistics about the scenarios (counts by severity and impact type)
+- Managing the state of the form dialog for creating/editing scenarios
+
+#### DamageScenarioList.svelte
+
+Component for displaying the list of damage scenarios with pagination and actions:
+
+```svelte
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import { RefreshCw, AlertTriangle, Shield, Activity, Edit, Trash2, Eye } from '@lucide/svelte';
+  import type { DamageScenario } from '../../api/damage-scenarios';
+  
+  // Props
+  export let scenarios: DamageScenario[] = [];
+  export let totalScenarios: number = 0;
+  export let currentPage: number = 1;
+  export let pageSize: number = 10;
+  export let isLoading: boolean = false;
+  export let error: string = '';
+  
+  // Event dispatcher
+  const dispatch = createEventDispatcher();
+  
+  // Computed properties
+  $: totalPages = Math.ceil(totalScenarios / pageSize);
+  $: startItem = (currentPage - 1) * pageSize + 1;
+  $: endItem = Math.min(startItem + pageSize - 1, totalScenarios);
+  
+  // Helper functions
+  function getSeverityColor(severity: string): string { /* ... */ }
+  function getImpactTypeColor(impactType: string): string { /* ... */ }
+  function formatDate(dateString: string): string { /* ... */ }
+</script>
+
+<!-- UI Template -->
+<div>
+  {#if isLoading}
+    <!-- Loading state -->
+  {:else if error}
+    <!-- Error state -->
+  {:else if scenarios.length === 0}
+    <!-- Empty state -->
+  {:else}
+    <!-- Data table with scenarios -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <!-- Table header -->
+        <thead>...</thead>
+        
+        <!-- Table body -->
+        <tbody>
+          {#each scenarios as scenario}
+            <tr class="hover:bg-gray-50">
+              <!-- Scenario details columns -->
+              <td>...</td>
+              
+              <!-- Action buttons -->
+              <td>
+                <div class="flex space-x-2">
+                  <button on:click={() => dispatch('view', scenario)}>...</button>
+                  <button on:click={() => dispatch('edit', scenario)}>...</button>
+                  <button on:click={() => dispatch('delete', scenario)}>...</button>
+                </div>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+      
+      <!-- Pagination controls -->
+      {#if totalPages > 1}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200">
+          <!-- Pagination UI -->
+        </div>
+      {/if}
+    </div>
+  {/if}
+</div>
+```
+
+The DamageScenarioList component is responsible for:
+
+- Displaying damage scenarios in a tabular format
+- Showing appropriate loading, error, and empty states
+- Providing action buttons for viewing, editing, and deleting scenarios
+- Implementing pagination controls for navigating through large sets of scenarios
+- Visual indicators for severity and impact types
+
+#### DamageScenarioForm.svelte
+
+Component for creating and editing damage scenarios:
+
+```svelte
+<script lang="ts">
+  import { createEventDispatcher, onMount } from 'svelte';
+  import { X, AlertTriangle, Save, Trash2, Loader2 } from '@lucide/svelte';
+  import { 
+    damageScenarioApi, 
+    type DamageScenario, 
+    type DamageScenarioCreate,
+    type PropagationSuggestion,
+    DamageCategory,
+    ImpactType,
+    SeverityLevel
+  } from '../../api/damage-scenarios';
+  import { safeApiCall } from '../../utils/error-handler';
+  
+  // Props
+  export let scenario: DamageScenario | null = null;
+  export let scopeId: string | undefined = undefined;
+  export let componentId: string | undefined = undefined;
+  
+  // State
+  let isLoading = false;
+  let isSaving = false;
+  let isPropagationLoading = false;
+  let formData: DamageScenarioCreate;
+  let propagationSuggestions: PropagationSuggestion[] = [];
+  let scopes: Array<{ id: string, name: string }> = [];
+  let components: Array<{ id: string, name: string }> = [];
+  let showPropagationSuggestions = false;
+  let formErrors: Record<string, string> = {};
+  
+  // Event dispatcher
+  const dispatch = createEventDispatcher();
+  
+  // Initialize form data and load dependencies
+  onMount(async () => {
+    isLoading = true;
+    
+    try {
+      // Initialize form data
+      initFormData();
+      
+      // Load scopes and components in parallel
+      const [scopesResult, componentsResult] = await Promise.all([
+        safeApiCall(() => fetch('/api/scopes').then(res => res.json())),
+        safeApiCall(() => fetch('/api/components').then(res => res.json()))
+      ]);
+      
+      // Process results and load propagation suggestions if needed
+      // ...
+    } catch (err) {
+      console.error('Error initializing form:', err);
+    } finally {
+      isLoading = false;
+    }
+  });
+  
+  // Load propagation suggestions based on selected component and CIA impacts
+  async function loadPropagationSuggestions() { /* ... */ }
+  
+  // Form validation and submission
+  function validateForm(): boolean { /* ... */ }
+  async function handleSubmit() { /* ... */ }
+  
+  // Handle component selection and propagation suggestions
+  function handlePrimaryComponentChange() { /* ... */ }
+  function handleCIAChange() { /* ... */ }
+  function handleApplySuggestions() { /* ... */ }
+</script>
+
+<div class="bg-white rounded-lg shadow-lg overflow-hidden max-w-3xl mx-auto">
+  <!-- Form header -->
+  <div class="flex justify-between items-center px-6 py-4 bg-gray-50 border-b border-gray-200">...</div>
+  
+  {#if isLoading}
+    <!-- Loading state -->
+  {:else}
+    <form on:submit|preventDefault={handleSubmit} class="p-6 space-y-6">
+      <!-- Basic Information section -->
+      <div class="space-y-4">...</div>
+      
+      <!-- Impact Details section -->
+      <div class="space-y-4">...</div>
+      
+      <!-- Component Selection section -->
+      <div class="space-y-4">
+        <!-- Primary Component selection -->
+        <div>...</div>
+        
+        <!-- Propagation Suggestions -->
+        {#if formData.primary_component_id}
+          <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+            <!-- Propagation UI with suggestions based on component connections -->
+            <!-- Shows potential affected components based on the selected primary component -->
+          </div>
+        {/if}
+        
+        <!-- Affected Components selection -->
+        <div>...</div>
+      </div>
+      
+      <!-- Form actions -->
+      <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">...</div>
+    </form>
+  {/if}
+</div>
+```
+
+The DamageScenarioForm component provides a comprehensive interface for creating and editing damage scenarios with the following features:
+
+- Form fields for all damage scenario properties (name, description, category, etc.)
+- CIA impact selection with validation to ensure at least one impact is selected
+- Component selection with primary and affected components
+- Integration with the Impact Propagation Engine to suggest affected components
+- Form validation with error messages
+- Loading and saving states with appropriate UI feedback
+
+#### Integration with AnalysisManager
+
+The Damage Scenarios module is integrated into the existing AnalysisManager component as a new tab:
+
+```svelte
+<!-- In AnalysisManager.svelte -->
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { Plus, RefreshCw, BarChart, AlertTriangle, Shield, Activity, Search, ShieldAlert, Zap } from '@lucide/svelte';
+  import { analysisApi, type Analysis, AnalysisStatus } from '../api/analysis';
+  import { componentApi } from '../api/components';
+  import { safeApiCall } from '../utils/error-handler';
+  import AnalysisForm from './AnalysisForm.svelte';
+  import ThreatAnalysisVisualizer from './threat/ThreatAnalysisVisualizer.svelte';
+  import VulnerabilityAssessmentTab from './vulnerability/VulnerabilityAssessmentTab.svelte';
+  import DamageScenarioManager from './damage-scenario/DamageScenarioManager.svelte';
+  
+  // Active tab management
+  let activeTab = 'general-analysis'; // 'general-analysis', 'threat-analysis', 'vulnerability-analysis', 'damage-scenarios'
+  // ...
+</script>
+
+<div class="space-y-6">
+  <!-- Tab Navigation -->
+  <div class="border-b border-gray-200">
+    <nav class="-mb-px flex space-x-8" aria-label="Analysis sections">
+      <!-- Existing tabs -->
+      
+      <!-- Damage Scenarios Tab -->
+      <button
+        class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'damage-scenarios' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        on:click={() => activeTab = 'damage-scenarios'}
+      >
+        <Zap class="h-5 w-5" />
+        <span>Damage Scenarios</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Tab Content -->
+  <!-- Existing tab content -->
+  
+  <!-- Damage Scenarios Tab Content -->
+  {#if activeTab === 'damage-scenarios'}
+    <DamageScenarioManager />
+  {/if}
+</div>
+```
+
+This integration allows users to seamlessly switch between different analysis activities while maintaining a consistent user interface and navigation pattern.
   import DamageScenarioStats from './DamageScenarioStats.svelte';
   import DamageScenarioFilter from './DamageScenarioFilter.svelte';
   import { damageScenarioApi } from '../api/api';

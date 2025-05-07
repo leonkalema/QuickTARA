@@ -8,6 +8,7 @@ import logging
 
 from api.deps.db import get_db
 from api.models.scope import SystemScope, SystemScopeCreate, SystemScopeUpdate, SystemScopeList
+from api.models.component import ComponentList
 from api.services.scope_service import (
     create_scope as service_create_scope,
     get_scope as service_get_scope,
@@ -16,6 +17,7 @@ from api.services.scope_service import (
     update_scope as service_update_scope,
     delete_scope as service_delete_scope
 )
+from api.services.component_service import get_components_by_scope, count_components_by_scope
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -119,4 +121,36 @@ async def delete_scope(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting scope: {str(e)}"
+        )
+
+
+@router.get("/{scope_id}/components", response_model=ComponentList)
+async def get_scope_components(
+    scope_id: str,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all components for a specific scope
+    """
+    try:
+        # Check if scope exists
+        scope = service_get_scope(db, scope_id)
+        if not scope:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"System scope with ID {scope_id} not found"
+            )
+        
+        # Get components for this scope
+        components = get_components_by_scope(db, scope_id, skip=skip, limit=limit)
+        total = count_components_by_scope(db, scope_id)
+        
+        return ComponentList(components=components, total=total)
+    except Exception as e:
+        logger.error(f"Error getting components for scope {scope_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting components for scope: {str(e)}"
         )

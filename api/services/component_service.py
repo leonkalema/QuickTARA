@@ -164,6 +164,21 @@ def count_components(db: Session) -> int:
             return 0  # Safe fallback
 
 
+def get_components_by_scope(db: Session, scope_id: str, skip: int = 0, limit: int = 100) -> List[Component]:
+    """
+    Get components filtered by scope ID
+    """
+    db_components = db.query(DBComponent).filter(DBComponent.scope_id == scope_id).offset(skip).limit(limit).all()
+    return [_db_component_to_schema(c) for c in db_components]
+
+
+def count_components_by_scope(db: Session, scope_id: str) -> int:
+    """
+    Count total number of components for a specific scope
+    """
+    return db.query(DBComponent).filter(DBComponent.scope_id == scope_id).count()
+
+
 def update_component(db: Session, component_id: str, component: ComponentUpdate) -> Optional[Component]:
     """
     Update an existing component

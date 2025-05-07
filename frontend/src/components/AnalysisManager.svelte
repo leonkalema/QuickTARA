@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, RefreshCw, BarChart, AlertTriangle, Shield, Activity, Search, ShieldAlert } from '@lucide/svelte';
+  import { Plus, RefreshCw, BarChart, AlertTriangle, Shield, Activity, Search, ShieldAlert, Zap } from '@lucide/svelte';
   import { analysisApi, type Analysis, AnalysisStatus } from '../api/analysis';
   import { componentApi } from '../api/components';
   import { safeApiCall } from '../utils/error-handler';
   import AnalysisForm from './AnalysisForm.svelte';
   import ThreatAnalysisVisualizer from './threat/ThreatAnalysisVisualizer.svelte';
   import VulnerabilityAssessmentTab from './vulnerability/VulnerabilityAssessmentTab.svelte';
+  import DamageScenarioManager from './damage-scenario/DamageScenarioManager.svelte';
   
   // Analysis state
   let analyses: Analysis[] = [];
@@ -15,7 +16,7 @@
   let showForm = false;
   
   // Active tab management
-  let activeTab = 'general-analysis'; // 'general-analysis', 'threat-analysis', 'vulnerability-analysis'
+  let activeTab = 'general-analysis'; // 'general-analysis', 'threat-analysis', 'vulnerability-analysis', 'damage-scenarios'
   let selectedComponentIds: string[] = [];
   
   // Summary stats
@@ -133,6 +134,14 @@
       >
         <ShieldAlert class="h-5 w-5" />
         <span>Vulnerability Assessment</span>
+      </button>
+      
+      <button
+        class={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${activeTab === 'damage-scenarios' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        on:click={() => activeTab = 'damage-scenarios'}
+      >
+        <Zap class="h-5 w-5" />
+        <span>Damage Scenarios</span>
       </button>
     </nav>
   </div>
@@ -317,6 +326,11 @@
   <!-- Vulnerability Assessment Tab Content -->
   {#if activeTab === 'vulnerability-analysis'}
     <VulnerabilityAssessmentTab />
+  {/if}
+  
+  <!-- Damage Scenarios Tab Content -->
+  {#if activeTab === 'damage-scenarios'}
+    <DamageScenarioManager />
   {/if}
 </div>
 
