@@ -44,6 +44,21 @@ def create_damage_scenario(db: Session, scenario: DamageScenarioCreate) -> Damag
     if not primary_component:
         raise ValueError(f"Component with ID {scenario.primary_component_id} does not exist")
     
+    # Generate suggested SFOP ratings based on component and damage properties
+    # This uses the same logic as the suggest_sfop_ratings endpoint
+    safety_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.SAFETY else SeverityLevel.LOW
+    financial_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.FINANCIAL else SeverityLevel.MEDIUM
+    operational_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.OPERATIONAL else SeverityLevel.MEDIUM
+    privacy_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.PRIVACY else SeverityLevel.LOW
+    
+    # If availability is impacted, operational impact is at least MEDIUM
+    if scenario.availability_impact and operational_impact == SeverityLevel.LOW:
+        operational_impact = SeverityLevel.MEDIUM
+        
+    # If confidentiality is impacted, privacy impact is at least MEDIUM
+    if scenario.confidentiality_impact and privacy_impact == SeverityLevel.LOW:
+        privacy_impact = SeverityLevel.MEDIUM
+    
     # Create the damage scenario
     db_scenario = DBDamageScenario(
         scenario_id=scenario_id,
@@ -59,7 +74,13 @@ def create_damage_scenario(db: Session, scenario: DamageScenarioCreate) -> Damag
         version=scenario.version,
         revision_notes=scenario.revision_notes,
         scope_id=scenario.scope_id,
-        primary_component_id=scenario.primary_component_id
+        primary_component_id=scenario.primary_component_id,
+        # Set the auto-generated SFOP ratings
+        safety_impact=safety_impact,
+        financial_impact=financial_impact,
+        operational_impact=operational_impact,
+        privacy_impact=privacy_impact,
+        sfop_rating_auto_generated=True
     )
     
     # Add to database
