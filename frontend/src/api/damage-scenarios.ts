@@ -61,6 +61,19 @@ export interface DamageScenario {
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+
+  // SFOP Impact Rating fields
+  safety_impact?: string | null;
+  financial_impact?: string | null;
+  operational_impact?: string | null;
+  privacy_impact?: string | null;
+  impact_rating_notes?: string | null;
+
+  // Audit fields
+  sfop_rating_auto_generated?: boolean;
+  sfop_rating_last_edited_by?: string | null;
+  sfop_rating_last_edited_at?: string | null;
+  sfop_rating_override_reason?: string | null;
 }
 
 /**

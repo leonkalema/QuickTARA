@@ -242,6 +242,34 @@ def update_damage_scenario(
         
         db_scenario.affected_components = affected_components
     
+    # Update SFOP impact ratings if provided
+    if scenario.safety_impact is not None:
+        db_scenario.safety_impact = scenario.safety_impact
+    
+    if scenario.financial_impact is not None:
+        db_scenario.financial_impact = scenario.financial_impact
+    
+    if scenario.operational_impact is not None:
+        db_scenario.operational_impact = scenario.operational_impact
+    
+    if scenario.privacy_impact is not None:
+        db_scenario.privacy_impact = scenario.privacy_impact
+    
+    if scenario.impact_rating_notes is not None:
+        db_scenario.impact_rating_notes = scenario.impact_rating_notes
+    
+    if scenario.sfop_rating_auto_generated is not None:
+        db_scenario.sfop_rating_auto_generated = scenario.sfop_rating_auto_generated
+    
+    if scenario.sfop_rating_last_edited_by is not None:
+        db_scenario.sfop_rating_last_edited_by = scenario.sfop_rating_last_edited_by
+    
+    if scenario.sfop_rating_last_edited_at is not None:
+        db_scenario.sfop_rating_last_edited_at = scenario.sfop_rating_last_edited_at
+    
+    if scenario.sfop_rating_override_reason is not None:
+        db_scenario.sfop_rating_override_reason = scenario.sfop_rating_override_reason
+    
     # Update timestamp
     db_scenario.updated_at = datetime.now()
     
@@ -508,5 +536,15 @@ def _db_scenario_to_schema(db_scenario: DBDamageScenario) -> DamageScenario:
         updated_at=db_scenario.updated_at,
         scope_id=db_scenario.scope_id,
         primary_component_id=db_scenario.primary_component_id,
-        affected_component_ids=affected_component_ids
+        affected_component_ids=affected_component_ids,
+        # SFOP impact ratings and notes
+        safety_impact=db_scenario.safety_impact,
+        financial_impact=db_scenario.financial_impact,
+        operational_impact=db_scenario.operational_impact,
+        privacy_impact=db_scenario.privacy_impact,
+        impact_rating_notes=db_scenario.impact_rating_notes,
+        sfop_rating_auto_generated=db_scenario.sfop_rating_auto_generated,
+        sfop_rating_last_edited_by=db_scenario.sfop_rating_last_edited_by,
+        sfop_rating_last_edited_at=db_scenario.sfop_rating_last_edited_at,
+        sfop_rating_override_reason=db_scenario.sfop_rating_override_reason,
     )

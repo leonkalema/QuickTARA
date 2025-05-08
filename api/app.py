@@ -11,7 +11,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Import all routers
-from api.routes import components, analysis, reports, review, settings_routes, scope, risk, threat, vulnerability, attack_path, damage_scenarios
+from api.routes import components, analysis, reports, review, settings_routes, scope, risk, threat, vulnerability, attack_path, damage_scenarios, impact_ratings
 
 def create_app(settings=None):
     """
@@ -53,6 +53,7 @@ def create_app(settings=None):
     app.include_router(scope.router, prefix="/api/scope", tags=["scope"])  # Add scope router first
     app.include_router(components.router, prefix="/api/components", tags=["components"])
     app.include_router(damage_scenarios.router, prefix="/api/damage-scenarios", tags=["damage-scenarios"])  # Add damage scenarios router
+    app.include_router(impact_ratings.router, prefix="/api/impact-ratings", tags=["impact-ratings"])  # Add impact ratings router
     app.include_router(risk.router, prefix="/api/risk", tags=["risk"])  # Add risk framework router
     app.include_router(threat.router, prefix="/api/threat", tags=["threat"])  # Add threat analysis router
     app.include_router(vulnerability.router, prefix="/api/vulnerability", tags=["vulnerability"])  # Add vulnerability assessment router

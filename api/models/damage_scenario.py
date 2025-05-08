@@ -63,6 +63,19 @@ class DamageScenarioBase(BaseModel):
         description="Detailed impact information"
     )
     
+    # SFOP impact ratings
+    safety_impact: Optional[SeverityLevel] = Field(None, description="Safety impact rating")
+    financial_impact: Optional[SeverityLevel] = Field(None, description="Financial impact rating")
+    operational_impact: Optional[SeverityLevel] = Field(None, description="Operational impact rating")
+    privacy_impact: Optional[SeverityLevel] = Field(None, description="Privacy impact rating")
+    impact_rating_notes: Optional[str] = Field(None, description="Notes about impact ratings")
+    
+    # Audit fields for regulatory compliance
+    sfop_rating_auto_generated: bool = Field(default=True, description="Whether ratings were auto-generated")
+    sfop_rating_last_edited_by: Optional[str] = Field(None, description="Username who last modified the ratings")
+    sfop_rating_last_edited_at: Optional[datetime] = Field(None, description="When ratings were last modified")
+    sfop_rating_override_reason: Optional[str] = Field(None, description="Reason for overriding auto-ratings")
+    
     # Related components
     scope_id: str = Field(..., description="Associated system scope ID")
     primary_component_id: str = Field(..., description="Primary affected component ID")
@@ -112,6 +125,19 @@ class DamageScenarioUpdate(BaseModel):
     affected_component_ids: Optional[List[str]] = None
     version: Optional[int] = None
     revision_notes: Optional[str] = None
+    
+    # SFOP impact ratings
+    safety_impact: Optional[SeverityLevel] = None
+    financial_impact: Optional[SeverityLevel] = None
+    operational_impact: Optional[SeverityLevel] = None
+    privacy_impact: Optional[SeverityLevel] = None
+    impact_rating_notes: Optional[str] = None
+    
+    # Audit fields for regulatory compliance
+    sfop_rating_auto_generated: Optional[bool] = None
+    sfop_rating_last_edited_by: Optional[str] = None
+    sfop_rating_last_edited_at: Optional[datetime] = None
+    sfop_rating_override_reason: Optional[str] = None  # Required when manually overriding auto-ratings
     
     @model_validator(mode='after')
     def validate_cia_impacts(self):

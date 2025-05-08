@@ -41,6 +41,19 @@ class DamageScenario(Base):
     severity = Column(String, nullable=False)  # Low, Medium, High, Critical
     impact_details = Column(JSON, nullable=True)  # Detailed impact information
     
+    # SFOP impact ratings
+    safety_impact = Column(String, nullable=True)  # Low, Medium, High, Critical
+    financial_impact = Column(String, nullable=True)  # Low, Medium, High, Critical
+    operational_impact = Column(String, nullable=True)  # Low, Medium, High, Critical
+    privacy_impact = Column(String, nullable=True)  # Low, Medium, High, Critical
+    impact_rating_notes = Column(Text, nullable=True)  # Notes about impact ratings
+    
+    # Audit fields for regulatory compliance (UN R155 and ISO 21434)
+    sfop_rating_auto_generated = Column(Boolean, default=True, nullable=False)  # Flag to indicate if ratings were auto-generated
+    sfop_rating_last_edited_by = Column(String, nullable=True)  # Username who last modified the ratings
+    sfop_rating_last_edited_at = Column(DateTime, nullable=True)  # When ratings were last modified
+    sfop_rating_override_reason = Column(Text, nullable=True)  # Reason for overriding auto-ratings
+    
     # Versioning and audit
     version = Column(Integer, default=1)
     revision_notes = Column(Text, nullable=True)
