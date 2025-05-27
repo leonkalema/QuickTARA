@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 # Import all routers
 from api.routes import components, analysis, reports, review, settings_routes, scope, risk, threat, vulnerability, attack_path, damage_scenarios, impact_ratings
 
+# Import new product-centric model routers
+from api.routes import products, assets
+
 def create_app(settings=None):
     """
     Create FastAPI application with all routes and middleware
@@ -50,8 +53,14 @@ def create_app(settings=None):
     )
     
     # Include all API routers
-    app.include_router(scope.router, prefix="/api/scope", tags=["scope"])  # Add scope router first
-    app.include_router(components.router, prefix="/api/components", tags=["components"])
+    
+    # New product-centric model routes (takes precedence)
+    app.include_router(products.router, prefix="/api/products", tags=["products"])  # Product (scope) routes
+    app.include_router(assets.router, prefix="/api/assets", tags=["assets"])      # Asset (component) routes
+    
+    # Legacy routes (kept for backward compatibility)
+    app.include_router(scope.router, prefix="/api/scope", tags=["scope"])        # Legacy scope router
+    app.include_router(components.router, prefix="/api/components", tags=["components"])  # Legacy components router
     app.include_router(damage_scenarios.router, prefix="/api/damage-scenarios", tags=["damage-scenarios"])  # Add damage scenarios router
     app.include_router(impact_ratings.router, prefix="/api/impact-ratings", tags=["impact-ratings"])  # Add impact ratings router
     app.include_router(risk.router, prefix="/api/risk", tags=["risk"])  # Add risk framework router

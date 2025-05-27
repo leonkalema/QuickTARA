@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
-  import { RefreshCw, AlertCircle, Eye, Trash2, Info } from '@lucide/svelte';
-  import { scopeApi, type SystemScope } from '../api/scope';
+  import { RefreshCw, AlertCircle, Eye, Edit, Trash2, Info } from '@lucide/svelte';
+  import { productApi, type Product } from '../api/products';
   import { safeApiCall } from '../utils/error-handler';
   
   const dispatch = createEventDispatcher();
   
-  // Scope state
-  let scopes: SystemScope[] = [];
-  let filteredScopes: SystemScope[] = [];
+  // Product state (formerly scopes)
+  let scopes: Product[] = [];
+  let filteredScopes: Product[] = [];
   let isLoading = true;
   let error = '';
   
@@ -22,18 +22,25 @@
     await loadScopes();
   });
   
+  // Expose this method so parent component can update scopes
+  export function updateScopes(newScopes: Product[]) {
+    scopes = newScopes;
+    applyFilters();
+    dispatch('update', scopes);
+  }
+  
   async function loadScopes() {
     isLoading = true;
     error = '';
     
     try {
-      const result = await scopeApi.getAll();
+      const result = await productApi.getAll();
       scopes = result.scopes;
       applyFilters();
       dispatch('update', scopes);
     } catch (err) {
-      console.error('Error loading scopes:', err);
-      error = 'Failed to load scopes. Please try again.';
+      console.error('Error loading products:', err);
+      error = 'Failed to load products. Please try again.';
     } finally {
       isLoading = false;
     }
@@ -47,10 +54,10 @@
         scope.scope_id.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         (scope.description && scope.description.toLowerCase().includes(filters.searchTerm.toLowerCase()));
       
-      // System type filter
-      const systemTypeMatch = !filters.systemType || scope.system_type === filters.systemType;
+      // Product type filter (formerly system type)
+      const productTypeMatch = !filters.systemType || scope.product_type === filters.systemType;
       
-      return searchTermMatch && systemTypeMatch;
+      return searchTermMatch && productTypeMatch;
     });
   }
   
@@ -64,18 +71,26 @@
     applyFilters();
   }
   
-  function handleViewScope(scope: SystemScope) {
+  function handleViewScope(scope: Product) {
     dispatch('view', scope);
   }
   
+  function handleEditScope(scope: Product) {
+    dispatch('edit', scope);
+  }
+  
   async function handleDeleteScope(scopeId: string) {
-    if (confirm(`Are you sure you want to delete this scope: ${scopeId}?`)) {
-      const success = await safeApiCall(() => scopeApi.delete(scopeId));
+    if (confirm(`Are you sure you want to delete this product: ${scopeId}?`)) {
+      const success = await safeApiCall(() => productApi.delete(scopeId));
       
       if (success) {
+        // First update local state
         scopes = scopes.filter(s => s.scope_id !== scopeId);
         applyFilters();
         dispatch('update', scopes);
+        
+        // Then trigger a fresh reload to ensure consistency
+        await loadScopes();
       }
     }
   }
@@ -104,7 +119,7 @@
     </div>
     
     <div>
-      <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-1">System Type</label>
+      <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
       <select
         id="type-filter"
         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
@@ -112,12 +127,13 @@
         on:change={handleTypeFilter}
       >
         <option value="">All Types</option>
-        <option value="subsystem">Subsystem</option>
-        <option value="api">API</option>
-        <option value="backend">Backend</option>
-        <option value="fullsystem">Full System</option>
-        <option value="embedded">Embedded</option>
-        <option value="other">Other</option>
+        <option value="ECU">ECU</option>
+        <option value="Gateway">Gateway</option>
+        <option value="Sensor">Sensor</option>
+        <option value="Actuator">Actuator</option>
+        <option value="Network">Network</option>
+        <option value="ExternalDevice">External Device</option>
+        <option value="Other">Other</option>
       </select>
     </div>
   </div>
@@ -166,9 +182,9 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead style="background-color: var(--color-table-header-bg);">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scope ID</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product ID</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System Type</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Type</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -180,7 +196,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{scope.name}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                    {scope.system_type}
+                    {scope.product_type}
                   </span>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{scope.description || 'No description'}</td>
@@ -189,13 +205,24 @@
                     <button 
                       on:click={() => handleViewScope(scope)}
                       class="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-100 transition-colors"
+                      title="View"
                     >
                       <Eye size={16} />
                       <span class="sr-only">View</span>
                     </button>
                     <button 
+                      on:click={() => handleEditScope(scope)}
+                      class="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-100 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit size={16} />
+                      <span class="sr-only">Edit</span>
+                    </button>
+                    <button 
                       on:click={() => handleDeleteScope(scope.scope_id)}
-                      class="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-100 transition-colors">
+                      class="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-100 transition-colors"
+                      title="Delete"
+                    >
                       <Trash2 size={16} />
                       <span class="sr-only">Delete</span>
                     </button>

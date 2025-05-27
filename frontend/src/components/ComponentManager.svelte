@@ -1,171 +1,53 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { RefreshCw, Database, Settings, Shield, BarChart, AlertTriangle, Plus, Upload, Download } from '@lucide/svelte';
-  import ComponentList from './ComponentList.svelte';
-  import { componentApi } from '../api/components';
+  import AssetManager from './AssetManager.svelte';
+  import { productApi } from '../api/products';
   import { safeApiCall } from '../utils/error-handler';
   
-  // ComponentList instance reference
-  // Add proper type to avoid TypeScript warnings
-  let componentListInstance: any;
+  // State variables
+  let selectedProduct: string | null = null;
   
-  // Summary stats
-  let stats = {
-    totalComponents: 0,
-    unreviewedThreats: 5, // This would normally come from an API call to get actual pending threats
-    byType: {
-      ECU: 0,
-      Sensor: 0,
-      Gateway: 0,
-      Actuator: 0,
-      Network: 0
-    },
-    bySafetyLevel: {
-      'ASIL D': 0,
-      'ASIL C': 0,
-      'ASIL B': 0,
-      'ASIL A': 0,
-      'QM': 0
-    }
-  };
+  // Load products on mount to populate dropdown
+  let products: any[] = [];
   
-  // UI state
-  let isLoading = false;
-  
-  // Demo data for stats
-  function updateStats(components: any[]) {
-    stats.totalComponents = components.length;
-    
-    // Reset counts
-    Object.keys(stats.byType).forEach(key => {
-      stats.byType[key as keyof typeof stats.byType] = 0;
-    });
-    
-    Object.keys(stats.bySafetyLevel).forEach(key => {
-      stats.bySafetyLevel[key as keyof typeof stats.bySafetyLevel] = 0;
-    });
-    
-    // Count by type and safety level
-    components.forEach(component => {
-      if (component.type in stats.byType) {
-        stats.byType[component.type as keyof typeof stats.byType]++;
-      }
-      
-      if (component.safety_level in stats.bySafetyLevel) {
-        stats.bySafetyLevel[component.safety_level as keyof typeof stats.bySafetyLevel]++;
-      }
-    });
-  }
-  
-  // Load components on mount
   onMount(async () => {
-    await loadComponents();
+    await loadProducts();
   });
   
-  // Load components from API
-  async function loadComponents() {
-    isLoading = true;
-    const result = await safeApiCall(componentApi.getAll);
+  // Load products from API
+  async function loadProducts() {
+    const result = await safeApiCall(() => productApi.getAll());
     if (result) {
-      updateStats(result);
+      products = result.scopes;
     }
-    isLoading = false;
   }
   
-  function handleComponentsUpdate(components: any[]) {
-    updateStats(components);
+  // Function to handle product selection
+  function handleProductChange(event: Event) {
+    const selectElement = event.target as HTMLSelectElement;
+    selectedProduct = selectElement.value || null;
   }
-  
-  // Tab navigation removed - no need for tab management now
 </script>
 
 <div>
-  <!-- Stats cards area with new warm color palette -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <!-- Simple Critical Status Metric -->
-    <div class="metric-card">
-      <div class="flex items-start">
-        <AlertTriangle size={20} 
-          class="mr-3 mt-1"
-          style={`color: ${stats.unreviewedThreats > 0 ? 'var(--color-danger)' : 'var(--color-success)'}`} 
-        />
-        <div>
-          <p class="metric-label">Unreviewed Threats</p>
-          <p class="metric-value" style={`color: ${stats.unreviewedThreats > 0 ? 'var(--color-danger)' : 'var(--color-success)'}`}>
-            {stats.unreviewedThreats}
-          </p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="metric-card">
-      <div class="flex items-start">
-        <Database size={24} style="color: var(--color-primary);" class="mr-3 mt-1" />
-        <div>
-          <p class="metric-label">Total Components</p>
-          <p class="metric-value">{stats.totalComponents}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="metric-card">
-      <div class="flex items-start">
-        <Shield size={24} style="color: var(--color-secondary);" class="mr-3 mt-1" />
-        <div>
-          <p class="metric-label">ASIL D Components</p>
-          <p class="metric-value">{stats.bySafetyLevel['ASIL D']}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="metric-card">
-      <div class="flex items-start">
-        <Settings size={24} style="color: var(--color-success);" class="mr-3 mt-1" />
-        <div>
-          <p class="metric-label">Electronic Control Units</p>
-          <p class="metric-value">{stats.byType.ECU}</p>
-        </div>
-      </div>
+  <!-- Header with product filter -->
+  <div class="flex justify-between items-end mb-6">
+    <h2 class="text-xl font-semibold" style="color: var(--color-text-main);">Asset Identification</h2>
+    <div class="w-1/3">
+      <label for="product-selector" class="block text-sm font-medium text-gray-700 mb-1">Filter by Product</label>
+      <select
+        id="product-selector"
+        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+        on:change={handleProductChange}
+      >
+        <option value="">All Products</option>
+        {#each products as product}
+          <option value={product.scope_id}>{product.name} ({product.product_type})</option>
+        {/each}
+      </select>
     </div>
   </div>
-  
-  <!-- Action bar with warm styling -->
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-semibold" style="color: var(--color-text-main);">Component List</h2>
-    <div class="flex space-x-2">
-      <button 
-        on:click={loadComponents}
-        style="color: var(--color-text-muted); background-color: rgba(255, 255, 255, 0.5);" 
-        class="p-2 rounded-md flex items-center gap-1 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200">
-        <RefreshCw size={16} class="{isLoading ? 'animate-spin' : ''}" />
-        <span class="sr-only md:not-sr-only">Refresh</span>
-      </button>
-      
-      <button 
-        on:click={() => componentListInstance.handleOpenImport()}
-        style="color: var(--color-text-muted); background-color: rgba(255, 255, 255, 0.5);"
-        class="p-2 rounded-md flex items-center gap-1 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200">
-        <Upload size={16} />
-        <span class="sr-only md:not-sr-only">Import</span>
-      </button>
-      
-      <button 
-        on:click={() => componentListInstance.handleExportCSV()}
-        style="color: var(--color-text-muted); background-color: rgba(255, 255, 255, 0.5);"
-        class="p-2 rounded-md flex items-center gap-1 transition-all duration-200 hover:shadow-sm border border-transparent hover:border-gray-200">
-        <Download size={16} />
-        <span class="sr-only md:not-sr-only">Export</span>
-      </button>
-      
-      <button 
-        on:click={() => componentListInstance.handleAddComponent()}
-        class="btn btn-primary flex items-center gap-1">
-        <Plus size={16} />
-        <span>Add Component</span>
-      </button>
-    </div>
-  </div>
-  
-  <!-- Content area - component list -->
-  <ComponentList bind:this={componentListInstance} on:update={e => handleComponentsUpdate(e.detail)} />
+
+  <!-- Asset Manager Component -->
+  <AssetManager productId={selectedProduct} />
 </div>

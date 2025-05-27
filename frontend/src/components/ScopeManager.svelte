@@ -3,7 +3,7 @@
   import { RefreshCw, AlertCircle, Plus, Target, Database } from '@lucide/svelte';
   import ScopeList from './ScopeList.svelte';
   import ScopeForm from './ScopeForm.svelte';
-  import { scopeApi, SystemType } from '../api/scope';
+  import { productApi, ProductType } from '../api/products';
   import { safeApiCall } from '../utils/error-handler';
   
   // Component references
@@ -11,14 +11,15 @@
   
   // Summary stats
   let stats = {
-    totalScopes: 0,
+    totalProducts: 0,
     byType: {
-      [SystemType.SUBSYSTEM]: 0,
-      [SystemType.API]: 0,
-      [SystemType.BACKEND]: 0,
-      [SystemType.FULLSYSTEM]: 0,
-      [SystemType.EMBEDDED]: 0,
-      [SystemType.OTHER]: 0
+      [ProductType.ECU]: 0,
+      [ProductType.GATEWAY]: 0,
+      [ProductType.SENSOR]: 0,
+      [ProductType.ACTUATOR]: 0,
+      [ProductType.NETWORK]: 0,
+      [ProductType.EXTERNAL_DEVICE]: 0,
+      [ProductType.OTHER]: 0
     }
   };
   
@@ -28,8 +29,8 @@
   let editingScope: any = null;
   let viewMode = false;
   
-  function updateStats(scopes: any[]) {
-    stats.totalScopes = scopes.length;
+  function updateStats(products: any[]) {
+    stats.totalProducts = products.length;
     
     // Reset counts
     Object.keys(stats.byType).forEach(key => {
@@ -37,9 +38,9 @@
     });
     
     // Count by type
-    scopes.forEach(scope => {
-      if (scope.system_type in stats.byType) {
-        stats.byType[scope.system_type as keyof typeof stats.byType]++;
+    products.forEach(product => {
+      if (product.product_type in stats.byType) {
+        stats.byType[product.product_type as keyof typeof stats.byType]++;
       }
     });
   }
@@ -49,12 +50,16 @@
     await loadScopes();
   });
   
-  // Load scopes from API
+  // Load products from API
   async function loadScopes() {
     isLoading = true;
-    const result = await safeApiCall(scopeApi.getAll);
+    const result = await safeApiCall(productApi.getAll);
     if (result) {
       updateStats(result.scopes);
+      // Make sure to update the scopes list
+      if (scopeListInstance) {
+        scopeListInstance.updateScopes(result.scopes);
+      }
     }
     isLoading = false;
   }
@@ -77,8 +82,8 @@
       <div class="flex items-start">
         <Target size={24} style="color: var(--color-primary);" class="mr-3 mt-1" />
         <div>
-          <p class="metric-label">Total System Scopes</p>
-          <p class="metric-value">{stats.totalScopes}</p>
+          <p class="metric-label">Total Products</p>
+          <p class="metric-value">{stats.totalProducts}</p>
         </div>
       </div>
     </div>
@@ -87,8 +92,8 @@
       <div class="flex items-start">
         <Database size={24} style="color: var(--color-secondary);" class="mr-3 mt-1" />
         <div>
-          <p class="metric-label">Full Systems</p>
-          <p class="metric-value">{stats.byType[SystemType.FULLSYSTEM]}</p>
+          <p class="metric-label">ECUs</p>
+          <p class="metric-value">{stats.byType[ProductType.ECU]}</p>
         </div>
       </div>
     </div>
@@ -99,8 +104,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
         </svg>
         <div>
-          <p class="metric-label">Embedded Systems</p>
-          <p class="metric-value">{stats.byType[SystemType.EMBEDDED]}</p>
+          <p class="metric-label">Gateways</p>
+          <p class="metric-value">{stats.byType[ProductType.GATEWAY]}</p>
         </div>
       </div>
     </div>
@@ -108,7 +113,7 @@
   
   <!-- Action bar -->
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-semibold" style="color: var(--color-text-main);">System Scopes</h2>
+    <h2 class="text-xl font-semibold" style="color: var(--color-text-main);">Products</h2>
     <div class="flex space-x-2">
       <button 
         on:click={loadScopes}
@@ -122,7 +127,7 @@
         on:click={handleAddScope}
         class="btn btn-primary flex items-center gap-1">
         <Plus size={16} />
-        <span>Add Scope</span>
+        <span>Add Product</span>
       </button>
     </div>
   </div>
@@ -136,6 +141,12 @@
       editingScope = e.detail;
       viewMode = true;
       showForm = true;
+    }}
+    on:edit={(e: CustomEvent<any>) => {
+      // Set the scope for editing and show the form in edit mode
+      editingScope = e.detail;
+      viewMode = false;
+      showForm = true;
     }} />
   
   <!-- Form Dialog (shown when showForm is true) -->
@@ -147,14 +158,25 @@
           viewMode={viewMode}
           scope={editingScope || undefined}
           on:submit={async (e: CustomEvent<any>) => {
-            if (editingScope) {
-              await safeApiCall(() => scopeApi.update(editingScope.scope_id, e.detail));
-            } else {
-              await safeApiCall(() => scopeApi.create(e.detail));
+            try {
+              if (editingScope) {
+                // For updating existing product
+                await safeApiCall(() => productApi.update(editingScope.scope_id, e.detail));
+                console.log('Product updated successfully');
+              } else {
+                // For creating new product
+                await safeApiCall(() => productApi.create(e.detail));
+                console.log('New product created successfully');
+              }
+              // Always reload to ensure UI is in sync with backend
+              await loadScopes();
+              // Close form after successful operation
+              showForm = false;
+              viewMode = false;
+              editingScope = null;
+            } catch (err) {
+              console.error('Error saving product:', err);
             }
-            showForm = false;
-            viewMode = false;
-            loadScopes();
           }}
           on:switchToEdit={() => {
             viewMode = false; // Switch to edit mode
