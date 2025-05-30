@@ -1,3 +1,5 @@
+my thoughts and correct me if am wrong- An asset connected to several Damage scenraios - then each damage scenario is connected to a threat scenario where we do Impact Rationgs ie SFOP  - each threat scenario will then be linked to an attack path when we select a vector or more for each attack path and then do feasibility rating on each. ?
+
 Component: Engine Control Unit
 Type: ECU
 Safety Level: ASIL D
