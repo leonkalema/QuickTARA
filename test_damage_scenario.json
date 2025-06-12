@@ -1,0 +1,13 @@
+{
+  "name": "Test Product Damage Scenario",
+  "description": "Test damage scenario using product scope and assets",
+  "scope_id": "product_ba5145c8",
+  "primary_component_id": "BMS001",
+  "affected_component_ids": ["BMS001", "BMS002"],
+  "impact_type": "Direct",
+  "confidentiality_impact": true,
+  "integrity_impact": true,
+  "availability_impact": false,
+  "damage_category": "Operational",
+  "severity": "Medium"
+}

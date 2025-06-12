@@ -7,8 +7,13 @@ import json
 import uuid
 from datetime import datetime
 
+# Import legacy models (needed for transition period)
 from db.damage_scenario import DamageScenario as DBDamageScenario
 from db.base import Component as DBComponent, SystemScope as DBSystemScope
+
+# Import product-centric models
+from db.product_asset_models import DamageScenario as ProductDamageScenario
+from db.product_asset_models import Asset, ProductScope
 from api.models.damage_scenario import (
     DamageScenario, 
     DamageScenarioCreate, 
@@ -22,85 +27,138 @@ from api.models.damage_scenario import (
 
 def create_damage_scenario(db: Session, scenario: DamageScenarioCreate) -> DamageScenario:
     """
-    Create a new damage scenario in the database
+    Create a new damage scenario in the database using the product-centric model
     """
-    # Generate a unique ID if not provided
-    scenario_id = scenario.scenario_id or f"DS-{uuid.uuid4().hex[:8].upper()}"
+    import logging
+    logger = logging.getLogger("quicktara")
+    logger.setLevel(logging.DEBUG)
     
-    # Check if scenario with same ID already exists
-    existing = db.query(DBDamageScenario).filter(DBDamageScenario.scenario_id == scenario_id).first()
-    if existing:
-        raise ValueError(f"Damage scenario with ID {scenario_id} already exists")
-    
-    # Verify that scope exists
-    scope = db.query(DBSystemScope).filter(DBSystemScope.scope_id == scenario.scope_id).first()
-    if not scope:
-        raise ValueError(f"Scope with ID {scenario.scope_id} does not exist")
-    
-    # Verify that primary component exists
-    primary_component = db.query(DBComponent).filter(
-        DBComponent.component_id == scenario.primary_component_id
-    ).first()
-    if not primary_component:
-        raise ValueError(f"Component with ID {scenario.primary_component_id} does not exist")
-    
-    # Generate suggested SFOP ratings based on component and damage properties
-    # This uses the same logic as the suggest_sfop_ratings endpoint
-    safety_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.SAFETY else SeverityLevel.LOW
-    financial_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.FINANCIAL else SeverityLevel.MEDIUM
-    operational_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.OPERATIONAL else SeverityLevel.MEDIUM
-    privacy_impact = SeverityLevel.HIGH if scenario.damage_category == DamageCategory.PRIVACY else SeverityLevel.LOW
-    
-    # If availability is impacted, operational impact is at least MEDIUM
-    if scenario.availability_impact and operational_impact == SeverityLevel.LOW:
-        operational_impact = SeverityLevel.MEDIUM
+    try:
+        # Generate a unique ID if not provided
+        scenario_id = scenario.scenario_id or f"DS-{uuid.uuid4().hex[:8].upper()}"
+        logger.info(f"Creating damage scenario with ID: {scenario_id}")
         
-    # If confidentiality is impacted, privacy impact is at least MEDIUM
-    if scenario.confidentiality_impact and privacy_impact == SeverityLevel.LOW:
-        privacy_impact = SeverityLevel.MEDIUM
-    
-    # Create the damage scenario
-    db_scenario = DBDamageScenario(
-        scenario_id=scenario_id,
-        name=scenario.name,
-        description=scenario.description,
-        damage_category=scenario.damage_category,
-        impact_type=scenario.impact_type,
-        confidentiality_impact=scenario.confidentiality_impact,
-        integrity_impact=scenario.integrity_impact,
-        availability_impact=scenario.availability_impact,
-        severity=scenario.severity,
-        impact_details=json.dumps(scenario.impact_details) if scenario.impact_details else None,
-        version=scenario.version,
-        revision_notes=scenario.revision_notes,
-        scope_id=scenario.scope_id,
-        primary_component_id=scenario.primary_component_id,
-        # Set the auto-generated SFOP ratings
-        safety_impact=safety_impact,
-        financial_impact=financial_impact,
-        operational_impact=operational_impact,
-        privacy_impact=privacy_impact,
-        sfop_rating_auto_generated=True
-    )
-    
-    # Add to database
-    db.add(db_scenario)
-    db.commit()
-    db.refresh(db_scenario)
-    
-    # Handle affected components (many-to-many relationship)
-    affected_components = []
-    for component_id in scenario.affected_component_ids:
-        component = db.query(DBComponent).filter(DBComponent.component_id == component_id).first()
-        if component:
-            affected_components.append(component)
-    
-    if affected_components:
-        db_scenario.affected_components = affected_components
-        db.commit()
-        db.refresh(db_scenario)
-    
-    return _db_scenario_to_schema(db_scenario)
+        # Check if scenario with same ID already exists
+        existing = db.query(ProductDamageScenario).filter(ProductDamageScenario.scenario_id == scenario_id).first()
+        if existing:
+            raise ValueError(f"Damage scenario with ID {scenario_id} already exists")
+        
+        # Verify that product scope exists
+        logger.info(f"Checking for product scope: {scenario.scope_id}")
+        scope = db.query(ProductScope).filter(ProductScope.scope_id == scenario.scope_id).first()
+        if not scope:
+            raise ValueError(f"Product scope with ID {scenario.scope_id} does not exist")
+        
+        # Verify that primary asset exists (frontend sends asset_id as primary_component_id)
+        logger.info(f"Checking for primary asset: {scenario.primary_component_id}")
+        primary_asset = db.query(Asset).filter(
+            Asset.asset_id == scenario.primary_component_id
+        ).first()
+        if not primary_asset:
+            raise ValueError(f"Asset with ID {scenario.primary_component_id} does not exist")
+        
+        # Generate impact values based on damage category
+        logger.info(f"Damage category: {scenario.damage_category}")
+        safety_impact = scenario.damage_category == DamageCategory.SAFETY
+        financial_impact = scenario.damage_category == DamageCategory.FINANCIAL
+        operational_impact = scenario.damage_category == DamageCategory.OPERATIONAL
+        privacy_impact = scenario.damage_category == DamageCategory.PRIVACY
+        
+        # Create violated_properties JSON for new model
+        violated_properties = json.dumps({
+            "confidentiality": scenario.confidentiality_impact,
+            "integrity": scenario.integrity_impact,
+            "availability": scenario.availability_impact,
+            "severity": scenario.severity
+        })
+        logger.info(f"Violated properties: {violated_properties}")
+        
+        # Add impact details if available
+        if scenario.impact_details:
+            # Need to deserialize first, add details, then serialize again
+            props_dict = json.loads(violated_properties)
+            props_dict["details"] = scenario.impact_details
+            violated_properties = json.dumps(props_dict)
+        
+        # Create the damage scenario using product-centric model
+        try:
+            db_scenario = ProductDamageScenario(
+                scenario_id=scenario_id,
+                name=scenario.name,
+                description=scenario.description,
+                # Both new and legacy categorization fields
+                category=scenario.damage_category,
+                damage_category=scenario.damage_category,
+                impact_type=scenario.impact_type,
+                severity=scenario.severity,
+                # CIA impact booleans for legacy columns
+                confidentiality_impact=scenario.confidentiality_impact,
+                integrity_impact=scenario.integrity_impact,
+                availability_impact=scenario.availability_impact,
+                # Primary asset reference for legacy column
+                primary_component_id=scenario.primary_component_id,
+                # New JSON field
+                violated_properties=violated_properties,
+                scope_id=scenario.scope_id,
+                safety_impact=safety_impact,
+                financial_impact=financial_impact,
+                operational_impact=operational_impact,
+                privacy_impact=privacy_impact,
+                version=scenario.version,
+                is_current=True,
+                revision_notes=scenario.revision_notes,
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+                # Not using created_by and updated_by as they don't exist in DB schema
+            )
+            logger.info(f"Created damage scenario object: {db_scenario.scenario_id}")
+        except Exception as e:
+            logger.error(f"Error creating damage scenario object: {str(e)}")
+            raise
+        
+        # Combine all database operations into a single transaction
+        try:
+            # Process affected assets
+            affected_assets = []
+            logger.info(f"Processing affected assets: {scenario.affected_component_ids}")
+            
+            for asset_id in scenario.affected_component_ids:  # frontend still uses affected_component_ids for asset_ids
+                asset = db.query(Asset).filter(Asset.asset_id == asset_id).first()
+                if asset:
+                    affected_assets.append(asset)
+                    logger.info(f"Added asset to affected list: {asset_id}")
+                else:
+                    logger.warning(f"Asset not found: {asset_id}")
+            
+            # Add damage scenario to database
+            db.add(db_scenario)
+            db.flush()  # This assigns the ID but doesn't commit the transaction yet
+            logger.info(f"Added damage scenario to database: {db_scenario.scenario_id}")
+            
+            # Set affected assets relationship
+            if affected_assets:
+                db_scenario.affected_assets = affected_assets
+                logger.info(f"Set {len(affected_assets)} affected assets for damage scenario")
+            
+            # Now commit the entire transaction
+            db.commit()
+            db.refresh(db_scenario)
+            logger.info(f"Successfully committed damage scenario with all relationships")
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error in database transaction: {str(e)}")
+            raise
+        
+        # Return the created damage scenario
+        return _db_scenario_to_schema(db_scenario)
+        
+    except Exception as e:
+        logger.error(f"Error in create_damage_scenario: {str(e)}")
+        # Re-raise the exception to be handled by the API endpoint
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
 
 
 def get_damage_scenario(db: Session, scenario_id: str) -> Optional[DamageScenario]:
@@ -193,15 +251,25 @@ def update_damage_scenario(
     scenario: DamageScenarioUpdate
 ) -> Optional[DamageScenario]:
     """
-    Update an existing damage scenario
+    Update an existing damage scenario - handles both legacy and product-centric models
     """
-    db_scenario = db.query(DBDamageScenario).filter(
-        DBDamageScenario.scenario_id == scenario_id,
-        DBDamageScenario.is_deleted == False
+    # Try to find the scenario in the product-centric model first
+    db_scenario = db.query(ProductDamageScenario).filter(
+        ProductDamageScenario.scenario_id == scenario_id
     ).first()
+    
+    # If not found in product model, try legacy model
+    if not db_scenario:
+        db_scenario = db.query(DBDamageScenario).filter(
+            DBDamageScenario.scenario_id == scenario_id,
+            DBDamageScenario.is_deleted == False
+        ).first()
     
     if not db_scenario:
         return None
+        
+    # Determine if this is a product-centric damage scenario
+    is_product_scenario = isinstance(db_scenario, ProductDamageScenario)
     
     # Update fields if provided
     if scenario.name is not None:
@@ -238,58 +306,149 @@ def update_damage_scenario(
         db_scenario.revision_notes = scenario.revision_notes
     
     if scenario.scope_id is not None:
-        # Verify that scope exists
-        scope = db.query(DBSystemScope).filter(DBSystemScope.scope_id == scenario.scope_id).first()
-        if not scope:
-            raise ValueError(f"Scope with ID {scenario.scope_id} does not exist")
+        # Handle scope validation based on scenario type
+        if is_product_scenario:
+            # Verify that product scope exists
+            scope = db.query(ProductScope).filter(ProductScope.scope_id == scenario.scope_id).first()
+            if not scope:
+                raise ValueError(f"Product scope with ID {scenario.scope_id} does not exist")
+        else:
+            # Legacy scenario - verify system scope
+            scope = db.query(DBSystemScope).filter(DBSystemScope.scope_id == scenario.scope_id).first()
+            if not scope:
+                raise ValueError(f"System scope with ID {scenario.scope_id} does not exist")
+        
         db_scenario.scope_id = scenario.scope_id
     
     if scenario.primary_component_id is not None:
-        # Verify that primary component exists
-        primary_component = db.query(DBComponent).filter(
-            DBComponent.component_id == scenario.primary_component_id
-        ).first()
-        if not primary_component:
-            raise ValueError(f"Component with ID {scenario.primary_component_id} does not exist")
-        db_scenario.primary_component_id = scenario.primary_component_id
+        if is_product_scenario:
+            # Verify that asset exists for product-centric model
+            primary_asset = db.query(Asset).filter(
+                Asset.asset_id == scenario.primary_component_id
+            ).first()
+            if not primary_asset:
+                raise ValueError(f"Asset with ID {scenario.primary_component_id} does not exist")
+            # Note: Product model doesn't have primary_component_id field, this will be handled via affected_assets
+        else:
+            # Legacy model - verify component exists
+            primary_component = db.query(DBComponent).filter(
+                DBComponent.component_id == scenario.primary_component_id
+            ).first()
+            if not primary_component:
+                raise ValueError(f"Component with ID {scenario.primary_component_id} does not exist")
+            db_scenario.primary_component_id = scenario.primary_component_id
     
-    # Update affected components if provided
+    # Update affected components/assets if provided
     if scenario.affected_component_ids is not None:
-        affected_components = []
-        for component_id in scenario.affected_component_ids:
-            component = db.query(DBComponent).filter(DBComponent.component_id == component_id).first()
-            if component:
-                affected_components.append(component)
+        if is_product_scenario:
+            # Handle product-centric model assets
+            affected_assets = []
+            for asset_id in scenario.affected_component_ids:
+                asset = db.query(Asset).filter(Asset.asset_id == asset_id).first()
+                if asset:
+                    affected_assets.append(asset)
+            
+            # Make sure the primary asset is included
+            if scenario.primary_component_id and scenario.primary_component_id not in [a.asset_id for a in affected_assets]:
+                primary_asset = db.query(Asset).filter(Asset.asset_id == scenario.primary_component_id).first()
+                if primary_asset:
+                    affected_assets.append(primary_asset)
+            
+            db_scenario.affected_assets = affected_assets
+        else:
+            # Handle legacy model components
+            affected_components = []
+            for component_id in scenario.affected_component_ids:
+                component = db.query(DBComponent).filter(DBComponent.component_id == component_id).first()
+                if component:
+                    affected_components.append(component)
+            
+            db_scenario.affected_components = affected_components
+    
+    # Update CIA impacts and SFOP ratings based on model type
+    if is_product_scenario:
+        # For product model, update violated_properties JSON
+        if any([scenario.confidentiality_impact is not None, 
+                scenario.integrity_impact is not None, 
+                scenario.availability_impact is not None, 
+                scenario.severity is not None]):
+            
+            # Get current violated properties
+            violated_props = _parse_json_field(db_scenario.violated_properties) or {}
+            
+            # Update fields if provided
+            if scenario.confidentiality_impact is not None:
+                violated_props['confidentiality'] = scenario.confidentiality_impact
+            
+            if scenario.integrity_impact is not None:
+                violated_props['integrity'] = scenario.integrity_impact
+            
+            if scenario.availability_impact is not None:
+                violated_props['availability'] = scenario.availability_impact
+            
+            if scenario.severity is not None:
+                violated_props['severity'] = scenario.severity
+            
+            if scenario.impact_details is not None:
+                violated_props['details'] = scenario.impact_details
+            
+            # Update violated_properties JSON
+            db_scenario.violated_properties = violated_props
         
-        db_scenario.affected_components = affected_components
-    
-    # Update SFOP impact ratings if provided
-    if scenario.safety_impact is not None:
-        db_scenario.safety_impact = scenario.safety_impact
-    
-    if scenario.financial_impact is not None:
-        db_scenario.financial_impact = scenario.financial_impact
-    
-    if scenario.operational_impact is not None:
-        db_scenario.operational_impact = scenario.operational_impact
-    
-    if scenario.privacy_impact is not None:
-        db_scenario.privacy_impact = scenario.privacy_impact
-    
-    if scenario.impact_rating_notes is not None:
-        db_scenario.impact_rating_notes = scenario.impact_rating_notes
-    
-    if scenario.sfop_rating_auto_generated is not None:
-        db_scenario.sfop_rating_auto_generated = scenario.sfop_rating_auto_generated
-    
-    if scenario.sfop_rating_last_edited_by is not None:
-        db_scenario.sfop_rating_last_edited_by = scenario.sfop_rating_last_edited_by
-    
-    if scenario.sfop_rating_last_edited_at is not None:
-        db_scenario.sfop_rating_last_edited_at = scenario.sfop_rating_last_edited_at
-    
-    if scenario.sfop_rating_override_reason is not None:
-        db_scenario.sfop_rating_override_reason = scenario.sfop_rating_override_reason
+        # For product model, SFOP are boolean flags
+        if scenario.damage_category is not None:
+            db_scenario.category = scenario.damage_category
+            
+        if scenario.safety_impact is not None:
+            # Convert SeverityLevel to boolean (any non-LOW value is True)
+            db_scenario.safety_impact = (scenario.safety_impact != SeverityLevel.LOW)
+        
+        if scenario.financial_impact is not None:
+            db_scenario.financial_impact = (scenario.financial_impact != SeverityLevel.LOW)
+        
+        if scenario.operational_impact is not None:
+            db_scenario.operational_impact = (scenario.operational_impact != SeverityLevel.LOW)
+        
+        if scenario.privacy_impact is not None:
+            db_scenario.privacy_impact = (scenario.privacy_impact != SeverityLevel.LOW)
+    else:
+        # Legacy model - direct field updates
+        if scenario.safety_impact is not None:
+            db_scenario.safety_impact = scenario.safety_impact
+        
+        if scenario.financial_impact is not None:
+            db_scenario.financial_impact = scenario.financial_impact
+        
+        if scenario.operational_impact is not None:
+            db_scenario.operational_impact = scenario.operational_impact
+        
+        if scenario.privacy_impact is not None:
+            db_scenario.privacy_impact = scenario.privacy_impact
+        
+        if scenario.impact_rating_notes is not None:
+            db_scenario.impact_rating_notes = scenario.impact_rating_notes
+        
+        if scenario.sfop_rating_auto_generated is not None:
+            db_scenario.sfop_rating_auto_generated = scenario.sfop_rating_auto_generated
+        
+        if scenario.sfop_rating_last_edited_by is not None:
+            db_scenario.sfop_rating_last_edited_by = scenario.sfop_rating_last_edited_by
+        
+        if scenario.sfop_rating_last_edited_at is not None:
+            db_scenario.sfop_rating_last_edited_at = scenario.sfop_rating_last_edited_at
+        
+        if scenario.sfop_rating_override_reason is not None:
+            db_scenario.sfop_rating_override_reason = scenario.sfop_rating_override_reason
+            
+        # Update CIA impacts for legacy model
+        if scenario.confidentiality_impact is not None:
+            db_scenario.confidentiality_impact = scenario.confidentiality_impact
+        
+        if scenario.integrity_impact is not None:
+            db_scenario.integrity_impact = scenario.integrity_impact
+        
+        if scenario.availability_impact is not None:
+            db_scenario.availability_impact = scenario.availability_impact
     
     # Update timestamp
     db_scenario.updated_at = datetime.now()
@@ -529,43 +688,113 @@ def _parse_json_field(val: Any) -> Any:
         return val
 
 
-def _db_scenario_to_schema(db_scenario: DBDamageScenario) -> DamageScenario:
+def _to_severity(value) -> SeverityLevel:
+    """Convert various DB representations (enum, int, bool, str) to SeverityLevel enum."""
+    if isinstance(value, SeverityLevel):
+        return value
+    # Booleans or ints treated as binary HIGH/LOW
+    if isinstance(value, (bool, int)):
+        return SeverityLevel.HIGH if bool(value) else SeverityLevel.LOW
+    if isinstance(value, str):
+        upper = value.upper()
+        if upper in {"LOW", "MEDIUM", "HIGH", "CRITICAL"}:
+            return SeverityLevel[upper]
+        if upper in {"1", "TRUE", "YES"}:
+            return SeverityLevel.HIGH
+        if upper in {"0", "FALSE", "NO"}:
+            return SeverityLevel.LOW
+    # Fallback
+    return SeverityLevel.LOW
+
+
+def _db_scenario_to_schema(db_scenario) -> DamageScenario:
     """
     Convert DB damage scenario to Pydantic schema
+    Works with both legacy DBDamageScenario and new ProductDamageScenario
     """
-    # Parse JSON fields
-    impact_details = _parse_json_field(db_scenario.impact_details)
-    
-    # Get affected component IDs
-    affected_component_ids = [c.component_id for c in db_scenario.affected_components]
-    
-    return DamageScenario(
-        scenario_id=db_scenario.scenario_id,
-        name=db_scenario.name,
-        description=db_scenario.description,
-        damage_category=db_scenario.damage_category,
-        impact_type=db_scenario.impact_type,
-        confidentiality_impact=db_scenario.confidentiality_impact,
-        integrity_impact=db_scenario.integrity_impact,
-        availability_impact=db_scenario.availability_impact,
-        severity=db_scenario.severity,
-        impact_details=impact_details,
-        version=db_scenario.version,
-        revision_notes=db_scenario.revision_notes,
-        is_deleted=db_scenario.is_deleted,
-        created_at=db_scenario.created_at,
-        updated_at=db_scenario.updated_at,
-        scope_id=db_scenario.scope_id,
-        primary_component_id=db_scenario.primary_component_id,
-        affected_component_ids=affected_component_ids,
-        # SFOP impact ratings and notes
-        safety_impact=db_scenario.safety_impact,
-        financial_impact=db_scenario.financial_impact,
-        operational_impact=db_scenario.operational_impact,
-        privacy_impact=db_scenario.privacy_impact,
-        impact_rating_notes=db_scenario.impact_rating_notes,
-        sfop_rating_auto_generated=db_scenario.sfop_rating_auto_generated,
-        sfop_rating_last_edited_by=db_scenario.sfop_rating_last_edited_by,
-        sfop_rating_last_edited_at=db_scenario.sfop_rating_last_edited_at,
-        sfop_rating_override_reason=db_scenario.sfop_rating_override_reason,
-    )
+    # Check if this is a product-centric damage scenario
+    is_product_scenario = isinstance(db_scenario, ProductDamageScenario)
+
+    if is_product_scenario:
+        # Handle ProductDamageScenario
+        violated_props = _parse_json_field(db_scenario.violated_properties)
+        
+        # Extract CIA impacts and severity from violated_properties
+        confidentiality_impact = violated_props.get('confidentiality', False)
+        integrity_impact = violated_props.get('integrity', False)
+        availability_impact = violated_props.get('availability', False)
+        severity = violated_props.get('severity', 'Medium')
+        impact_details = violated_props.get('details', {})
+        
+        # First asset in affected_assets is the primary asset
+        affected_asset_ids = [a.asset_id for a in db_scenario.affected_assets]
+        primary_asset_id = affected_asset_ids[0] if affected_asset_ids else None
+        
+        # Determine impact type from category
+        impact_type = ImpactType.DIRECT  # Default
+        
+        return DamageScenario(
+            scenario_id=db_scenario.scenario_id,
+            name=db_scenario.name,
+            description=db_scenario.description,
+            damage_category=db_scenario.category,
+            impact_type=impact_type,
+            confidentiality_impact=confidentiality_impact,
+            integrity_impact=integrity_impact,
+            availability_impact=availability_impact,
+            severity=severity,
+            impact_details=impact_details,
+            version=db_scenario.version,
+            revision_notes=db_scenario.revision_notes,
+            is_deleted=False,  # Product model doesn't use is_deleted
+            created_at=db_scenario.created_at,
+            updated_at=db_scenario.updated_at,
+            scope_id=db_scenario.scope_id,
+            primary_component_id=primary_asset_id,
+            affected_component_ids=affected_asset_ids,
+            # SFOP impact ratings and notes
+            safety_impact=SeverityLevel.HIGH if db_scenario.safety_impact else SeverityLevel.LOW,
+            financial_impact=SeverityLevel.HIGH if db_scenario.financial_impact else SeverityLevel.LOW,
+            operational_impact=SeverityLevel.HIGH if db_scenario.operational_impact else SeverityLevel.LOW,
+            privacy_impact=SeverityLevel.HIGH if db_scenario.privacy_impact else SeverityLevel.LOW,
+            impact_rating_notes=None,  # Not in product model
+            sfop_rating_auto_generated=True,
+            sfop_rating_last_edited_by=None,
+            sfop_rating_last_edited_at=None,
+            sfop_rating_override_reason=None
+        )
+    else:
+        # Handle legacy DBDamageScenario
+        impact_details = _parse_json_field(db_scenario.impact_details)
+        affected_component_ids = [c.component_id for c in db_scenario.affected_components]
+        
+        return DamageScenario(
+            scenario_id=db_scenario.scenario_id,
+            name=db_scenario.name,
+            description=db_scenario.description,
+            damage_category=db_scenario.damage_category,
+            impact_type=db_scenario.impact_type,
+            confidentiality_impact=db_scenario.confidentiality_impact,
+            integrity_impact=db_scenario.integrity_impact,
+            availability_impact=db_scenario.availability_impact,
+            severity=db_scenario.severity,
+            impact_details=impact_details,
+            version=db_scenario.version,
+            revision_notes=db_scenario.revision_notes,
+            is_deleted=db_scenario.is_deleted,
+            created_at=db_scenario.created_at,
+            updated_at=db_scenario.updated_at,
+            scope_id=db_scenario.scope_id,
+            primary_component_id=db_scenario.primary_component_id,
+            affected_component_ids=affected_component_ids,
+            # SFOP impact ratings and notes
+            safety_impact=_to_severity(db_scenario.safety_impact),
+            financial_impact=_to_severity(db_scenario.financial_impact),
+            operational_impact=_to_severity(db_scenario.operational_impact),
+            privacy_impact=_to_severity(db_scenario.privacy_impact),
+            impact_rating_notes=db_scenario.impact_rating_notes,
+            sfop_rating_auto_generated=db_scenario.sfop_rating_auto_generated,
+            sfop_rating_last_edited_by=db_scenario.sfop_rating_last_edited_by,
+            sfop_rating_last_edited_at=db_scenario.sfop_rating_last_edited_at,
+            sfop_rating_override_reason=db_scenario.sfop_rating_override_reason,
+        )

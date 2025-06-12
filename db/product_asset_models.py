@@ -297,8 +297,17 @@ class DamageScenario(Base):
     # Security Properties being violated
     violated_properties = Column(JSON, nullable=False)
     
-    # Categorization
-    category = Column(String, nullable=False)
+    # Categorization (new column)
+    category = Column(String, nullable=True)
+
+    # Legacy columns kept for backward compatibility (NOT NULL constraints in existing DB)
+    damage_category = Column(String, nullable=False)
+    impact_type = Column(String, nullable=False, default="Direct")
+    severity = Column(String, nullable=False, default="Medium")
+    confidentiality_impact = Column(Boolean, default=False)
+    integrity_impact = Column(Boolean, default=False)
+    availability_impact = Column(Boolean, default=False)
+    primary_component_id = Column(String, nullable=False)
     
     # Damage Types (multiple can apply)
     safety_impact = Column(Boolean, default=False)
@@ -314,8 +323,6 @@ class DamageScenario(Base):
     # Timestamps and audit
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    created_by = Column(String, nullable=True)
-    updated_by = Column(String, nullable=True)
     
     # Relationships
     product_scope = relationship("ProductScope", back_populates="damage_scenarios")

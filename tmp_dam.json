@@ -1,0 +1,14 @@
+{
+  "name": "Test DS via curl",
+  "description": "Created from curl to validate product flow",
+  "damage_category": "Operational",
+  "impact_type": "Direct",
+  "confidentiality_impact": true,
+  "integrity_impact": false,
+  "availability_impact": false,
+  "severity": "Medium",
+  "impact_details": {"note": "curl test"},
+  "scope_id": "product_0a10b223",
+  "primary_component_id": "asset_2521e408",
+  "affected_component_ids": ["asset_2521e408", "asset_f049afea"]
+}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, RefreshCw, AlertTriangle, Shield, Activity, Trash2 } from '@lucide/svelte';
+  import { Plus, RefreshCw, AlertTriangle, Shield, Activity, Trash2, ListPlus } from '@lucide/svelte';
   import { damageScenarioApi, type DamageScenario, DamageCategory, SeverityLevel } from '../../api/damage-scenarios';
   import { scopeApi, type Scope } from '../../api/scopes';
   import { componentApi, type Component } from '../../api/components';
@@ -8,6 +8,7 @@
   import { showSuccess, showError } from '../ToastManager.svelte';
   import DamageScenarioListComponent from './DamageScenarioList.svelte';
   import DamageScenarioForm from './DamageScenarioForm.svelte';
+  import DamageScenarioBatchCreator from './DamageScenarioBatchCreator.svelte';
   
   // Props
   export let scopeId: string | null = null;
@@ -19,6 +20,7 @@
   let isLoading = true;
   let error = '';
   let showForm = false;
+  let showBatchCreator = false;
   let showViewPanel = false;
   let showDeleteModal = false;
   let editingScenario: DamageScenario | null = null;
@@ -131,8 +133,14 @@
   }
   
   function handleCreateScenario() {
-    editingScenario = null;
     showForm = true;
+    showBatchCreator = false;
+    editingScenario = null;
+  }
+
+  function handleBatchCreateScenario() {
+    showBatchCreator = true;
+    showForm = false;
   }
   
   function handleEditScenario(scenario: DamageScenario) {
@@ -174,6 +182,7 @@
   
   function handleFormCancel() {
     showForm = false;
+    showBatchCreator = false;
     editingScenario = null;
   }
   
@@ -335,22 +344,42 @@
     
     <div class="flex space-x-2">
       <button 
-        on:click={() => loadDamageScenarios()}
-        class="btn btn-secondary flex items-center gap-1"
+        on:click={handleCreateScenario}
+        class="btn btn-primary flex items-center gap-1 mr-2"
       >
-        <RefreshCw size={16} />
-        <span>Refresh</span>
+        <Plus size={18} />
+        Create Single Scenario
+      </button>
+
+      <button 
+        on:click={handleBatchCreateScenario}
+        class="btn btn-primary flex items-center gap-1 mr-2"
+      >
+        <ListPlus size={18} />
+        Batch Create Scenarios
       </button>
       
       <button 
-        on:click={handleCreateScenario}
-        class="btn btn-primary flex items-center gap-1"
+        on:click={loadDamageScenarios}
+        class="btn btn-secondary flex items-center gap-1"
+        disabled={isLoading}
       >
-        <Plus size={16} />
-        <span>New Scenario</span>
+        <RefreshCw size={18} class={isLoading ? 'animate-spin' : ''} />
+        Refresh
       </button>
     </div>
   </div>
+  
+  <!-- Batch Creator Modal -->
+  {#if showBatchCreator}
+    <DamageScenarioBatchCreator
+      on:cancel={handleFormCancel}
+      on:complete={() => {
+        showBatchCreator = false;
+        loadDamageScenarios();
+      }}
+    />
+  {/if}
   
   <!-- Filters -->
   <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -439,31 +468,15 @@
     on:pageChange={(e: CustomEvent<number>) => handlePageChange(e.detail)}
   />
   
-  <!-- Damage Scenario Form Slide-in Panel -->
+  <!-- Create/Edit Form Modal -->
   {#if showForm}
-    <!-- Semi-transparent backdrop with accessibility attributes -->
-    <div 
-      class="fixed inset-0 bg-neutral-900/40 z-40 transition-opacity duration-200" 
-      on:click={handleFormCancel}
-      on:keydown={(e) => e.key === 'Escape' && handleFormCancel()}
-      role="button"
-      tabindex="0"
-      aria-label="Close panel"
-    ></div>
-    
-    <!-- Slide-in panel from the right -->
-    <div class="fixed inset-y-0 right-0 w-full md:w-2/3 lg:w-1/2 xl:w-2/5 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out overflow-auto" 
-         style="border-left: 1px solid var(--color-border);">
-      <div class="h-full overflow-y-auto">
-        <DamageScenarioForm
-          scenario={editingScenario}
-          scopeId={selectedScopeId || undefined}
-          componentId={selectedComponentId || undefined}
-          on:submit={handleFormSubmit}
-          on:cancel={handleFormCancel}
-        />
-      </div>
-    </div>
+    <DamageScenarioForm 
+      scenario={editingScenario}
+      scopeId={selectedScopeId}
+      componentId={selectedComponentId}
+      on:cancel={handleFormCancel}
+      on:submit={handleFormSubmit}
+    />
   {/if}
   
   <!-- Damage Scenario View Panel -->
