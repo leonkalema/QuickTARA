@@ -7,6 +7,7 @@ from typing import List, Dict, Optional, Any
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+from fastapi.encoders import jsonable_encoder
 
 from db.base import RiskFramework
 from api.models.risk import (
@@ -32,16 +33,19 @@ def create_risk_framework(db: Session, risk_framework: RiskFrameworkCreate) -> R
         now = datetime.now()
         framework_id = generate_framework_id()
         
+        # Serialize the pydantic model to a plain dict (all Enum values → raw strings)
+        fw_data = jsonable_encoder(risk_framework, exclude_none=True)
+        
         # Create new RiskFramework instance
         db_framework = RiskFramework(
             framework_id=framework_id,
-            name=risk_framework.name,
-            description=risk_framework.description,
-            version=risk_framework.version,
-            impact_definitions=risk_framework.dict()['impact_definitions'],
-            likelihood_definitions=risk_framework.dict()['likelihood_definitions'],
-            risk_matrix=risk_framework.dict()['risk_matrix'],
-            risk_thresholds=risk_framework.dict()['risk_thresholds'],
+            name=fw_data["name"],
+            description=fw_data.get("description"),
+            version=fw_data["version"],
+            impact_definitions=fw_data["impact_definitions"],
+            likelihood_definitions=fw_data["likelihood_definitions"],
+            risk_matrix=fw_data["risk_matrix"],
+            risk_thresholds=fw_data["risk_thresholds"],
             created_at=now,
             updated_at=now,
             is_active=True

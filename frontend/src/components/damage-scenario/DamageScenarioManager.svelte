@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, RefreshCw, AlertTriangle, Shield, Activity, Trash2, ListPlus } from '@lucide/svelte';
+  import { RefreshCw, AlertTriangle, Shield, Activity, Trash2, ListPlus } from '@lucide/svelte';
   import { damageScenarioApi, type DamageScenario, DamageCategory, SeverityLevel } from '../../api/damage-scenarios';
   import { scopeApi, type Scope } from '../../api/scopes';
   import { componentApi, type Component } from '../../api/components';
@@ -132,12 +132,6 @@
     return component ? component.name : 'Unknown Component';
   }
   
-  function handleCreateScenario() {
-    showForm = true;
-    showBatchCreator = false;
-    editingScenario = null;
-  }
-
   function handleBatchCreateScenario() {
     showBatchCreator = true;
     showForm = false;
@@ -344,19 +338,11 @@
     
     <div class="flex space-x-2">
       <button 
-        on:click={handleCreateScenario}
-        class="btn btn-primary flex items-center gap-1 mr-2"
-      >
-        <Plus size={18} />
-        Create Single Scenario
-      </button>
-
-      <button 
         on:click={handleBatchCreateScenario}
         class="btn btn-primary flex items-center gap-1 mr-2"
       >
         <ListPlus size={18} />
-        Batch Create Scenarios
+        Add Damage Scenarios
       </button>
       
       <button 
