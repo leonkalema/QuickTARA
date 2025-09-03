@@ -1,33 +1,36 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { productApi } from '../../../lib/api/productApi';
-  import type { CreateProductRequest } from '../../../lib/types/product';
+  import Modal from '../../../components/ui/Modal.svelte';
+  import type { Product } from '../../../lib/types/product';
 
-  const dispatch = createEventDispatcher();
+  export let isOpen = false;
 
-  let isSubmitting = false;
+  const dispatch = createEventDispatcher<{
+    close: void;
+    create: Product;
+  }>();
+
+  let isLoading = false;
   let error = '';
 
-  // Form data
-  let formData: CreateProductRequest = {
+  let formData = {
     name: '',
     description: '',
     product_type: 'automotive',
-    version: '1.0.0',
+    version: '',
     status: 'development',
     owner_team: '',
-    compliance_standards: []
+    compliance_standards: [] as string[]
   };
 
   let complianceInput = '';
 
   const productTypes = [
-    { value: 'automotive', label: 'Automotive', description: 'Vehicles, ECUs, infotainment systems' },
-    { value: 'industrial', label: 'Industrial', description: 'Manufacturing, automation, control systems' },
-    { value: 'iot', label: 'IoT', description: 'Connected devices, sensors, smart home' },
-    { value: 'medical', label: 'Medical', description: 'Healthcare devices, diagnostic equipment' },
-    { value: 'aerospace', label: 'Aerospace', description: 'Aircraft systems, satellites, avionics' },
-    { value: 'other', label: 'Other', description: 'Custom or specialized systems' }
+    { value: 'automotive', label: 'Automotive', description: 'Vehicle systems and components' },
+    { value: 'industrial', label: 'Industrial', description: 'Manufacturing and automation' },
+    { value: 'iot', label: 'IoT', description: 'Internet of Things devices' },
+    { value: 'medical', label: 'Medical', description: 'Healthcare and medical devices' },
+    { value: 'aerospace', label: 'Aerospace', description: 'Aviation and space systems' }
   ];
 
   const statusOptions = [
@@ -61,38 +64,70 @@
   }
 
   async function handleSubmit() {
-    error = '';
-    
     if (!formData.name.trim()) {
       error = 'Product name is required';
       return;
     }
 
-    if (!formData.version.trim()) {
-      error = 'Version is required';
-      return;
-    }
-
-    isSubmitting = true;
+    isLoading = true;
+    error = '';
 
     try {
-      await productApi.create({
-        ...formData,
-        name: formData.name.trim(),
-        description: formData.description?.trim() || undefined,
-        owner_team: formData.owner_team?.trim() || undefined
+      const response = await fetch('http://127.0.0.1:8080/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          product_type: formData.product_type,
+          description: formData.description.trim() || null,
+          safety_level: 'QM',
+          interfaces: [],
+          access_points: [],
+          boundaries: [],
+          objectives: [],
+          stakeholders: [],
+          location: 'Internal',
+          trust_zone: 'Standard'
+        })
       });
-      
-      dispatch('created');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Error Response:', errorData);
+        throw new Error(JSON.stringify(errorData) || `HTTP error! status: ${response.status}`);
+      }
+
+      const newProduct = await response.json();
+      dispatch('create', newProduct);
+      resetForm();
+      isOpen = false;
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to create product';
       console.error('Error creating product:', err);
     } finally {
-      isSubmitting = false;
+      isLoading = false;
     }
   }
 
-  function handleClose() {
+  function resetForm() {
+    formData = {
+      name: '',
+      description: '',
+      product_type: 'automotive',
+      version: '',
+      status: 'development',
+      owner_team: '',
+      compliance_standards: []
+    };
+    complianceInput = '';
+    error = '';
+  }
+
+  function closeModal() {
+    resetForm();
+    isOpen = false;
     dispatch('close');
   }
 </script>
@@ -104,7 +139,7 @@
     <div class="flex items-center justify-between p-6 border-b border-gray-200">
       <h2 class="text-xl font-semibold text-gray-900">Create New Product</h2>
       <button
-        on:click={handleClose}
+        on:click={closeModal}
         class="text-gray-400 hover:text-gray-600 transition-colors"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,11 +191,17 @@
           <select
             id="type"
             bind:value={formData.product_type}
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+            required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
-            {#each productTypes as type}
-              <option value={type.value}>{type.label} - {type.description}</option>
-            {/each}
+            <option value="">Select product type</option>
+            <option value="ECU">ECU</option>
+            <option value="Gateway">Gateway</option>
+            <option value="Sensor">Sensor</option>
+            <option value="Actuator">Actuator</option>
+            <option value="Network">Network</option>
+            <option value="ExternalDevice">External Device</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
@@ -283,18 +324,18 @@
       <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
         <button
           type="button"
-          on:click={handleClose}
+          on:click={closeModal}
           class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-          disabled={isSubmitting}
+          disabled={isLoading}
         >
           Cancel
         </button>
         <button
           type="submit"
           class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors disabled:opacity-50"
-          disabled={isSubmitting}
+          disabled={isLoading}
         >
-          {isSubmitting ? 'Creating...' : 'Create Product'}
+          {isLoading ? 'Creating...' : 'Create Product'}
         </button>
       </div>
     </form>

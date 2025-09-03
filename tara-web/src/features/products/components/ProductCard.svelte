@@ -16,26 +16,13 @@
   }
 
   function handleEdit() {
-    // TODO: Implement edit functionality
+    dispatch('edit', product);
     showMenu = false;
   }
 
-  async function handleDelete() {
-    if (!confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    isDeleting = true;
-    try {
-      await productApi.delete(product.scope_id);
-      dispatch('deleted');
-    } catch (error) {
-      console.error('Failed to delete product:', error);
-      alert('Failed to delete product. Please try again.');
-    } finally {
-      isDeleting = false;
-      showMenu = false;
-    }
+  function handleDelete() {
+    dispatch('delete', product);
+    showMenu = false;
   }
 
   function getStatusColor(status: string) {

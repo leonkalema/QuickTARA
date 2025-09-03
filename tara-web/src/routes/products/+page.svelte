@@ -7,12 +7,16 @@
   // import { Plus, Search, Filter, Package, Users, Calendar } from '@lucide/svelte';
   import ProductCard from '../../features/products/components/ProductCard.svelte';
   import CreateProductModal from '../../features/products/components/CreateProductModal.svelte';
+  import ConfirmationModal from '../../components/ui/ConfirmationModal.svelte';
 
   let products: Product[] = [];
   let filteredProducts: Product[] = [];
   let isLoading = true;
   let error = '';
   let showCreateModal = false;
+  let showDeleteModal = false;
+  let productToDelete: Product | null = null;
+  let isDeleting = false;
   let viewMode = 'grid'; // 'grid' or 'list'
   
   // Filters
@@ -65,13 +69,53 @@
     applyFilters();
   }
 
-  function handleProductSelect(product: Product) {
-    selectedProduct.set(product);
+  function handleProductCreated(event: CustomEvent<Product>) {
+    const newProduct = event.detail;
+    products = [newProduct, ...products];
+    applyFilters();
+    showCreateModal = false;
   }
 
-  function handleProductCreated() {
-    showCreateModal = false;
-    loadProducts();
+  function handleEditProduct(product: Product) {
+    // TODO: Implement edit functionality
+    console.log('Edit product:', product);
+  }
+
+  function handleDeleteProduct(product: Product) {
+    productToDelete = product;
+    showDeleteModal = true;
+  }
+
+  async function confirmDelete() {
+    if (!productToDelete) return;
+
+    isDeleting = true;
+    try {
+      const response = await fetch(`http://127.0.0.1:8080/api/products/${productToDelete.scope_id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Remove from local state
+      products = products.filter(p => p.scope_id !== productToDelete?.scope_id);
+      applyFilters();
+      
+      showDeleteModal = false;
+      productToDelete = null;
+    } catch (err) {
+      error = 'Failed to delete product. Please try again.';
+      console.error('Error deleting product:', err);
+    } finally {
+      isDeleting = false;
+    }
+  }
+
+  function cancelDelete() {
+    showDeleteModal = false;
+    productToDelete = null;
   }
 
   function handleProductUpdated() {
@@ -250,9 +294,9 @@
           <ProductCard
             {product}
             isSelected={$selectedProduct?.scope_id === product.scope_id}
-            on:select={() => handleProductSelect(product)}
-            on:updated={handleProductUpdated}
-            on:deleted={handleProductDeleted}
+            on:select={() => selectedProduct.set(product)}
+            on:edit={(e) => handleEditProduct(e.detail)}
+            on:delete={(e) => handleDeleteProduct(e.detail)}
           />
         {/each}
       </div>
@@ -263,10 +307,10 @@
           {#each filteredProducts as product (product.scope_id)}
             <div 
               class="p-4 hover:bg-gray-50 cursor-pointer transition-colors {$selectedProduct?.scope_id === product.scope_id ? 'bg-slate-50 border-l-4 border-slate-500' : ''}"
-              on:click={() => handleProductSelect(product)}
+              on:click={() => selectedProduct.set(product)}
               role="button"
               tabindex="0"
-              on:keydown={(e) => e.key === 'Enter' && handleProductSelect(product)}
+              on:keydown={(e) => e.key === 'Enter' && selectedProduct.set(product)}
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4 flex-1">
@@ -331,9 +375,24 @@
 
 <!-- Create Product Modal -->
 {#if showCreateModal}
-  <CreateProductModal
-    on:created={handleProductCreated}
+  <CreateProductModal 
+    bind:isOpen={showCreateModal}
+    on:create={handleProductCreated}
     on:close={() => showCreateModal = false}
+  />
+{/if}
+
+{#if showDeleteModal && productToDelete}
+  <ConfirmationModal
+    bind:isOpen={showDeleteModal}
+    title="Delete Product"
+    message="Are you sure you want to delete '{productToDelete.name}'? This action cannot be undone."
+    confirmText="Delete"
+    cancelText="Cancel"
+    variant="danger"
+    isLoading={isDeleting}
+    on:confirm={confirmDelete}
+    on:cancel={cancelDelete}
   />
 {/if}
 
