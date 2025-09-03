@@ -295,8 +295,6 @@
             {product}
             isSelected={$selectedProduct?.scope_id === product.scope_id}
             on:select={() => selectedProduct.set(product)}
-            on:edit={(e) => handleEditProduct(e.detail)}
-            on:delete={(e) => handleDeleteProduct(e.detail)}
           />
         {/each}
       </div>

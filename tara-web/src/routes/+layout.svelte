@@ -3,6 +3,7 @@
 	import Header from '../components/layout/Header.svelte';
 	import Sidebar from '../components/layout/Sidebar.svelte';
 	import Footer from '../components/layout/Footer.svelte';
+	import NotificationContainer from '../components/ui/NotificationContainer.svelte';
 
 	let { children } = $props();
 </script>
@@ -31,4 +32,7 @@
 	
 	<!-- Footer -->
 	<Footer />
+	
+	<!-- Global Notifications -->
+	<NotificationContainer />
 </div>

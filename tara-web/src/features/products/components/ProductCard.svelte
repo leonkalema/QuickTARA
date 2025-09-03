@@ -1,7 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { MoreVertical, Edit, Trash2 } from '@lucide/svelte';
   import type { Product } from '../../../lib/types/product';
-  import { productApi } from '../../../lib/api/productApi';
 
   export let product: Product;
   export let isSelected: boolean = false;
@@ -13,6 +14,8 @@
 
   function handleSelect() {
     dispatch('select');
+    // Navigate to product detail page
+    goto(`/products/${product.scope_id}`);
   }
 
   function handleEdit() {
@@ -74,36 +77,11 @@
         </div>
       </div>
 
-      <!-- Actions Menu -->
-      <div class="relative">
-        <button
-          class="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-gray-100 transition-opacity"
-          on:click|stopPropagation={() => showMenu = !showMenu}
-        >
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-          </svg>
-        </button>
-
-        {#if showMenu}
-          <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-            <div class="py-1">
-              <button
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                on:click|stopPropagation={handleEdit}
-              >
-                Edit Product
-              </button>
-              <button
-                class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                on:click|stopPropagation={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete Product'}
-              </button>
-            </div>
-          </div>
-        {/if}
+      <!-- Status Badge -->
+      <div class="flex items-center">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getStatusColor(product.status)}">
+          {product.status}
+        </span>
       </div>
     </div>
   </div>
@@ -117,18 +95,14 @@
       </p>
     {/if}
 
-    <!-- Status and Team -->
-    <div class="flex items-center justify-between">
-      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getStatusColor(product.status)}">
-        {product.status}
-      </span>
-      
-      {#if product.owner_team}
+    <!-- Team -->
+    {#if product.owner_team}
+      <div class="flex items-center">
         <span class="text-xs text-gray-500">
           Team: {product.owner_team}
         </span>
-      {/if}
-    </div>
+      </div>
+    {/if}
 
     <!-- Compliance Standards -->
     {#if product.compliance_standards && product.compliance_standards.length > 0}

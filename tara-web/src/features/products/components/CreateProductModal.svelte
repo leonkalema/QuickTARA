@@ -101,6 +101,11 @@
 
       const newProduct = await response.json();
       dispatch('create', newProduct);
+      
+      // Show success notification
+      const { notifications } = await import('../../../lib/stores/notificationStore');
+      notifications.show(`Product "${newProduct.name}" created successfully!`, 'success');
+      
       resetForm();
       isOpen = false;
     } catch (err) {
