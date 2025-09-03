@@ -1,14 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { RefreshCw, AlertTriangle, Shield, Activity, Trash2, ListPlus } from '@lucide/svelte';
+  import { RefreshCw, AlertTriangle, Shield, Activity, Trash2, ListPlus, ArrowLeft, Package } from '@lucide/svelte';
   import { damageScenarioApi, type DamageScenario, DamageCategory, SeverityLevel } from '../../api/damage-scenarios';
   import { scopeApi, type Scope } from '../../api/scopes';
   import { componentApi, type Component } from '../../api/components';
   import { safeApiCall } from '../../utils/error-handler';
   import { showSuccess, showError } from '../ToastManager.svelte';
   import DamageScenarioListComponent from './DamageScenarioList.svelte';
-  import DamageScenarioForm from './DamageScenarioForm.svelte';
+  import DamageScenarioFormNew from './DamageScenarioFormNew.svelte';
   import DamageScenarioBatchCreator from './DamageScenarioBatchCreator.svelte';
+  import ProductSelector from './ProductSelector.svelte';
   
   // Props
   export let scopeId: string | null = null;
@@ -26,6 +27,12 @@
   let editingScenario: DamageScenario | null = null;
   let viewingScenario: DamageScenario | null = null;
   let scenarioToDelete: DamageScenario | null = null;
+
+  // Product selection state
+  let selectedProductId: string | null = null;
+  let selectedProductName: string = '';
+  let selectedProductType: string = '';
+  let showProductSelector = true;
   
   // Data for filters
   let availableScopes: Scope[] = [];
@@ -52,12 +59,29 @@
   };
   
   onMount(async () => {
-    // Load filter data and damage scenarios in parallel
-    await Promise.all([
-      loadFilterData(),
-      loadDamageScenarios()
-    ]);
+    // Only load filter data initially, scenarios loaded after product selection
+    await loadFilterData();
   });
+
+  function handleProductSelected(event: CustomEvent) {
+    const { productId, productName, productType } = event.detail;
+    selectedProductId = productId;
+    selectedProductName = productName;
+    selectedProductType = productType;
+    showProductSelector = false;
+    
+    // Load scenarios for selected product
+    loadDamageScenarios();
+  }
+
+  function handleBackToProductSelector() {
+    showProductSelector = true;
+    selectedProductId = null;
+    selectedProductName = '';
+    selectedProductType = '';
+    scenarios = [];
+    totalScenarios = 0;
+  }
   
   /**
    * Load scopes and components for filters
@@ -97,8 +121,7 @@
       const result = await safeApiCall(() => damageScenarioApi.getAll({
         skip,
         limit: pageSize,
-        scope_id: selectedScopeId || undefined,
-        component_id: selectedComponentId || undefined,
+        scope_id: selectedProductId || selectedScopeId || undefined,
         damage_category: selectedDamageCategory || undefined,
         severity: selectedSeverity || undefined
       }));
@@ -132,11 +155,19 @@
     return component ? component.name : 'Unknown Component';
   }
   
-  function handleBatchCreateScenario() {
+  function handleBatchCreatorShow() {
     showBatchCreator = true;
-    showForm = false;
   }
-  
+
+  function handleBatchCreatorComplete() {
+    showBatchCreator = false;
+    loadDamageScenarios(); // Refresh the list
+  }
+
+  function handleBatchCreatorCancel() {
+    showBatchCreator = false;
+  }
+
   function handleEditScenario(scenario: DamageScenario) {
     editingScenario = scenario;
     showForm = true;
@@ -273,7 +304,37 @@
   }
 </script>
 
+{#if showProductSelector}
+  <ProductSelector 
+    bind:selectedProductId
+    on:productSelected={handleProductSelected}
+  />
+{:else}
 <div class="space-y-6">
+  <!-- Product Context Header -->
+  <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <button 
+          on:click={handleBackToProductSelector}
+          class="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+          title="Back to product selection"
+        >
+          <ArrowLeft class="h-5 w-5" />
+        </button>
+        <Package class="h-6 w-6 text-blue-600" />
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">{selectedProductName}</h2>
+          <p class="text-sm text-gray-500">{selectedProductType}</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-sm text-gray-500">Product ID</p>
+        <p class="text-xs font-mono text-gray-700">{selectedProductId}</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Stats cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
     <!-- Total Scenarios -->
@@ -338,7 +399,7 @@
     
     <div class="flex space-x-2">
       <button 
-        on:click={handleBatchCreateScenario}
+        on:click={handleBatchCreatorShow}
         class="btn btn-primary flex items-center gap-1 mr-2"
       >
         <ListPlus size={18} />
@@ -456,10 +517,10 @@
   
   <!-- Create/Edit Form Modal -->
   {#if showForm}
-    <DamageScenarioForm 
+    <DamageScenarioFormNew 
       scenario={editingScenario}
-      scopeId={selectedScopeId}
-      componentId={selectedComponentId}
+      selectedProductId={selectedProductId || ''}
+      selectedProductName={selectedProductName || ''}
       on:cancel={handleFormCancel}
       on:submit={handleFormSubmit}
     />
@@ -643,6 +704,20 @@
     </div>
   {/if}
   
+  <!-- Batch Creator Modal -->
+  {#if showBatchCreator}
+    <div class="fixed inset-0 backdrop-blur-sm bg-neutral-900/40 flex items-center justify-center z-50 p-4 transition-opacity duration-200">
+      <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DamageScenarioBatchCreator 
+          selectedProductId={selectedProductId || ''}
+          selectedProductName={selectedProductName || ''}
+          on:complete={handleBatchCreatorComplete}
+          on:cancel={handleBatchCreatorCancel}
+        />
+      </div>
+    </div>
+  {/if}
+  
   <!-- Delete Confirmation Modal -->
   {#if showDeleteModal && scenarioToDelete}
     <div class="fixed inset-0 bg-neutral-900/40 z-50 flex items-center justify-center transition-opacity duration-200">
@@ -696,6 +771,7 @@
     </div>
   {/if}
 </div>
+{/if}
 
 <style>
   .metric-card {

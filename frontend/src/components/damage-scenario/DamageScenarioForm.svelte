@@ -11,6 +11,8 @@
     SeverityLevel
   } from '../../api/damage-scenarios';
   import { safeApiCall } from '../../utils/error-handler';
+  import AssetSelector from './AssetSelector.svelte';
+  import ThreatScenarioLinker from './ThreatScenarioLinker.svelte';
   import { scopeApi, type Scope } from '../../api/scopes';
   import { componentApi, type Component } from '../../api/components';
   import { showError } from '../ToastManager.svelte';
@@ -23,7 +25,6 @@
   // State
   let isLoading = false;
   let isSaving = false;
-  let isPropagationLoading = false;
   let formData: DamageScenarioCreate = {
     name: '',
     description: '',
@@ -40,13 +41,10 @@
     version: 1,
     revision_notes: ''
   };
-  let propagationSuggestions: PropagationSuggestion[] = [];
   let scopes: Scope[] = [];
-  // Keep full component list to avoid extra API round-trips
-  let allComponents: Component[] = [];
-  let components: Component[] = [];
-  let showPropagationSuggestions = false;
   let formErrors: Record<string, string> = {};
+  let selectedAssetId: string | null = null;
+  let selectedThreatId: string | null = null;
   
   // Event dispatcher
   const dispatch = createEventDispatcher();

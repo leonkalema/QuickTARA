@@ -53,6 +53,9 @@ export const handleApiError = (
   // Default error handling
   if (error instanceof ApiError) {
     console.error(`API Error (${error.status}): ${error.message}`, error.data);
+    if (error.data && error.data.detail) {
+      console.error('Validation errors:', JSON.stringify(error.data.detail, null, 2));
+    }
   } else {
     console.error('Application Error:', error.message);
   }
