@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import Header from '../components/layout/Header.svelte';
+	import Sidebar from '../components/layout/Sidebar.svelte';
 	import Footer from '../components/layout/Footer.svelte';
 
 	let { children } = $props();
@@ -15,12 +16,18 @@
 	<!-- Header -->
 	<Header />
 	
-	<!-- Main Content -->
-	<main class="flex-1">
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-			{@render children?.()}
-		</div>
-	</main>
+	<!-- Main Layout with Sidebar -->
+	<div class="flex flex-1">
+		<!-- Left Sidebar -->
+		<Sidebar />
+		
+		<!-- Main Content -->
+		<main class="flex-1 overflow-auto">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+				{@render children?.()}
+			</div>
+		</main>
+	</div>
 	
 	<!-- Footer -->
 	<Footer />
