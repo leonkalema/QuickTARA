@@ -1,20 +1,14 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { damageScenarioApi } from '../../../lib/api/damageScenarioApi';
-  import { notifications } from '../../../lib/stores/notificationStore';
-  import { selectedProduct } from '../../../lib/stores/productStore';
-  import { 
-    DamageCategory,
-    ImpactType,
-    SeverityLevel,
-    type DamageScenario, 
-    type CreateDamageScenarioRequest
-  } from '../../../lib/types/damageScenario';
-  import type { Asset } from '../../../lib/types/asset';
+  import { notifications } from '$lib/stores/notificationStore';
+  import type { CreateDamageScenarioRequest, DamageScenario } from '$lib/types/damageScenario';
+  import { damageScenarioApi } from '$lib/api/damageScenarioApi';
+  import { selectedProduct } from '$lib/stores/productStore';
+  import { onMount, createEventDispatcher } from 'svelte';
+  import { getOverallSfopRating, getSfopBadgeClass, getCIABadgeClass, getSfopImpacts } from '$lib/utils/sfopUtils';
 
   export let damageScenarios: DamageScenario[] = [];
-  export let assets: Asset[] = [];
-  
+  export let assets: any[] = [];
+
   const dispatch = createEventDispatcher();
 
   // Form state
@@ -22,9 +16,9 @@
   let newScenario = {
     name: '',
     description: '',
-    damage_category: DamageCategory.SAFETY,
-    impact_type: ImpactType.DIRECT,
-    severity: SeverityLevel.LOW,
+    damage_category: 'Safety',
+    impact_type: 'Direct',
+    severity: 'Low',
     confidentiality_impact: false,
     integrity_impact: false,
     availability_impact: false,
@@ -49,9 +43,9 @@
     newScenario = {
       name: '',
       description: '',
-      damage_category: DamageCategory.SAFETY,
-      impact_type: ImpactType.DIRECT,
-      severity: SeverityLevel.LOW,
+      damage_category: 'Safety',
+      impact_type: 'Direct',
+      severity: 'Low',
       confidentiality_impact: false,
       integrity_impact: false,
       availability_impact: false,
@@ -60,7 +54,7 @@
       version: '1.0',
       revision_notes: 'Initial version'
     };
-    
+
     safety_impact = '';
     financial_impact = '';
     operational_impact = '';
@@ -76,6 +70,11 @@
 
     if (!$selectedProduct?.scope_id) {
       notifications.show('Please select a product first', 'error');
+      return;
+    }
+
+    if (!newScenario.confidentiality_impact && !newScenario.integrity_impact && !newScenario.availability_impact) {
+      notifications.show('Please select at least one CIA security property', 'error');
       return;
     }
 
@@ -100,45 +99,6 @@
       console.error('Error creating damage scenario:', error);
       notifications.show('Failed to create damage scenario', 'error');
     }
-  }
-
-  function getOverallSfopRating(scenario: any): string {
-    const impacts = [
-      scenario.safety_impact,
-      scenario.financial_impact,
-      scenario.operational_impact,
-      scenario.privacy_impact
-    ].filter(impact => impact && impact !== 'negligible');
-
-    if (impacts.length === 0) return 'negligible';
-
-    const severityOrder = ['negligible', 'moderate', 'major', 'severe'];
-    let maxSeverity = 0;
-    
-    impacts.forEach(impact => {
-      const index = severityOrder.indexOf(impact);
-      if (index > maxSeverity) {
-        maxSeverity = index;
-      }
-    });
-
-    return severityOrder[maxSeverity];
-  }
-
-  function getSfopBadgeClass(impact: string): string {
-    switch (impact) {
-      case 'severe': return 'bg-red-100 text-red-800';
-      case 'major': return 'bg-orange-100 text-orange-800';
-      case 'moderate': return 'bg-yellow-100 text-yellow-800';
-      case 'negligible': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  }
-
-  function getCIABadgeClass(isActive: boolean): string {
-    return isActive 
-      ? 'bg-red-100 text-red-800 border border-red-200' 
-      : 'bg-gray-100 text-gray-500 border border-gray-200';
   }
 
   function getAssetName(assetId: string): string {
@@ -252,6 +212,36 @@
         </div>
       </div>
 
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">CIA Security Properties *</label>
+        <div class="flex space-x-6">
+          <label class="flex items-center">
+            <input
+              type="checkbox"
+              bind:checked={newScenario.confidentiality_impact}
+              class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            />
+            <span class="text-sm text-gray-700">Confidentiality</span>
+          </label>
+          <label class="flex items-center">
+            <input
+              type="checkbox"
+              bind:checked={newScenario.integrity_impact}
+              class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            />
+            <span class="text-sm text-gray-700">Integrity</span>
+          </label>
+          <label class="flex items-center">
+            <input
+              type="checkbox"
+              bind:checked={newScenario.availability_impact}
+              class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            />
+            <span class="text-sm text-gray-700">Availability</span>
+          </label>
+        </div>
+      </div>
+
       <div class="flex justify-end space-x-3">
         <button
           type="button"
@@ -282,7 +272,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Asset</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CIA</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SFOP Impact</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SFOP</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overall</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
           </tr>
@@ -307,19 +297,13 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex space-x-1">
-                  {#if scenario.safety_impact}
-                    <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(scenario.safety_impact)}">S</span>
-                  {/if}
-                  {#if scenario.financial_impact}
-                    <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(scenario.financial_impact)}">F</span>
-                  {/if}
-                  {#if scenario.operational_impact}
-                    <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(scenario.operational_impact)}">O</span>
-                  {/if}
-                  {#if scenario.privacy_impact}
-                    <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(scenario.privacy_impact)}">P</span>
-                  {/if}
+                <div class="space-y-1">
+                  {#each Object.entries(getSfopImpacts(scenario)) as [key, value]}
+                    <div class="flex items-center space-x-2">
+                      <span class="text-xs font-medium w-8">{key.charAt(0).toUpperCase()}</span>
+                      <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(value)}">{value}</span>
+                    </div>
+                  {/each}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
