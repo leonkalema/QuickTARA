@@ -1,73 +1,135 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { selectedProduct } from '../../lib/stores/productStore';
-  import { notifications } from '../../lib/stores/notificationStore';
-  import { damageScenarioApi } from '../../lib/api/damageScenarioApi';
-  import { assetApi } from '../../lib/api/assetApi';
-  import type { DamageScenario } from '../../lib/types/damageScenario';
-  import type { Asset } from '../../lib/types/asset';
-  import DamageScenarioTable from '../../features/damage-scenarios/components/DamageScenarioTableNew.svelte';
+  import { selectedProduct } from '$lib/stores/productStore';
+  import { damageScenarioApi } from '$lib/api/damageScenarioApi';
+  import { assetApi } from '$lib/api/assetApi';
+  import { notifications } from '$lib/stores/notificationStore';
+  import DamageScenarioTableNew from '../../features/damage-scenarios/components/DamageScenarioTableNew.svelte';
+  import DamageScenarioFilters from '../../components/DamageScenarioFilters.svelte';
+  import Pagination from '../../components/Pagination.svelte';
+  import type { DamageScenario } from '$lib/types/damageScenario';
 
-  let damageScenarios: DamageScenario[] = [];
-  let assets: Asset[] = [];
-  let isLoading = true;
-  let error = '';
+  let allDamageScenarios: DamageScenario[] = [];
+  let filteredScenarios: DamageScenario[] = [];
+  let paginatedScenarios: DamageScenario[] = [];
+  let assets: any[] = [];
+  let loading = true;
+  let error: string | null = null;
+  
+  // Pagination
+  let currentPage = 1;
+  let itemsPerPage = 20;
+  
+  // Filters
+  let filters = {
+    search: '',
+    asset: '',
+    cia: ''
+  };
 
   async function loadData() {
-    if (!$selectedProduct) {
-      console.log('No product selected');
+    if (!$selectedProduct?.scope_id) {
+      error = 'Please select a product first';
+      loading = false;
       return;
     }
-    
-    console.log('Loading data for product:', $selectedProduct.scope_id);
-    isLoading = true;
-    error = '';
-    
+
     try {
-      // Load both damage scenarios and assets for the selected product
-      const [damageResponse, assetResponse] = await Promise.all([
+      loading = true;
+      error = null;
+
+      const [scenariosResponse, assetsResponse] = await Promise.all([
         damageScenarioApi.getDamageScenariosByProduct($selectedProduct.scope_id),
         assetApi.getByProduct($selectedProduct.scope_id)
       ]);
       
-      console.log('Loaded damage scenarios:', damageResponse);
-      console.log('Loaded assets:', assetResponse);
-      
-      damageScenarios = damageResponse.scenarios;
-      assets = assetResponse.assets;
+      allDamageScenarios = scenariosResponse?.scenarios || [];
+      assets = assetsResponse?.assets || [];
+      applyFilters();
+
     } catch (err) {
       console.error('Error loading data:', err);
       error = 'Failed to load damage scenarios';
       notifications.show('Failed to load damage scenarios', 'error');
     } finally {
-      isLoading = false;
+      loading = false;
     }
   }
 
-  function handleScenarioAdded(event: CustomEvent<DamageScenario>) {
-    damageScenarios = [...damageScenarios, event.detail];
+  function applyFilters() {
+    filteredScenarios = allDamageScenarios.filter(scenario => {
+      // Search filter
+      if (filters.search && !scenario.name.toLowerCase().includes(filters.search.toLowerCase()) && 
+          !scenario.description?.toLowerCase().includes(filters.search.toLowerCase())) {
+        return false;
+      }
+      
+      
+      // Asset filter
+      if (filters.asset && scenario.primary_component_id !== filters.asset) {
+        return false;
+      }
+      
+      // CIA filter
+      if (filters.cia) {
+        const ciaMap: Record<string, boolean> = {
+          'confidentiality': scenario.confidentiality_impact,
+          'integrity': scenario.integrity_impact,
+          'availability': scenario.availability_impact
+        };
+        if (!ciaMap[filters.cia]) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
+    // Reset to first page when filters change
+    currentPage = 1;
+    updatePagination();
   }
 
-  function handleScenarioDeleted(event: CustomEvent<string>) {
-    damageScenarios = damageScenarios.filter(s => s.scenario_id !== event.detail);
+  function updatePagination() {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    paginatedScenarios = filteredScenarios.slice(startIndex, endIndex);
   }
 
-  function handleScenarioUpdated(event: CustomEvent<DamageScenario>) {
-    const updatedScenario = event.detail;
-    const index = damageScenarios.findIndex(ds => ds.scenario_id === updatedScenario.scenario_id);
-    if (index !== -1) {
-      damageScenarios[index] = updatedScenario;
-      damageScenarios = [...damageScenarios];
-    }
+  function handleFilterChange(event: CustomEvent) {
+    filters = event.detail;
+    applyFilters();
   }
 
-  onMount(() => {
+  function handlePageChange(event: CustomEvent) {
+    currentPage = event.detail.page;
+    itemsPerPage = event.detail.itemsPerPage;
+    updatePagination();
+  }
+
+  function handleScenarioAdded(event: CustomEvent) {
+    const newScenario = event.detail;
+    allDamageScenarios = [...allDamageScenarios, newScenario];
+    applyFilters();
+    notifications.show('Damage scenario added successfully', 'success');
+  }
+
+  function handleScenarioDeleted(event: CustomEvent) {
+    const deletedId = event.detail.scenario_id;
+    allDamageScenarios = allDamageScenarios.filter(s => s.scenario_id !== deletedId);
+    applyFilters();
+    notifications.show('Damage scenario deleted successfully', 'success');
+  }
+
+  // Load data when component mounts or when selected product changes
+  onMount(loadData);
+  $: if ($selectedProduct?.scope_id) {
     loadData();
-  });
-
-  // Reload data when selected product changes
-  $: if ($selectedProduct) {
-    loadData();
+  }
+  
+  // Update pagination when filtered scenarios change
+  $: if (filteredScenarios) {
+    updatePagination();
   }
 </script>
 
@@ -81,9 +143,8 @@
     <div>
       <h1 class="text-3xl font-bold text-gray-900">Damage Scenarios</h1>
       {#if $selectedProduct}
-        <p class="mt-2 text-gray-600 max-w-2xl">
-          Define potential damage scenarios for <strong>{$selectedProduct.name}</strong>. 
-          Each scenario describes what could go wrong with a specific asset and its CIA properties.
+        <p class="mt-2 text-gray-600">
+          Define potential damage scenarios for <strong>{$selectedProduct.name}</strong>. Each scenario describes what could go wrong with a specific asset and its CIA properties.
         </p>
       {:else}
         <p class="mt-2 text-gray-600 max-w-2xl">
@@ -113,7 +174,7 @@
         <span>Select a Product</span>
       </a>
     </div>
-  {:else if assets.length === 0 && !isLoading}
+  {:else if assets.length === 0 && !loading}
     <!-- No Assets State -->
     <div class="text-center py-16">
       <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +196,7 @@
     </div>
   {:else}
     <!-- Content -->
-    {#if isLoading}
+    {#if loading}
       <div class="flex flex-col justify-center items-center py-16">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mb-4"></div>
         <p class="text-gray-500">Loading damage scenarios...</p>
@@ -159,13 +220,37 @@
         </div>
       </div>
     {:else}
-      <!-- Damage Scenario Table -->
-      <DamageScenarioTable 
-        {damageScenarios}
+      <!-- Filters -->
+      <DamageScenarioFilters 
+        {filters}
         {assets}
-        productId={$selectedProduct.scope_id}
+        on:filterChange={handleFilterChange}
+      />
+      
+      <!-- Results Summary -->
+      <div class="flex items-center justify-between text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
+        <span>
+          Showing {paginatedScenarios.length} of {filteredScenarios.length} damage scenarios
+          {#if filteredScenarios.length !== allDamageScenarios.length}
+            (filtered from {allDamageScenarios.length} total)
+          {/if}
+        </span>
+      </div>
+      
+      <!-- Damage Scenario Table -->
+      <DamageScenarioTableNew 
+        damageScenarios={paginatedScenarios}
+        {assets}
         on:scenarioAdded={handleScenarioAdded}
         on:scenarioDeleted={handleScenarioDeleted}
+      />
+      
+      <!-- Pagination -->
+      <Pagination 
+        {currentPage}
+        totalItems={filteredScenarios.length}
+        {itemsPerPage}
+        on:pageChange={handlePageChange}
       />
     {/if}
   {/if}

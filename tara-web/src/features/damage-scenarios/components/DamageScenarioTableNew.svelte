@@ -5,6 +5,7 @@
   import { selectedProduct } from '$lib/stores/productStore';
   import { onMount, createEventDispatcher } from 'svelte';
   import { getOverallSfopRating, getSfopBadgeClass, getCIABadgeClass, getSfopImpacts } from '$lib/utils/sfopUtils';
+  import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
 
   export let damageScenarios: DamageScenario[] = [];
   export let assets: any[] = [];
@@ -33,6 +34,11 @@
   let financial_impact = '';
   let operational_impact = '';
   let privacy_impact = '';
+  
+  // Delete confirmation dialog
+  let showDeleteDialog = false;
+  let scenarioToDelete: DamageScenario | null = null;
+  let isDeleting = false;
 
   // Update scope when product changes
   $: if ($selectedProduct?.scope_id) {
@@ -106,31 +112,47 @@
     return asset?.name || 'Unknown Asset';
   }
 
-  async function deleteDamageScenario(scenario: DamageScenario) {
-    if (!confirm(`Are you sure you want to delete "${scenario.name}"?`)) {
-      return;
-    }
+  function confirmDelete(scenario: DamageScenario) {
+    scenarioToDelete = scenario;
+    showDeleteDialog = true;
+  }
+
+  async function deleteDamageScenario() {
+    if (!scenarioToDelete) return;
+    
+    isDeleting = true;
 
     try {
-      await damageScenarioApi.deleteDamageScenario(scenario.scenario_id);
-      damageScenarios = damageScenarios.filter(s => s.scenario_id !== scenario.scenario_id);
+      await damageScenarioApi.deleteDamageScenario(scenarioToDelete.scenario_id);
+      damageScenarios = damageScenarios.filter(s => s.scenario_id !== scenarioToDelete!.scenario_id);
       notifications.show('Damage scenario deleted successfully', 'success');
-      dispatch('scenarioDeleted', scenario.scenario_id);
+      dispatch('scenarioDeleted', { scenario_id: scenarioToDelete.scenario_id });
+      
+      // Reset dialog state
+      showDeleteDialog = false;
+      scenarioToDelete = null;
     } catch (error) {
       console.error('Error deleting damage scenario:', error);
       notifications.show('Failed to delete damage scenario', 'error');
+    } finally {
+      isDeleting = false;
     }
+  }
+
+  function handleDeleteCancel() {
+    showDeleteDialog = false;
+    scenarioToDelete = null;
+    isDeleting = false;
   }
 </script>
 
 <div class="space-y-6">
-  <div class="flex justify-between items-center">
-    <h3 class="text-lg font-medium text-gray-900">Damage Scenarios</h3>
+  <div class="flex justify-end items-center">
     <button
       on:click={() => isAddingNew = !isAddingNew}
       class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
     >
-      {isAddingNew ? 'Cancel' : 'Add Scenario'}
+      {isAddingNew ? 'Cancel' : 'Add New Scenario'}
     </button>
   </div>
 
@@ -313,7 +335,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
-                  on:click={() => deleteDamageScenario(scenario)}
+                  on:click={() => confirmDelete(scenario)}
                   class="text-red-600 hover:text-red-900"
                 >
                   Delete
@@ -326,3 +348,16 @@
     </div>
   {/if}
 </div>
+
+<!-- Delete Confirmation Dialog -->
+<ConfirmDialog
+  bind:isOpen={showDeleteDialog}
+  title="Delete Damage Scenario"
+  message={scenarioToDelete ? `Are you sure you want to delete "${scenarioToDelete.name}"? This action cannot be undone.` : ''}
+  confirmText="Delete"
+  cancelText="Cancel"
+  variant="danger"
+  loading={isDeleting}
+  on:confirm={deleteDamageScenario}
+  on:cancel={handleDeleteCancel}
+/>

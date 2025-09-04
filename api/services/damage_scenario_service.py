@@ -761,6 +761,20 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
         # Determine impact type from category
         impact_type = ImpactType.DIRECT  # Default
         
+        # Extract SFOP ratings from violated_properties if available
+        sfop_ratings = violated_props.get('sfop_ratings', {})
+        
+        # Create ImpactRating object from SFOP data
+        from api.models.damage_scenario import ImpactRating, ImpactRatingLevel
+        impact_rating = None
+        if sfop_ratings:
+            impact_rating = ImpactRating(
+                safety=ImpactRatingLevel(sfop_ratings.get('safety', 'negligible')),
+                financial=ImpactRatingLevel(sfop_ratings.get('financial', 'negligible')),
+                operational=ImpactRatingLevel(sfop_ratings.get('operational', 'negligible')),
+                privacy=ImpactRatingLevel(sfop_ratings.get('privacy', 'negligible'))
+            )
+
         return DamageScenario(
             scenario_id=db_scenario.scenario_id,
             name=db_scenario.name,
@@ -772,6 +786,7 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             availability_impact=availability_impact,
             severity=severity,
             impact_details=impact_details,
+            impact_rating=impact_rating,
             version=db_scenario.version,
             revision_notes=db_scenario.revision_notes,
             is_deleted=False,  # Product model doesn't use is_deleted
@@ -780,11 +795,6 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             scope_id=db_scenario.scope_id,
             primary_component_id=primary_asset_id or "",
             affected_component_ids=affected_asset_ids,
-            # SFOP impact ratings - return actual string values from database
-            safety_impact=db_scenario.safety_impact or 'negligible',
-            financial_impact=db_scenario.financial_impact or 'negligible', 
-            operational_impact=db_scenario.operational_impact or 'negligible',
-            privacy_impact=db_scenario.privacy_impact or 'negligible',
             impact_rating_notes=None,  # Not in product model
             sfop_rating_auto_generated=True,
             sfop_rating_last_edited_by=None,
@@ -796,6 +806,25 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
         impact_details = _parse_json_field(db_scenario.impact_details)
         affected_component_ids = [c.component_id for c in db_scenario.affected_components]
         
+        # Create ImpactRating object from legacy SFOP data
+        from api.models.damage_scenario import ImpactRating, ImpactRatingLevel
+        
+        # Convert legacy SFOP values to proper format
+        def convert_legacy_impact(value):
+            if value is None:
+                return "negligible"
+            if isinstance(value, str):
+                return value.lower()
+            # Handle boolean or other types
+            return "negligible"
+        
+        impact_rating = ImpactRating(
+            safety=ImpactRatingLevel(convert_legacy_impact(db_scenario.safety_impact)),
+            financial=ImpactRatingLevel(convert_legacy_impact(db_scenario.financial_impact)),
+            operational=ImpactRatingLevel(convert_legacy_impact(db_scenario.operational_impact)),
+            privacy=ImpactRatingLevel(convert_legacy_impact(db_scenario.privacy_impact))
+        )
+
         return DamageScenario(
             scenario_id=db_scenario.scenario_id,
             name=db_scenario.name,
@@ -807,6 +836,7 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             availability_impact=db_scenario.availability_impact,
             severity=db_scenario.severity,
             impact_details=impact_details,
+            impact_rating=impact_rating,
             version=db_scenario.version,
             revision_notes=db_scenario.revision_notes,
             is_deleted=db_scenario.is_deleted,
@@ -815,11 +845,6 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             scope_id=db_scenario.scope_id,
             primary_component_id=db_scenario.primary_component_id,
             affected_component_ids=affected_component_ids,
-            # SFOP impact ratings and notes
-            safety_impact=_to_severity(db_scenario.safety_impact),
-            financial_impact=_to_severity(db_scenario.financial_impact),
-            operational_impact=_to_severity(db_scenario.operational_impact),
-            privacy_impact=_to_severity(db_scenario.privacy_impact),
             impact_rating_notes=db_scenario.impact_rating_notes,
             sfop_rating_auto_generated=db_scenario.sfop_rating_auto_generated,
             sfop_rating_last_edited_by=db_scenario.sfop_rating_last_edited_by,
