@@ -2,9 +2,9 @@
 Damage Scenario models for FastAPI
 """
 from enum import Enum
-from typing import List, Optional, Set, Dict, Any, Union
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, validator, field_validator, model_validator
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class DamageCategory(str, Enum):
@@ -35,8 +35,25 @@ class SeverityLevel(str, Enum):
     CRITICAL = "Critical"
 
 
+class ImpactRatingLevel(str, Enum):
+    """Impact rating levels"""
+    NEGLIGIBLE = "negligible"
+    MODERATE = "moderate"
+    MAJOR = "major"
+    SEVERE = "severe"
+
+
+class ImpactRating(BaseModel):
+    """Impact rating for different categories"""
+    safety: ImpactRatingLevel = Field(default=ImpactRatingLevel.NEGLIGIBLE, description="Safety impact level")
+    financial: ImpactRatingLevel = Field(default=ImpactRatingLevel.NEGLIGIBLE, description="Financial impact level")
+    operational: ImpactRatingLevel = Field(default=ImpactRatingLevel.NEGLIGIBLE, description="Operational impact level")
+    privacy: ImpactRatingLevel = Field(default=ImpactRatingLevel.NEGLIGIBLE, description="Privacy impact level")
+
+
 class DamageScenarioBase(BaseModel):
     """Base Damage Scenario attributes"""
+    damage_scenario_id: Optional[str] = Field(None, description="Unique damage scenario ID (e.g., DS-001)")
     name: str = Field(..., description="Scenario name")
     description: Optional[str] = Field(None, description="Detailed description of the damage scenario")
     damage_category: DamageCategory = Field(..., description="Category of damage")
@@ -58,16 +75,13 @@ class DamageScenarioBase(BaseModel):
     
     # Severity and impact details
     severity: SeverityLevel = Field(..., description="Severity level of the damage")
-    impact_details: Optional[Dict[str, Any]] = Field(
+    impact_details: Optional[dict] = Field(
         default=None, 
         description="Detailed impact information"
     )
     
-    # SFOP impact ratings
-    safety_impact: Optional[SeverityLevel] = Field(None, description="Safety impact rating")
-    financial_impact: Optional[SeverityLevel] = Field(None, description="Financial impact rating")
-    operational_impact: Optional[SeverityLevel] = Field(None, description="Operational impact rating")
-    privacy_impact: Optional[SeverityLevel] = Field(None, description="Privacy impact rating")
+    # Impact ratings (Safety, Financial, Operational, Privacy)
+    impact_rating: Optional[ImpactRating] = Field(None, description="Impact ratings for different categories")
     impact_rating_notes: Optional[str] = Field(None, description="Notes about impact ratings")
     
     # Audit fields for regulatory compliance
@@ -78,7 +92,7 @@ class DamageScenarioBase(BaseModel):
     
     # Related components
     scope_id: str = Field(..., description="Associated system scope ID")
-    primary_component_id: str = Field(..., description="Primary affected component ID")
+    primary_component_id: Optional[str] = Field(None, description="Primary affected component ID")
     affected_component_ids: List[str] = Field(
         default_factory=list, 
         description="IDs of all affected components"

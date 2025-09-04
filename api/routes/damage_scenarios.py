@@ -7,12 +7,11 @@ from sqlalchemy.orm import Session
 import logging
 
 from api.deps.db import get_db
-from api.models.damage_scenario import (
+from ..models.damage_scenario import (
     DamageScenario, 
     DamageScenarioCreate, 
     DamageScenarioUpdate, 
     DamageScenarioList,
-    PropagationSuggestion,
     PropagationSuggestionResponse
 )
 from api.services.damage_scenario_service import (
@@ -61,20 +60,34 @@ async def list_damage_scenarios(
     return DamageScenarioList(scenarios=scenarios, total=total)
 
 
+def generate_damage_scenario_id(db: Session, scope_id: str) -> str:
+    """Generate next available damage scenario ID (DS-001, DS-002, etc.)"""
+    from api.services.damage_scenario_service import count_damage_scenarios
+    
+    # Get count of existing scenarios for this scope to generate next ID
+    total_scenarios = count_damage_scenarios(db, scope_id=scope_id)
+    return f"DS-{total_scenarios + 1:03d}"
+
+
 @router.post("", response_model=DamageScenario, status_code=status.HTTP_201_CREATED)
 async def create_damage_scenario(
-    scenario: DamageScenarioCreate,
+    damage_scenario: DamageScenarioCreate,
     db: Session = Depends(get_db)
 ):
     """
-    Create a new damage scenario
+    Create a new damage scenario with auto-generated ID
     """
     try:
-        return service_create_scenario(db, scenario)
-    except ValueError as e:
+        # Generate damage scenario ID if not provided
+        if not damage_scenario.damage_scenario_id:
+            damage_scenario.damage_scenario_id = generate_damage_scenario_id(db, damage_scenario.scope_id)
+        
+        return service_create_scenario(db, damage_scenario)
+    except Exception as e:
+        logger.error(f"Error creating damage scenario: {e}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create damage scenario: {str(e)}"
         )
 
 

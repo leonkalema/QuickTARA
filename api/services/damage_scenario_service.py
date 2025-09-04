@@ -49,36 +49,63 @@ def create_damage_scenario(db: Session, scenario: DamageScenarioCreate) -> Damag
         if not scope:
             raise ValueError(f"Product scope with ID {scenario.scope_id} does not exist")
         
-        # Verify that primary asset exists (frontend sends asset_id as primary_component_id)
-        logger.info(f"Checking for primary asset: {scenario.primary_component_id}")
-        primary_asset = db.query(Asset).filter(
-            Asset.asset_id == scenario.primary_component_id
-        ).first()
-        if not primary_asset:
-            raise ValueError(f"Asset with ID {scenario.primary_component_id} does not exist")
+        # Verify that primary asset exists if provided (frontend sends asset_id as primary_component_id)
+        primary_asset = None
+        if scenario.primary_component_id:
+            logger.info(f"Checking for primary asset: {scenario.primary_component_id}")
+            primary_asset = db.query(Asset).filter(
+                Asset.asset_id == scenario.primary_component_id
+            ).first()
+            if not primary_asset:
+                raise ValueError(f"Asset with ID {scenario.primary_component_id} does not exist")
+        else:
+            logger.info("No primary asset specified - creating scenario without asset link")
         
-        # Generate impact values based on damage category
-        logger.info(f"Damage category: {scenario.damage_category}")
-        safety_impact = scenario.damage_category == DamageCategory.SAFETY
-        financial_impact = scenario.damage_category == DamageCategory.FINANCIAL
-        operational_impact = scenario.damage_category == DamageCategory.OPERATIONAL
-        privacy_impact = scenario.damage_category == DamageCategory.PRIVACY
+        # Use SFOP impact ratings from the form if available
+        logger.info(f"Processing SFOP impact ratings: {scenario.impact_rating}")
         
-        # Create violated_properties JSON for new model
-        violated_properties = json.dumps({
+        # Extract SFOP ratings from impact_rating field
+        safety_impact = "negligible"
+        financial_impact = "negligible"
+        operational_impact = "negligible"
+        privacy_impact = "negligible"
+        
+        if scenario.impact_rating:
+            safety_impact = scenario.impact_rating.safety
+            financial_impact = scenario.impact_rating.financial
+            operational_impact = scenario.impact_rating.operational
+            privacy_impact = scenario.impact_rating.privacy
+        else:
+            # Fallback to negligible if no SFOP ratings provided
+            logger.info(f"No SFOP ratings provided, using negligible defaults")
+            safety_impact = "negligible"
+            financial_impact = "negligible"
+            operational_impact = "negligible"
+            privacy_impact = "negligible"
+        
+        # Create violated_properties JSON including SFOP ratings
+        violated_properties_dict = {
             "confidentiality": scenario.confidentiality_impact,
             "integrity": scenario.integrity_impact,
             "availability": scenario.availability_impact,
             "severity": scenario.severity
-        })
-        logger.info(f"Violated properties: {violated_properties}")
+        }
+        
+        # Add SFOP impact ratings to violated_properties
+        if scenario.impact_rating:
+            violated_properties_dict["sfop_ratings"] = {
+                "safety": scenario.impact_rating.safety,
+                "financial": scenario.impact_rating.financial,
+                "operational": scenario.impact_rating.operational,
+                "privacy": scenario.impact_rating.privacy
+            }
         
         # Add impact details if available
         if scenario.impact_details:
-            # Need to deserialize first, add details, then serialize again
-            props_dict = json.loads(violated_properties)
-            props_dict["details"] = scenario.impact_details
-            violated_properties = json.dumps(props_dict)
+            violated_properties_dict["details"] = scenario.impact_details
+            
+        violated_properties = json.dumps(violated_properties_dict)
+        logger.info(f"Violated properties: {violated_properties}")
         
         # Create the damage scenario using product-centric model
         try:
@@ -393,7 +420,7 @@ def update_damage_scenario(
                 violated_props['details'] = scenario.impact_details
             
             # Update violated_properties JSON
-            db_scenario.violated_properties = violated_props
+            db_scenario.violated_properties = json.dumps(violated_props)
         
         # For product model, SFOP are boolean flags
         if scenario.damage_category is not None:
@@ -717,18 +744,19 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
 
     if is_product_scenario:
         # Handle ProductDamageScenario
-        violated_props = _parse_json_field(db_scenario.violated_properties)
+        violated_props = _parse_json_field(db_scenario.violated_properties) or {}
         
         # Extract CIA impacts and severity from violated_properties
-        confidentiality_impact = violated_props.get('confidentiality', False)
-        integrity_impact = violated_props.get('integrity', False)
-        availability_impact = violated_props.get('availability', False)
-        severity = violated_props.get('severity', 'Medium')
+        # Use database fields as fallback if violated_properties doesn't have CIA data
+        confidentiality_impact = violated_props.get('confidentiality', db_scenario.confidentiality_impact if hasattr(db_scenario, 'confidentiality_impact') else False)
+        integrity_impact = violated_props.get('integrity', db_scenario.integrity_impact if hasattr(db_scenario, 'integrity_impact') else False)
+        availability_impact = violated_props.get('availability', db_scenario.availability_impact if hasattr(db_scenario, 'availability_impact') else False)
+        severity = db_scenario.severity or 'Medium'
         impact_details = violated_props.get('details', {})
         
-        # First asset in affected_assets is the primary asset
-        affected_asset_ids = [a.asset_id for a in db_scenario.affected_assets]
-        primary_asset_id = affected_asset_ids[0] if affected_asset_ids else None
+        # Use primary_component_id from database, then fallback to first affected asset
+        primary_asset_id = db_scenario.primary_component_id
+        affected_asset_ids = [a.asset_id for a in db_scenario.affected_assets] if hasattr(db_scenario, 'affected_assets') else []
         
         # Determine impact type from category
         impact_type = ImpactType.DIRECT  # Default
@@ -737,7 +765,7 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             scenario_id=db_scenario.scenario_id,
             name=db_scenario.name,
             description=db_scenario.description,
-            damage_category=db_scenario.category,
+            damage_category=db_scenario.category or DamageCategory.OPERATIONAL,
             impact_type=impact_type,
             confidentiality_impact=confidentiality_impact,
             integrity_impact=integrity_impact,
@@ -750,13 +778,13 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             created_at=db_scenario.created_at,
             updated_at=db_scenario.updated_at,
             scope_id=db_scenario.scope_id,
-            primary_component_id=primary_asset_id,
+            primary_component_id=primary_asset_id or "",
             affected_component_ids=affected_asset_ids,
-            # SFOP impact ratings and notes
-            safety_impact=SeverityLevel.HIGH if db_scenario.safety_impact else SeverityLevel.LOW,
-            financial_impact=SeverityLevel.HIGH if db_scenario.financial_impact else SeverityLevel.LOW,
-            operational_impact=SeverityLevel.HIGH if db_scenario.operational_impact else SeverityLevel.LOW,
-            privacy_impact=SeverityLevel.HIGH if db_scenario.privacy_impact else SeverityLevel.LOW,
+            # SFOP impact ratings - return actual string values from database
+            safety_impact=db_scenario.safety_impact or 'negligible',
+            financial_impact=db_scenario.financial_impact or 'negligible', 
+            operational_impact=db_scenario.operational_impact or 'negligible',
+            privacy_impact=db_scenario.privacy_impact or 'negligible',
             impact_rating_notes=None,  # Not in product model
             sfop_rating_auto_generated=True,
             sfop_rating_last_edited_by=None,

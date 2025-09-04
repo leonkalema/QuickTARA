@@ -307,13 +307,13 @@ class DamageScenario(Base):
     confidentiality_impact = Column(Boolean, default=False)
     integrity_impact = Column(Boolean, default=False)
     availability_impact = Column(Boolean, default=False)
-    primary_component_id = Column(String, nullable=False)
+    primary_component_id = Column(String, nullable=True)
     
-    # Damage Types (multiple can apply)
-    safety_impact = Column(Boolean, default=False)
-    financial_impact = Column(Boolean, default=False)
-    operational_impact = Column(Boolean, default=False)
-    privacy_impact = Column(Boolean, default=False)
+    # SFOP Impact Ratings (severity levels)
+    safety_impact = Column(String, default="negligible")
+    financial_impact = Column(String, default="negligible")
+    operational_impact = Column(String, default="negligible")
+    privacy_impact = Column(String, default="negligible")
     
     # Versioning & Traceability
     version = Column(Integer, default=1, nullable=False)
