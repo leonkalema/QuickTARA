@@ -223,17 +223,17 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Damage Scenario</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attack Vector</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Damage Scenario</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Attack Vector</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Description</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Actions</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           {#each threatScenarios as scenario (scenario.threat_scenario_id)}
             <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-6 py-4">
                 {#if editingCell?.scenarioId === scenario.threat_scenario_id && editingCell?.field === 'name'}
                   <input
                     bind:value={editingValue}
@@ -242,7 +242,7 @@
                     disabled={isSaving}
                   />
                 {:else}
-                  <div class="text-sm font-medium text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded" 
+                  <div class="text-sm font-medium text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded break-words" 
                        on:click={() => startEdit(scenario, 'name')}>
                     {scenario.name}
                   </div>
@@ -256,8 +256,11 @@
                     {#if linkedIds.length > 0}
                       <div class="flex flex-wrap gap-1">
                         {#each linkedIds as damageId}
-                          <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                            {getDamageScenarioName(damageId)}
+                          <span 
+                            class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full cursor-help"
+                            title={getDamageScenarioName(damageId)}
+                          >
+                            {damageId}
                           </span>
                         {/each}
                       </div>

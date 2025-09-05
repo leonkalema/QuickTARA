@@ -15,20 +15,21 @@ class ThreatScenarioApiError extends Error {
 }
 
 export const threatScenarioApi = {
-  async getThreatScenariosByProduct(scopeId: string): Promise<ThreatScenarioListResponse> {
-    const response = await fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${scopeId}`);
+  handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      throw new ThreatScenarioApiError(`Failed to fetch threat scenarios: ${response.statusText}`, response.status);
+      throw new ThreatScenarioApiError(`Failed to fetch data: ${response.statusText}`, response.status);
     }
     return response.json();
   },
 
+  async getThreatScenariosByProduct(scopeId: string): Promise<ThreatScenarioListResponse> {
+    const response = await fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${scopeId}`);
+    return this.handleResponse<ThreatScenarioListResponse>(response);
+  },
+
   async getThreatScenariosByDamageScenario(damageScenarioId: string): Promise<ThreatScenarioListResponse> {
     const response = await fetch(`${API_BASE_URL}/threat-scenarios?damage_scenario_id=${damageScenarioId}`);
-    if (!response.ok) {
-      throw new ThreatScenarioApiError(`Failed to fetch threat scenarios: ${response.statusText}`, response.status);
-    }
-    return response.json();
+    return this.handleResponse<ThreatScenarioListResponse>(response);
   },
 
   async getThreatScenario(threatScenarioId: string): Promise<ThreatScenario> {

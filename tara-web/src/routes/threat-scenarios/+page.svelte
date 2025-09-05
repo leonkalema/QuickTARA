@@ -26,8 +26,7 @@
     const matchesSearch = scenario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          scenario.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          scenario.attack_vector?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDamageScenario = !selectedDamageScenario || scenario.damage_scenario_id === selectedDamageScenario;
-    return matchesSearch && matchesDamageScenario;
+    return matchesSearch;
   });
 
   $: paginatedScenarios = filteredScenarios.slice(
@@ -45,6 +44,11 @@
     loadData();
   }
 
+  // Watch for damage scenario filter changes and reload data
+  $: if ($selectedProduct?.scope_id && selectedDamageScenario !== undefined) {
+    loadThreatScenarios();
+  }
+
   async function loadData() {
     if (!$selectedProduct?.scope_id) return;
     
@@ -57,14 +61,32 @@
       console.log('Selected product:', $selectedProduct);
       
       // Load threat scenarios
-      const threatResponse = await threatScenarioApi.getThreatScenariosByProduct($selectedProduct.scope_id);
-      threatScenarios = threatResponse.threat_scenarios;
-      console.log('Loaded threat scenarios:', threatScenarios);
+      await loadThreatScenarios();
     } catch (error) {
       console.error('Error loading data:', error);
       notifications.show('Failed to load threat scenarios', 'error');
     } finally {
       loading = false;
+    }
+  }
+
+  async function loadThreatScenarios() {
+    if (!$selectedProduct?.scope_id) return;
+    
+    try {
+      let threatResponse;
+      if (selectedDamageScenario) {
+        // Filter by damage scenario using API
+        threatResponse = await threatScenarioApi.getThreatScenariosByDamageScenario(selectedDamageScenario);
+      } else {
+        // Load all threat scenarios for the product
+        threatResponse = await threatScenarioApi.getThreatScenariosByProduct($selectedProduct.scope_id);
+      }
+      threatScenarios = threatResponse.threat_scenarios;
+      console.log('Loaded threat scenarios:', threatScenarios);
+    } catch (error) {
+      console.error('Error loading threat scenarios:', error);
+      notifications.show('Failed to load threat scenarios', 'error');
     }
   }
 
