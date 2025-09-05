@@ -27,7 +27,7 @@ class ImpactRating(BaseModel):
 class ThreatScenarioBase(BaseModel):
     """Base threat scenario model"""
     threat_scenario_id: str = Field(..., description="Unique threat scenario ID (e.g., TS-001)")
-    damage_scenario_id: str = Field(..., description="Associated damage scenario ID")
+    damage_scenario_id: Optional[str] = Field(None, description="Associated damage scenario ID (deprecated - use damage_scenario_ids)")
     name: str = Field(..., description="Threat scenario name")
     description: str = Field(..., description="How an attacker could cause the damage")
     attack_vector: str = Field(..., description="Attack vector used")
@@ -38,6 +38,7 @@ class ThreatScenarioBase(BaseModel):
 class ThreatScenarioCreate(ThreatScenarioBase):
     """Create threat scenario request"""
     threat_scenario_id: Optional[str] = Field(None, description="Will be auto-generated if not provided")
+    damage_scenario_ids: Optional[List[str]] = Field(None, description="List of associated damage scenario IDs")
 
 
 class ThreatScenarioUpdate(BaseModel):

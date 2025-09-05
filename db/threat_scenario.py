@@ -16,7 +16,7 @@ class ThreatScenario(Base):
     # Primary key and identifiers
     id = Column(Integer, primary_key=True, index=True)
     threat_scenario_id = Column(String(50), unique=True, index=True, nullable=False)
-    damage_scenario_id = Column(String(50), index=True, nullable=False)
+    damage_scenario_id = Column(String(50), index=True, nullable=True)
     
     # Basic information
     name = Column(String(255), nullable=False)

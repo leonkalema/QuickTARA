@@ -82,5 +82,14 @@ export const threatScenarioApi = {
       const errorText = await response.text();
       throw new ThreatScenarioApiError(`Failed to delete threat scenario: ${errorText}`, response.status);
     }
+  },
+
+  async getLinkedDamageScenarios(threatScenarioId: string): Promise<string[]> {
+    const response = await fetch(`${API_BASE_URL}/threat-scenarios/${threatScenarioId}/damage-scenarios`);
+    if (!response.ok) {
+      throw new ThreatScenarioApiError(`Failed to fetch linked damage scenarios: ${response.statusText}`, response.status);
+    }
+    const data = await response.json();
+    return data.damage_scenario_ids || [];
   }
 };
