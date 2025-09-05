@@ -3,6 +3,7 @@
   import { assetApi } from '../../../lib/api/assetApi';
   import { notifications } from '../../../lib/stores/notificationStore';
   import { AssetType, SecurityLevel, type Asset, type CreateAssetRequest } from '../../../lib/types/asset';
+  import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
 
   export let assets: Asset[] = [];
   export let productId: string;
@@ -21,6 +22,9 @@
   };
   let isAddingNew = false;
   let isSaving = false;
+  let showDeleteDialog = false;
+  let assetToDelete: Asset | null = null;
+  let isDeleting = false;
 
   $: newAsset.scope_id = productId;
 
@@ -161,6 +165,37 @@
       default: return '📦';
     }
   }
+
+  function confirmDelete(asset: Asset) {
+    assetToDelete = asset;
+    showDeleteDialog = true;
+  }
+
+  async function deleteAsset() {
+    if (!assetToDelete) return;
+    
+    isDeleting = true;
+    try {
+      await assetApi.delete(assetToDelete.asset_id);
+      assets = assets.filter(a => a.asset_id !== assetToDelete!.asset_id);
+      dispatch('assetDeleted', assetToDelete);
+      notifications.show('Asset deleted successfully', 'success');
+      
+      showDeleteDialog = false;
+      assetToDelete = null;
+    } catch (error) {
+      console.error('Error deleting asset:', error);
+      notifications.show('Failed to delete asset', 'error');
+    } finally {
+      isDeleting = false;
+    }
+  }
+
+  function handleDeleteCancel() {
+    showDeleteDialog = false;
+    assetToDelete = null;
+    isDeleting = false;
+  }
 </script>
 
 <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -205,6 +240,9 @@
           </th>
           <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-64">
             Description
+          </th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+            Actions
           </th>
         </tr>
       </thead>
@@ -388,6 +426,17 @@
                 </button>
               {/if}
             </td>
+
+            <!-- Actions -->
+            <td class="px-4 py-3">
+              <button
+                  on:click={() => confirmDelete(asset)}
+                class="text-red-600 hover:text-red-900 text-sm font-medium"
+                disabled={isSaving}
+              >
+                Delete
+              </button>
+            </td>
           </tr>
         {/each}
 
@@ -477,11 +526,14 @@
                 rows="2"
               ></textarea>
             </td>
+
+            <!-- Actions (empty for new row) -->
+            <td class="px-4 py-3"></td>
           </tr>
           
           <!-- Action Row -->
           <tr class="bg-blue-50">
-            <td colspan="8" class="px-4 py-3">
+            <td colspan="9" class="px-4 py-3">
               <div class="flex justify-end space-x-2">
                 <button
                   on:click={cancelNewAsset}
@@ -509,6 +561,19 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Delete Confirmation Dialog -->
+<ConfirmDialog
+  bind:isOpen={showDeleteDialog}
+  title="Delete Asset"
+  message="Are you sure you want to delete '{assetToDelete?.name}'? This action cannot be undone."
+  confirmText="Delete"
+  cancelText="Cancel"
+  variant="danger"
+  loading={isDeleting}
+  on:confirm={deleteAsset}
+  on:cancel={handleDeleteCancel}
+/>
 
   <!-- Empty State -->
   {#if assets.length === 0 && !isAddingNew}
