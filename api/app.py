@@ -11,7 +11,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Import all routers
-from api.routes import components, analysis, reports, review, settings_routes, scope, risk, threat, vulnerability, attack_path, damage_scenarios, impact_ratings, threat_scenarios
+from api.routes import components, analysis, reports, review, settings_routes, scope, risk, threat, vulnerability, attack_path, damage_scenarios, impact_ratings, threat_scenarios, simple_attack_path
 
 # Import new product-centric model routers
 from api.routes import products, assets
@@ -70,7 +70,8 @@ def create_app(settings=None):
     app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
     
     # Add attack path analysis router
-    app.include_router(attack_path.router, prefix="/api/attack-paths", tags=["attack-paths"])
+    app.include_router(simple_attack_path.router, prefix="/api/attack-paths", tags=["attack-paths"])
+    app.include_router(attack_path.router, prefix="/api/attack-paths-analysis", tags=["attack-paths-analysis"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["settings"])
