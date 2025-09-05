@@ -13,12 +13,12 @@ Base = declarative_base()
 
 class FeasibilityRating(BaseModel):
     """Feasibility rating for attack paths"""
-    elapsed_time: int = Field(..., ge=1, le=4, description="Time required (1=<1 day, 4=>1 month)")
-    specialist_expertise: int = Field(..., ge=1, le=4, description="Expertise level (1=Layman, 4=Multiple Experts)")
-    knowledge_of_target: int = Field(..., ge=1, le=4, description="Target knowledge (1=Public, 4=Critical)")
-    window_of_opportunity: int = Field(..., ge=1, le=4, description="Opportunity window (1=Unlimited, 4=Difficult)")
-    equipment: int = Field(..., ge=1, le=4, description="Equipment needed (1=Standard, 4=Multiple Bespoke)")
-    overall_rating: Optional[float] = Field(None, description="Calculated overall rating")
+    elapsed_time: int = Field(..., ge=0, le=19, description="Time required (0=≤1 day, 19=>6 months)")
+    specialist_expertise: int = Field(..., ge=0, le=8, description="Expertise level (0=Layman, 8=Multiple Experts)")
+    knowledge_of_target: int = Field(..., ge=0, le=11, description="Target knowledge (0=Public, 11=Strictly confidential)")
+    window_of_opportunity: int = Field(..., ge=0, le=10, description="Opportunity window (0=Unlimited, 10=Difficult/none)")
+    equipment: int = Field(..., ge=0, le=9, description="Equipment needed (0=Standard, 9=Multiple bespoke)")
+    overall_rating: Optional[float] = Field(None, description="Calculated total score")
 
 class AttackPathDB(Base):
     """Database model for attack paths"""

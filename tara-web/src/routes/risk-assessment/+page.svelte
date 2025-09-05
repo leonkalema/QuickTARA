@@ -23,11 +23,11 @@
     description: '',
     attack_steps: '',
     feasibility_rating: {
-      elapsed_time: 1,
-      specialist_expertise: 1,
-      knowledge_of_target: 1,
-      window_of_opportunity: 1,
-      equipment: 1
+      elapsed_time: 0,
+      specialist_expertise: 0,
+      knowledge_of_target: 0,
+      window_of_opportunity: 0,
+      equipment: 0
     }
   };
 
@@ -89,11 +89,11 @@
       description: '',
       attack_steps: '',
       feasibility_rating: {
-        elapsed_time: 1,
-        specialist_expertise: 1,
-        knowledge_of_target: 1,
-        window_of_opportunity: 1,
-        equipment: 1
+        elapsed_time: 0,
+        specialist_expertise: 0,
+        knowledge_of_target: 0,
+        window_of_opportunity: 0,
+        equipment: 0
       }
     };
     showAddForm = true;

@@ -10,12 +10,12 @@ export interface AttackPath {
 }
 
 export interface FeasibilityRating {
-  elapsed_time: number; // 1-4 scale
-  specialist_expertise: number; // 1-4 scale  
-  knowledge_of_target: number; // 1-4 scale
-  window_of_opportunity: number; // 1-4 scale
-  equipment: number; // 1-4 scale
-  overall_rating?: number; // Calculated average
+  elapsed_time: number; // 0-19 scale
+  specialist_expertise: number; // 0-8 scale  
+  knowledge_of_target: number; // 0-11 scale
+  window_of_opportunity: number; // 0-10 scale
+  equipment: number; // 0-9 scale
+  overall_rating?: number; // Calculated total
 }
 
 export interface CreateAttackPathRequest {

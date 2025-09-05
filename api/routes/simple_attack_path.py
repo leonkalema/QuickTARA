@@ -117,7 +117,7 @@ async def create_attack_path(
             rating.knowledge_of_target + 
             rating.window_of_opportunity + 
             rating.equipment
-        ) / 5.0
+        )
         
         # Create database record
         db_attack_path = AttackPathDB(
@@ -186,7 +186,7 @@ async def update_attack_path(
             rating.knowledge_of_target + 
             rating.window_of_opportunity + 
             rating.equipment
-        ) / 5.0
+        )
         
         # Update fields
         db_attack_path.threat_scenario_id = attack_path.threat_scenario_id
