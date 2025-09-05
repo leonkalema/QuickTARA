@@ -37,9 +37,14 @@
   let isDeleting = false;
 
   $: filteredThreatScenarios = threatScenarios.filter(scenario => {
-    const matchesSearch = scenario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = !searchTerm || 
+                         scenario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          scenario.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    
+    const matchesSelected = !selectedThreatScenario || 
+                           scenario.threat_scenario_id === selectedThreatScenario;
+    
+    return matchesSearch && matchesSelected;
   });
 
   $: filteredAttackPaths = attackPaths.filter(path => {
@@ -435,8 +440,8 @@
                           <h4 class="text-md font-medium text-gray-900">{attackPath.name}</h4>
                           <div class="flex items-center space-x-2">
                             <span class="text-xs text-gray-500">Feasibility:</span>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {getAttackPathRatingColor(attackPath.feasibility_rating.overall_rating)}">
-                              {getAttackPathAFR(attackPath.feasibility_rating.overall_rating)}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {getAttackPathRatingColor(attackPath.feasibility_rating?.overall_rating || 0)}">
+                              {getAttackPathAFR(attackPath.feasibility_rating?.overall_rating || 0)}
                             </span>
                           </div>
                         </div>
