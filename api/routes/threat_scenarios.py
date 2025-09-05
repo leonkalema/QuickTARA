@@ -189,6 +189,7 @@ async def update_threat_scenario(
 ):
     """Update a threat scenario"""
     # Get existing threat scenario
+    from sqlalchemy import and_
     db_threat_scenario = db.query(DBThreatScenario).filter(
         and_(
             DBThreatScenario.threat_scenario_id == threat_scenario_id,
@@ -222,6 +223,7 @@ async def delete_threat_scenario(
     db: Session = Depends(get_db)
 ):
     """Delete a threat scenario (soft delete)"""
+    from sqlalchemy import and_
     threat_scenario = db.query(DBThreatScenario).filter(
         and_(
             DBThreatScenario.threat_scenario_id == threat_scenario_id,
