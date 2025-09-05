@@ -47,6 +47,22 @@
     return path.threat_scenario_id === selectedThreatScenario;
   });
 
+  function getAttackPathAFR(afs: number): string {
+    if (afs >= 25) return 'Very Low';
+    if (afs >= 20) return 'Low';
+    if (afs >= 14) return 'Medium';
+    if (afs >= 1) return 'High';
+    return 'Very High';
+  }
+
+  function getAttackPathRatingColor(afs: number): string {
+    if (afs >= 25) return 'bg-red-100 text-red-800';      // Very Low
+    if (afs >= 20) return 'bg-orange-100 text-orange-800'; // Low
+    if (afs >= 14) return 'bg-yellow-100 text-yellow-800'; // Medium
+    if (afs >= 1) return 'bg-green-100 text-green-800';    // High
+    return 'bg-blue-100 text-blue-800';                    // Very High
+  }
+
   onMount(async () => {
     if ($selectedProduct?.scope_id) {
       await loadData();
@@ -419,8 +435,8 @@
                           <h4 class="text-md font-medium text-gray-900">{attackPath.name}</h4>
                           <div class="flex items-center space-x-2">
                             <span class="text-xs text-gray-500">Feasibility:</span>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {attackPath.feasibility_rating.overall_rating <= 1.5 ? 'bg-green-100 text-green-800' : attackPath.feasibility_rating.overall_rating <= 2.5 ? 'bg-yellow-100 text-yellow-800' : attackPath.feasibility_rating.overall_rating <= 3.5 ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}">
-                              {attackPath.feasibility_rating.overall_rating}/4.0
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {getAttackPathRatingColor(attackPath.feasibility_rating.overall_rating)}">
+                              {getAttackPathAFR(attackPath.feasibility_rating.overall_rating)}
                             </span>
                           </div>
                         </div>

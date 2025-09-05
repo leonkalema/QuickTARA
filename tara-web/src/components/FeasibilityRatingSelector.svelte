@@ -24,7 +24,7 @@
     if (afs >= 20) return 'Low';
     if (afs >= 14) return 'Medium';
     if (afs >= 1) return 'High';
-    return '–';
+    return 'Very High';
   }
 
   function getNRV(afs: number): number {
@@ -36,19 +36,19 @@
   }
 
   function getRatingColor(afs: number): string {
-    if (afs >= 25) return 'bg-red-500';      // Very Low (NRV: 0.0)
-    if (afs >= 20) return 'bg-orange-500';   // Low (NRV: 1.0)
-    if (afs >= 14) return 'bg-yellow-500';   // Medium (NRV: 1.5)
-    if (afs >= 1) return 'bg-green-500';     // High (NRV: 2.0)
-    return 'bg-gray-500';                    // No score
+    if (afs >= 25) return 'bg-red-100';      // Very Low (NRV: 0.0)
+    if (afs >= 20) return 'bg-orange-100';   // Low (NRV: 1.0)
+    if (afs >= 14) return 'bg-yellow-100';   // Medium (NRV: 1.5)
+    if (afs >= 1) return 'bg-green-100';     // High (NRV: 2.0)
+    return 'bg-gray-100';                    // No score
   }
 
   function getRatingTextColor(afs: number): string {
-    if (afs >= 25) return 'text-red-600';
-    if (afs >= 20) return 'text-orange-600';
-    if (afs >= 14) return 'text-yellow-600';
-    if (afs >= 1) return 'text-green-600';
-    return 'text-gray-600';
+    if (afs >= 25) return 'text-red-700';
+    if (afs >= 20) return 'text-orange-700';
+    if (afs >= 14) return 'text-yellow-700';
+    if (afs >= 1) return 'text-green-700';
+    return 'text-gray-700';
   }
 
   function getProgressWidth(afs: number): number {
@@ -61,7 +61,7 @@
     if (afs >= 20) return 'Attack requires considerable effort and specialized knowledge. Moderately difficult to execute.';
     if (afs >= 14) return 'Attack requires some specialized knowledge or equipment. Moderate difficulty level.';
     if (afs >= 1) return 'Attack can be executed with readily available resources and basic knowledge. Relatively easy to perform.';
-    return 'No assessment available - please select values for all feasibility factors.';
+    return 'Attack can be executed with minimal effort and standard equipment. Extremely easy to perform.';
   }
 
   const elapsedTimeOptions = [
@@ -230,74 +230,16 @@
   </div>
 
   <div class="bg-white border border-gray-300 rounded-lg p-6 shadow-sm">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Attack Feasibility Assessment</h3>
-    
-    <!-- Score Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="text-center p-4 bg-gray-50 rounded-lg">
-        <div class="text-2xl font-bold text-gray-900">{overallRating}</div>
-        <div class="text-sm text-gray-600">Attack Feasibility Score (AFS)</div>
-        <div class="text-xs text-gray-500 mt-1">Range: 0-57</div>
+    <div class="text-center">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Attack Feasibility Rating</h3>
+      
+      <div class="inline-flex items-center justify-center px-6 py-3 rounded-full text-lg font-semibold {getRatingColor(overallRating)} {getRatingTextColor(overallRating)} mb-4">
+        {getAFR(overallRating)}
       </div>
       
-      <div class="text-center p-4 bg-gray-50 rounded-lg">
-        <div class="text-lg font-semibold {getRatingTextColor(overallRating)}">{getAFR(overallRating)}</div>
-        <div class="text-sm text-gray-600">Attack Feasibility Rating (AFR)</div>
-        <div class="text-xs text-gray-500 mt-1">Qualitative Assessment</div>
+      <div class="text-sm text-gray-600 max-w-md mx-auto">
+        {getRatingExplanation(overallRating)}
       </div>
-      
-      <div class="text-center p-4 bg-gray-50 rounded-lg">
-        <div class="text-2xl font-bold text-gray-900">{getNRV(overallRating)}</div>
-        <div class="text-sm text-gray-600">Numerical Risk Value (NRV)</div>
-        <div class="text-xs text-gray-500 mt-1">Risk Multiplier</div>
-      </div>
-    </div>
-
-    <!-- Visual Rating Scale -->
-    <div class="mb-4">
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-sm font-medium text-gray-700">Feasibility Level</span>
-        <span class="text-sm px-3 py-1 rounded-full text-white {getRatingColor(overallRating)}">{getAFR(overallRating)}</span>
-      </div>
-      
-      <div class="relative">
-        <div class="w-full bg-gray-200 rounded-full h-3">
-          <div 
-            class="h-3 rounded-full transition-all duration-500 {getRatingColor(overallRating)}"
-            style="width: {getProgressWidth(overallRating)}%"
-          ></div>
-        </div>
-        
-        <!-- Scale markers -->
-        <div class="flex justify-between text-xs text-gray-500 mt-2">
-          <div class="text-center">
-            <div class="w-px h-2 bg-gray-300 mx-auto mb-1"></div>
-            <span>0<br>Very High</span>
-          </div>
-          <div class="text-center">
-            <div class="w-px h-2 bg-gray-300 mx-auto mb-1"></div>
-            <span>13<br>High</span>
-          </div>
-          <div class="text-center">
-            <div class="w-px h-2 bg-gray-300 mx-auto mb-1"></div>
-            <span>19<br>Medium</span>
-          </div>
-          <div class="text-center">
-            <div class="w-px h-2 bg-gray-300 mx-auto mb-1"></div>
-            <span>24<br>Low</span>
-          </div>
-          <div class="text-center">
-            <div class="w-px h-2 bg-gray-300 mx-auto mb-1"></div>
-            <span>57<br>Very Low</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Rating Explanation -->
-    <div class="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-      <div class="font-medium text-blue-800 mb-1">Assessment Interpretation:</div>
-      <div>{getRatingExplanation(overallRating)}</div>
     </div>
   </div>
 </div>
