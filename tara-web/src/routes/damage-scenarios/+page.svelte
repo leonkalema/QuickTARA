@@ -19,6 +19,7 @@
   // Pagination
   let currentPage = 1;
   let itemsPerPage = 20;
+  let showAddForm = false;
   
   // Filters
   let filters = {
@@ -96,7 +97,7 @@
     paginatedScenarios = filteredScenarios.slice(startIndex, endIndex);
   }
 
-  function handleFilterChange(event: CustomEvent) {
+  function handleFilterChangeEvent(event: CustomEvent) {
     filters = event.detail;
     applyFilters();
   }
@@ -121,6 +122,15 @@
     notifications.show('Damage scenario deleted successfully', 'success');
   }
 
+  function clearFilters() {
+    filters = { search: '', asset: '', cia: '' };
+    applyFilters();
+  }
+
+  function handleFilterChange() {
+    applyFilters();
+  }
+
   // Load data when component mounts or when selected product changes
   onMount(loadData);
   $: if ($selectedProduct?.scope_id) {
@@ -141,9 +151,14 @@
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Damage Scenarios</h1>
+      <h1 class="text-3xl font-bold text-gray-900">
+        Damage Scenarios
+        {#if $selectedProduct && !loading}
+          <span class="text-lg font-normal text-gray-500 ml-2">({allDamageScenarios.length} {allDamageScenarios.length === 1 ? 'scenario' : 'scenarios'} total)</span>
+        {/if}
+      </h1>
       {#if $selectedProduct}
-        <p class="mt-2 text-gray-600">
+        <p class="mt-2 text-gray-600 max-w-2xl">
           Define potential damage scenarios for <strong>{$selectedProduct.name}</strong>. Each scenario describes what could go wrong with a specific asset and its CIA properties.
         </p>
       {:else}
@@ -152,6 +167,17 @@
         </p>
       {/if}
     </div>
+    {#if $selectedProduct && assets.length > 0 && !loading}
+      <button
+        class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2 self-start"
+        on:click={() => showAddForm = !showAddForm}
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        <span>{showAddForm ? 'Cancel' : 'New Scenario'}</span>
+      </button>
+    {/if}
   </div>
 
   {#if !$selectedProduct}
@@ -220,29 +246,37 @@
         </div>
       </div>
     {:else}
-      <!-- Filters -->
-      <DamageScenarioFilters 
-        {filters}
-        {assets}
-        on:filterChange={handleFilterChange}
-      />
-      
-      <!-- Results Summary -->
-      <div class="flex items-center justify-between text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
-        <span>
-          Showing {paginatedScenarios.length} of {filteredScenarios.length} damage scenarios
-          {#if filteredScenarios.length !== allDamageScenarios.length}
-            (filtered from {allDamageScenarios.length} total)
-          {/if}
-        </span>
+      <!-- Filters and Controls -->
+      <div class="w-full flex items-center justify-between">
+        <div class="flex-1">
+          <DamageScenarioFilters 
+            {filters}
+            {assets}
+            on:filterChange={handleFilterChangeEvent}
+          />
+        </div>
+        
+        <!-- Clear Filters -->
+        {#if filters.search || filters.asset || filters.cia}
+          <button
+            on:click={clearFilters}
+            class="text-slate-600 hover:text-slate-800 px-3 py-2 text-sm font-medium transition-colors ml-4"
+          >
+            Clear filters
+          </button>
+        {/if}
       </div>
+      
+      <!-- Add Form -->
       
       <!-- Damage Scenario Table -->
       <DamageScenarioTableNew 
         damageScenarios={paginatedScenarios}
         {assets}
+        isAddingNew={showAddForm}
         on:scenarioAdded={handleScenarioAdded}
         on:scenarioDeleted={handleScenarioDeleted}
+        on:cancelAdd={() => showAddForm = false}
       />
       
       <!-- Pagination -->

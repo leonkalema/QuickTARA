@@ -9,11 +9,16 @@
 
   export let damageScenarios: DamageScenario[] = [];
   export let assets: any[] = [];
+  export let isAddingNew: boolean = false;
 
   const dispatch = createEventDispatcher();
 
+  // Inline editing state
+  let editingCell: { scenarioId: string; field: string } | null = null;
+  let editingValue = '';
+  let isSaving = false;
+
   // Form state
-  let isAddingNew = false;
   let newScenario = {
     name: '',
     description: '',
@@ -56,9 +61,7 @@
       integrity_impact: false,
       availability_impact: false,
       primary_component_id: '',
-      scope_id: $selectedProduct?.scope_id || '',
-      version: '1.0',
-      revision_notes: 'Initial version'
+      secondary_component_id: ''
     };
 
     safety_impact = '';
@@ -66,6 +69,7 @@
     operational_impact = '';
     privacy_impact = '';
     isAddingNew = false;
+    dispatch('cancelAdd');
   }
 
   async function addNewScenario() {
@@ -144,140 +148,121 @@
     scenarioToDelete = null;
     isDeleting = false;
   }
+
+  // Inline editing functions
+  function startEdit(scenario: DamageScenario, field: string) {
+    editingCell = { scenarioId: scenario.scenario_id, field };
+    editingValue = getFieldValue(scenario, field);
+  }
+
+  function getFieldValue(scenario: DamageScenario, field: string): string {
+    switch (field) {
+      case 'name': return scenario.name;
+      case 'description': return scenario.description || '';
+      case 'primary_component_id': return scenario.primary_component_id || '';
+      default: return '';
+    }
+  }
+
+  async function saveEdit(scenario: DamageScenario, field: string) {
+    if (!editingCell || editingValue === getFieldValue(scenario, field)) {
+      cancelEdit();
+      return;
+    }
+
+    isSaving = true;
+    try {
+      const updateData: any = { [field]: editingValue };
+      const updatedScenario = await damageScenarioApi.updateDamageScenario(scenario.scenario_id, updateData);
+      
+      // Update local scenario
+      const index = damageScenarios.findIndex(s => s.scenario_id === scenario.scenario_id);
+      if (index !== -1) {
+        damageScenarios[index] = updatedScenario;
+        damageScenarios = [...damageScenarios];
+      }
+      
+      dispatch('scenarioUpdated', updatedScenario);
+      notifications.show('Scenario updated successfully', 'success');
+    } catch (error) {
+      console.error('Error updating scenario:', error);
+      notifications.show('Failed to update scenario', 'error');
+    } finally {
+      isSaving = false;
+      cancelEdit();
+    }
+  }
+
+  function cancelEdit() {
+    editingCell = null;
+    editingValue = '';
+  }
+
+  function handleKeyPress(event: KeyboardEvent, scenario: DamageScenario, field: string) {
+    if (event.key === 'Enter') {
+      saveEdit(scenario, field);
+    } else if (event.key === 'Escape') {
+      cancelEdit();
+    }
+  }
 </script>
 
 <div class="space-y-6">
-  <div class="flex justify-end items-center">
-    <button
-      on:click={() => isAddingNew = !isAddingNew}
-      class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-    >
-      {isAddingNew ? 'Cancel' : 'Add New Scenario'}
-    </button>
-  </div>
 
   {#if isAddingNew}
-    <form on:submit|preventDefault={addNewScenario} class="bg-gray-50 p-6 rounded-lg">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Scenario Name *</label>
-          <input
-            bind:value={newScenario.name}
-            placeholder="Enter scenario name"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Primary Asset</label>
-          <select
-            bind:value={newScenario.primary_component_id}
-            class="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="">Select an asset...</option>
-            {#each assets as asset}
-              <option value={asset.asset_id}>{asset.name}</option>
-            {/each}
-          </select>
-        </div>
+    <form on:submit|preventDefault={addNewScenario} class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <input bind:value={newScenario.name} placeholder="Scenario name *" class="px-3 py-2 border rounded-md" />
+        <select bind:value={newScenario.primary_component_id} class="px-3 py-2 border rounded-md">
+          <option value="">Select asset...</option>
+          {#each assets as asset}<option value={asset.asset_id}>{asset.name}</option>{/each}
+        </select>
       </div>
-
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-        <textarea
-          bind:value={newScenario.description}
-          placeholder="Describe the damage scenario"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md"
-          rows="3"
-        ></textarea>
+      <textarea bind:value={newScenario.description} placeholder="Description" class="w-full px-3 py-2 border rounded-md mb-3" rows="2"></textarea>
+      <div class="grid grid-cols-4 gap-2 mb-3">
+        <select bind:value={safety_impact} class="px-2 py-1 border rounded text-sm">
+          <option value="">Safety</option>
+          <option value="negligible">Negligible</option>
+          <option value="moderate">Moderate</option>
+          <option value="major">Major</option>
+          <option value="severe">Severe</option>
+        </select>
+        <select bind:value={financial_impact} class="px-2 py-1 border rounded text-sm">
+          <option value="">Financial</option>
+          <option value="negligible">Negligible</option>
+          <option value="moderate">Moderate</option>
+          <option value="major">Major</option>
+          <option value="severe">Severe</option>
+        </select>
+        <select bind:value={operational_impact} class="px-2 py-1 border rounded text-sm">
+          <option value="">Operational</option>
+          <option value="negligible">Negligible</option>
+          <option value="moderate">Moderate</option>
+          <option value="major">Major</option>
+          <option value="severe">Severe</option>
+        </select>
+        <select bind:value={privacy_impact} class="px-2 py-1 border rounded text-sm">
+          <option value="">Privacy</option>
+          <option value="negligible">Negligible</option>
+          <option value="moderate">Moderate</option>
+          <option value="major">Major</option>
+          <option value="severe">Severe</option>
+        </select>
       </div>
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Safety Impact</label>
-          <select bind:value={safety_impact} class="w-full px-3 py-2 border border-gray-300 rounded-md">
-            <option value="">Select...</option>
-            <option value="negligible">Negligible</option>
-            <option value="moderate">Moderate</option>
-            <option value="major">Major</option>
-            <option value="severe">Severe</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Financial Impact</label>
-          <select bind:value={financial_impact} class="w-full px-3 py-2 border border-gray-300 rounded-md">
-            <option value="">Select...</option>
-            <option value="negligible">Negligible</option>
-            <option value="moderate">Moderate</option>
-            <option value="major">Major</option>
-            <option value="severe">Severe</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Operational Impact</label>
-          <select bind:value={operational_impact} class="w-full px-3 py-2 border border-gray-300 rounded-md">
-            <option value="">Select...</option>
-            <option value="negligible">Negligible</option>
-            <option value="moderate">Moderate</option>
-            <option value="major">Major</option>
-            <option value="severe">Severe</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Privacy Impact</label>
-          <select bind:value={privacy_impact} class="w-full px-3 py-2 border border-gray-300 rounded-md">
-            <option value="">Select...</option>
-            <option value="negligible">Negligible</option>
-            <option value="moderate">Moderate</option>
-            <option value="major">Major</option>
-            <option value="severe">Severe</option>
-          </select>
-        </div>
+      <div class="flex space-x-4 mb-3">
+        <label class="flex items-center text-sm">
+          <input type="checkbox" bind:checked={newScenario.confidentiality_impact} class="mr-1" />C
+        </label>
+        <label class="flex items-center text-sm">
+          <input type="checkbox" bind:checked={newScenario.integrity_impact} class="mr-1" />I
+        </label>
+        <label class="flex items-center text-sm">
+          <input type="checkbox" bind:checked={newScenario.availability_impact} class="mr-1" />A
+        </label>
       </div>
-
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">CIA Security Properties *</label>
-        <div class="flex space-x-6">
-          <label class="flex items-center">
-            <input
-              type="checkbox"
-              bind:checked={newScenario.confidentiality_impact}
-              class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-            />
-            <span class="text-sm text-gray-700">Confidentiality</span>
-          </label>
-          <label class="flex items-center">
-            <input
-              type="checkbox"
-              bind:checked={newScenario.integrity_impact}
-              class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-            />
-            <span class="text-sm text-gray-700">Integrity</span>
-          </label>
-          <label class="flex items-center">
-            <input
-              type="checkbox"
-              bind:checked={newScenario.availability_impact}
-              class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-            />
-            <span class="text-sm text-gray-700">Availability</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="flex justify-end space-x-3">
-        <button
-          type="button"
-          on:click={resetForm}
-          class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-        >
-          Create Scenario
-        </button>
+      <div class="flex justify-end space-x-2">
+        <button type="button" on:click={resetForm} class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Cancel</button>
+        <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">Create</button>
       </div>
     </form>
   {/if}
@@ -302,44 +287,58 @@
         <tbody class="bg-white divide-y divide-gray-200">
           {#each damageScenarios as scenario}
             <tr>
-              <td class="px-6 py-4">
-                <div class="text-sm font-medium text-gray-900">{scenario.name}</div>
-                {#if scenario.description}
-                  <div class="text-sm text-gray-500 max-w-xs break-words">{scenario.description}</div>
+              <td class="px-4 py-3">
+                {#if editingCell?.scenarioId === scenario.scenario_id && editingCell?.field === 'name'}
+                  <input bind:value={editingValue} on:keydown={(e) => handleKeyPress(e, scenario, 'name')} on:blur={() => saveEdit(scenario, 'name')} class="w-full px-2 py-1 border border-blue-300 rounded" disabled={isSaving} autofocus />
+                {:else}
+                  <button on:click={() => startEdit(scenario, 'name')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded">
+                    <div class="text-sm font-medium text-gray-900">{scenario.name}</div>
+                  </button>
+                {/if}
+                {#if editingCell?.scenarioId === scenario.scenario_id && editingCell?.field === 'description'}
+                  <textarea bind:value={editingValue} on:keydown={(e) => e.key === 'Enter' && e.ctrlKey && saveEdit(scenario, 'description')} on:blur={() => saveEdit(scenario, 'description')} class="w-full px-2 py-1 border border-blue-300 rounded resize-none mt-1" rows="2" disabled={isSaving}></textarea>
+                {:else if scenario.description}
+                  <button on:click={() => startEdit(scenario, 'description')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded mt-1">
+                    <div class="text-sm text-gray-500 max-w-xs break-words">{scenario.description}</div>
+                  </button>
+                {:else}
+                  <button on:click={() => startEdit(scenario, 'description')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded mt-1 text-gray-400 italic">Add description...</button>
                 {/if}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {scenario.primary_component_id ? getAssetName(scenario.primary_component_id) : 'No asset'}
+              <td class="px-4 py-3 text-sm">
+                {#if editingCell?.scenarioId === scenario.scenario_id && editingCell?.field === 'primary_component_id'}
+                  <select bind:value={editingValue} on:change={() => saveEdit(scenario, 'primary_component_id')} on:blur={() => saveEdit(scenario, 'primary_component_id')} class="w-full px-2 py-1 border border-blue-300 rounded" disabled={isSaving} autofocus>
+                    <option value="">No asset</option>
+                    {#each assets as asset}<option value={asset.asset_id}>{asset.name}</option>{/each}
+                  </select>
+                {:else}
+                  <button on:click={() => startEdit(scenario, 'primary_component_id')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded">
+                    {scenario.primary_component_id ? getAssetName(scenario.primary_component_id) : 'No asset'}
+                  </button>
+                {/if}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-4 py-3">
                 <div class="flex space-x-1">
                   <span class="px-2 py-1 text-xs rounded {getCIABadgeClass(scenario.confidentiality_impact)}">C</span>
                   <span class="px-2 py-1 text-xs rounded {getCIABadgeClass(scenario.integrity_impact)}">I</span>
                   <span class="px-2 py-1 text-xs rounded {getCIABadgeClass(scenario.availability_impact)}">A</span>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-4 py-3">
                 <div class="space-y-1">
                   {#each Object.entries(getSfopImpacts(scenario)) as [key, value]}
-                    <div class="flex items-center space-x-2">
-                      <span class="text-xs font-medium w-8">{key.charAt(0).toUpperCase()}</span>
-                      <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(value)}">{value}</span>
+                    <div class="flex items-center space-x-1">
+                      <span class="text-xs w-6">{key.charAt(0).toUpperCase()}</span>
+                      <span class="px-1 py-0.5 text-xs rounded {getSfopBadgeClass(value)}">{value}</span>
                     </div>
                   {/each}
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(getOverallSfopRating(scenario))}">
-                  {getOverallSfopRating(scenario)}
-                </span>
+              <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(getOverallSfopRating(scenario))}">{getOverallSfopRating(scenario)}</span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button
-                  on:click={() => confirmDelete(scenario)}
-                  class="text-red-600 hover:text-red-900"
-                >
-                  Delete
-                </button>
+              <td class="px-4 py-3">
+                <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900 text-sm">Delete</button>
               </td>
             </tr>
           {/each}
