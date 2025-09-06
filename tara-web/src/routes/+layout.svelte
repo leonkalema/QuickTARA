@@ -20,6 +20,20 @@
 	onMount(() => {
 		authStore.init();
 	});
+
+	// Redirect unauthenticated users to /auth when visiting protected routes
+	$effect(() => {
+		if (!isAuthPage && !$authStore.isAuthenticated) {
+			goto('/auth');
+		}
+	});
+
+	// If already authenticated and on /auth, send to default page
+	$effect(() => {
+		if (isAuthPage && $authStore.isAuthenticated) {
+			goto('/products');
+		}
+	});
 </script>
 
 <svelte:head>

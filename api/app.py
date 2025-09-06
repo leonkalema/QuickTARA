@@ -22,6 +22,9 @@ from api.routers import risk_treatment, reports as reports_router
 # Import authentication router
 from api.routers import auth
 
+# Import user management router
+from api.routers import users
+
 def create_app(settings=None):
     """
     Create FastAPI application with all routes and middleware
@@ -51,7 +54,7 @@ def create_app(settings=None):
             "*"                         # Allow all origins (for development only)
             # In production, replace this with specific allowed origins
         ],
-        allow_credentials=False,
+        allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],  # Allows all headers
         expose_headers=["Content-Disposition"],
@@ -62,6 +65,9 @@ def create_app(settings=None):
     
     # Authentication routes (no auth required)
     app.include_router(auth.router, prefix="/api", tags=["authentication"])
+    
+    # User management routes (admin auth required)
+    app.include_router(users.router, tags=["users"])
     
     # New product-centric model routes (takes precedence)
     app.include_router(products.router, prefix="/api/products", tags=["products"])  # Product (scope) routes
