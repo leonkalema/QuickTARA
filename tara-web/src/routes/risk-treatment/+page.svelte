@@ -26,9 +26,9 @@
   // Goal templates
   const GOAL_TEMPLATES = {
     "Reducing": "Ensure {asset} {property} by reducing the risk of {threat_description}.",
-    "Retaining": "Accept the residual risk for {asset} {property} as it falls within acceptable limits.",
-    "Sharing": "Share the risk for {asset} {property} through appropriate risk transfer mechanisms.",
-    "Avoiding": "Avoid the risk for {asset} {property} by eliminating the threat source or exposure."
+    "Retaining": "Ensure {asset} {property} by retaining the risk of {threat_description}.",
+    "Sharing": "Ensure {asset} {property} by sharing the risk of {threat_description}.",
+    "Avoiding": "Ensure {asset} {property} by avoiding the risk of {threat_description}."
   };
 
   onMount(async () => {

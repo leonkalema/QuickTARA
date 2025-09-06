@@ -1,6 +1,13 @@
 <script lang="ts">
   import { ChevronDown, Settings, User } from '@lucide/svelte';
   import ProductSelector from '../ui/ProductSelector.svelte';
+  import UserMenu from '$lib/components/UserMenu.svelte';
+  import { authStore } from '$lib/stores/auth';
+  import { goto } from '$app/navigation';
+
+  function handleLogout() {
+    goto('/auth');
+  }
 </script>
 
 <header class="bg-white border-b border-gray-200 px-6 py-4">
@@ -27,13 +34,9 @@
         <span class="hidden sm:inline">Settings</span>
       </button>
       
-      <div class="flex items-center space-x-2">
-        <button class="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 rounded-lg px-3 py-2">
-          <User class="w-5 h-5 text-gray-600" />
-          <span class="text-sm font-medium text-gray-700 hidden sm:inline">Admin</span>
-          <ChevronDown class="w-4 h-4 text-gray-500" />
-        </button>
-      </div>
+      {#if $authStore.user}
+        <UserMenu user={$authStore.user} on:logout={handleLogout} />
+      {/if}
     </div>
   </div>
 </header>

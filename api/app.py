@@ -17,7 +17,10 @@ from api.routes import components, analysis, reports, review, settings_routes, s
 from api.routes import products, assets
 
 # Import risk treatment router
-from api.routers import risk_treatment
+from api.routers import risk_treatment, reports as reports_router
+
+# Import authentication router
+from api.routers import auth
 
 def create_app(settings=None):
     """
@@ -57,6 +60,9 @@ def create_app(settings=None):
     
     # Include all API routers
     
+    # Authentication routes (no auth required)
+    app.include_router(auth.router, prefix="/api", tags=["authentication"])
+    
     # New product-centric model routes (takes precedence)
     app.include_router(products.router, prefix="/api/products", tags=["products"])  # Product (scope) routes
     app.include_router(assets.router, prefix="/api/assets", tags=["assets"])      # Asset (component) routes
@@ -76,6 +82,7 @@ def create_app(settings=None):
     app.include_router(simple_attack_path.router, prefix="/api/attack-paths", tags=["attack-paths"])
     app.include_router(attack_path.router, prefix="/api/attack-paths-analysis", tags=["attack-paths-analysis"])
     app.include_router(risk_treatment.router, prefix="/api", tags=["risk-treatment"])
+    app.include_router(reports_router.router, prefix="/api", tags=["reports-pdf"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["settings"])

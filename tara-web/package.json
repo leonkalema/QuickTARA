@@ -43,6 +43,7 @@
 		"vitest-browser-svelte": "^0.1.0"
 	},
 	"dependencies": {
-		"@lucide/svelte": "^0.542.0"
+		"@lucide/svelte": "^0.542.0",
+		"puppeteer": "^24.19.0"
 	}
 }
