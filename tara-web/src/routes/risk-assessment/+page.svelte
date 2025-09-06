@@ -15,6 +15,7 @@
   let showAddForm = false;
   let selectedThreatScenario = '';
   let searchTerm = '';
+  let expandedCards: Set<string> = new Set();
   
   // Form data
   let formData: CreateAttackPathRequest = {
@@ -173,6 +174,15 @@
 
   function formatAttackSteps(steps: string): string[] {
     return steps.split('\n').filter(step => step.trim().length > 0);
+  }
+
+  function toggleCard(cardId: string) {
+    if (expandedCards.has(cardId)) {
+      expandedCards.delete(cardId);
+    } else {
+      expandedCards.add(cardId);
+    }
+    expandedCards = expandedCards; // Trigger reactivity
   }
 </script>
 
@@ -396,10 +406,25 @@
             <!-- Threat Scenario Header -->
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
               <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-lg font-medium text-gray-900">{threatScenario.name}</h3>
-                  {#if threatScenario.description}
-                    <p class="text-sm text-gray-600 mt-1">{threatScenario.description}</p>
+                <div class="flex-1">
+                  <div class="flex items-center space-x-3">
+                    <button
+                      on:click={() => toggleCard(threatScenario.threat_scenario_id)}
+                      class="flex items-center space-x-2 text-left hover:text-slate-700 transition-colors"
+                    >
+                      <svg 
+                        class="w-5 h-5 text-gray-400 transition-transform duration-200 {expandedCards.has(threatScenario.threat_scenario_id) ? 'rotate-90' : ''}"
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                      <h3 class="text-lg font-medium text-gray-900">{threatScenario.name}</h3>
+                    </button>
+                  </div>
+                  {#if threatScenario.description && expandedCards.has(threatScenario.threat_scenario_id)}
+                    <p class="text-sm text-gray-600 mt-2 ml-7">{threatScenario.description}</p>
                   {/if}
                 </div>
                 <div class="flex items-center space-x-3">
@@ -417,68 +442,70 @@
             </div>
 
             <!-- Attack Paths -->
-            <div class="divide-y divide-gray-200">
-              {#if threatAttackPaths.length === 0}
-                <div class="px-6 py-8 text-center">
-                  <svg class="w-8 h-8 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <p class="text-sm text-gray-500">No attack paths defined yet</p>
-                  <button
-                    on:click={() => startAddAttackPath(threatScenario.threat_scenario_id)}
-                    class="text-slate-600 hover:text-slate-800 text-sm font-medium mt-2"
-                  >
-                    Create the first attack path
-                  </button>
-                </div>
-              {:else}
-                {#each threatAttackPaths as attackPath}
-                  <div class="px-6 py-4">
-                    <div class="flex items-start justify-between">
-                      <div class="flex-1">
-                        <div class="flex items-center space-x-3 mb-2">
-                          <h4 class="text-md font-medium text-gray-900">{attackPath.name}</h4>
-                          <div class="flex items-center space-x-2">
-                            <span class="text-xs text-gray-500">Feasibility:</span>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {getAttackPathRatingColor(attackPath.feasibility_rating?.overall_rating || 0)}">
-                              {getAttackPathAFR(attackPath.feasibility_rating?.overall_rating || 0)}
-                            </span>
+            {#if expandedCards.has(threatScenario.threat_scenario_id)}
+              <div class="divide-y divide-gray-200">
+                {#if threatAttackPaths.length === 0}
+                  <div class="px-6 py-8 text-center">
+                    <svg class="w-8 h-8 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-sm text-gray-500">No attack paths defined yet</p>
+                    <button
+                      on:click={() => startAddAttackPath(threatScenario.threat_scenario_id)}
+                      class="text-slate-600 hover:text-slate-800 text-sm font-medium mt-2"
+                    >
+                      Create the first attack path
+                    </button>
+                  </div>
+                {:else}
+                  {#each threatAttackPaths as attackPath}
+                    <div class="px-6 py-4">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                          <div class="flex items-center space-x-3 mb-2">
+                            <h4 class="text-md font-medium text-gray-900">{attackPath.name}</h4>
+                            <div class="flex items-center space-x-2">
+                              <span class="text-xs text-gray-500">Feasibility:</span>
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {getAttackPathRatingColor(attackPath.feasibility_rating?.overall_rating || 0)}">
+                                {getAttackPathAFR(attackPath.feasibility_rating?.overall_rating || 0)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {#if attackPath.description}
+                            <p class="text-sm text-gray-600 mb-3">{attackPath.description}</p>
+                          {/if}
+                          
+                          <div>
+                            <h5 class="text-sm font-medium text-gray-700 mb-2">Attack Steps:</h5>
+                            <ol class="text-sm text-gray-600 space-y-1">
+                              {#each formatAttackSteps(attackPath.attack_steps) as step, index}
+                                <li class="flex items-start">
+                                  <span class="flex-shrink-0 w-6 h-6 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-xs font-medium mr-2 mt-0.5">
+                                    {index + 1}
+                                  </span>
+                                  <span>{step}</span>
+                                </li>
+                              {/each}
+                            </ol>
                           </div>
                         </div>
                         
-                        {#if attackPath.description}
-                          <p class="text-sm text-gray-600 mb-3">{attackPath.description}</p>
-                        {/if}
-                        
-                        <div>
-                          <h5 class="text-sm font-medium text-gray-700 mb-2">Attack Steps:</h5>
-                          <ol class="text-sm text-gray-600 space-y-1">
-                            {#each formatAttackSteps(attackPath.attack_steps) as step, index}
-                              <li class="flex items-start">
-                                <span class="flex-shrink-0 w-6 h-6 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center text-xs font-medium mr-2 mt-0.5">
-                                  {index + 1}
-                                </span>
-                                <span>{step}</span>
-                              </li>
-                            {/each}
-                          </ol>
-                        </div>
+                        <button
+                          on:click={() => handleDeleteAttackPath(attackPath)}
+                          class="text-red-600 hover:text-red-800 ml-4"
+                          title="Delete attack path"
+                        >
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </button>
                       </div>
-                      
-                      <button
-                        on:click={() => handleDeleteAttackPath(attackPath)}
-                        class="text-red-600 hover:text-red-800 ml-4"
-                        title="Delete attack path"
-                      >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </button>
                     </div>
-                  </div>
-                {/each}
-              {/if}
-            </div>
+                  {/each}
+                {/if}
+              </div>
+            {/if}
           </div>
         {/each}
       </div>

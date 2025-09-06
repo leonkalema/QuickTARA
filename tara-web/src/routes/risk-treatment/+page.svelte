@@ -8,14 +8,12 @@
   let riskTreatmentData: RiskTreatmentData[] = [];
   let loading = false;
   let expandedCards: Set<string> = new Set();
+  
+  // Filter states
+  let selectedRiskFilter = 'All';
+  let selectedStatusFilter = 'All';
 
-  // Risk matrix as per ISO 21434
-  const RISK_MATRIX = {
-    "Severe": {"Very High": "Critical", "High": "Critical", "Medium": "High", "Low": "Medium", "Very Low": "Medium"},
-    "Major": {"Very High": "High", "High": "High", "Medium": "Medium", "Low": "Low", "Very Low": "Low"},
-    "Moderate": {"Very High": "Medium", "High": "Medium", "Medium": "Low", "Low": "Low", "Very Low": "Low"},
-    "Negligible": {"Very High": "Low", "High": "Low", "Medium": "Low", "Low": "Low", "Very Low": "Low"}
-  };
+  
 
   // Treatment suggestions based on risk level
   const TREATMENT_SUGGESTIONS = {
@@ -126,6 +124,16 @@
     expandedCards = expandedCards; // Trigger reactivity
   }
 
+  // Filtered data based on selected filters
+  $: filteredRiskTreatmentData = riskTreatmentData.filter(scenario => {
+    const riskMatch = selectedRiskFilter === 'All' || scenario.risk_level === selectedRiskFilter;
+    const statusMatch = selectedStatusFilter === 'All' || 
+      (selectedStatusFilter === 'Draft' && scenario.treatment_status === 'draft') ||
+      (selectedStatusFilter === 'Approved' && scenario.treatment_status === 'approved');
+    
+    return riskMatch && statusMatch;
+  });
+
   function generateGoalTemplate(damageScenario: RiskTreatmentData, treatment: string): string {
     const template = (GOAL_TEMPLATES as any)[treatment] || GOAL_TEMPLATES["Retaining"];
     
@@ -178,12 +186,12 @@
   </div>
 
   {#if loading}
-    <div class="flex flex-col justify-center items-center py-16">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mb-4"></div>
-      <p class="text-gray-500">Loading risk treatment data...</p>
+    <div class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+      <span class="ml-3 text-gray-600">Loading risk treatment data...</span>
     </div>
   {:else if !$selectedProduct}
-    <div class="text-center py-16">
+    <div class="text-center py-12">
       <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
       </svg>
@@ -205,9 +213,55 @@
       </a>
     </div>
   {:else}
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm font-medium text-gray-700">Filters:</span>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-4 flex-1">
+          <!-- Risk Level Filter -->
+          <div class="flex items-center space-x-2">
+            <label for="risk-filter" class="text-sm text-gray-600 whitespace-nowrap">Risk Level:</label>
+            <select 
+              id="risk-filter"
+              bind:value={selectedRiskFilter}
+              class="w-32 px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+            >
+              <option value="All">All Levels</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="flex items-center space-x-2">
+            <label for="status-filter" class="text-sm text-gray-600 whitespace-nowrap">Status:</label>
+            <select 
+              id="status-filter"
+              bind:value={selectedStatusFilter}
+              class="w-28 px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+            >
+              <option value="All">All Status</option>
+              <option value="Draft">Draft</option>
+              <option value="Approved">Approved</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="text-sm text-gray-500 whitespace-nowrap">
+          Showing {filteredRiskTreatmentData.length} of {riskTreatmentData.length} treatments
+        </div>
+      </div>
+    </div>
+
     <!-- Risk Treatment Cards -->
     <div class="space-y-6">
-      {#each riskTreatmentData as damageScenario}
+      {#each filteredRiskTreatmentData as damageScenario}
         {@const impactLevel = damageScenario.impact_level}
         {@const feasibilityLevel = damageScenario.feasibility_level || 'Unknown'}
         {@const riskLevel = damageScenario.risk_level || 'Unknown'}
