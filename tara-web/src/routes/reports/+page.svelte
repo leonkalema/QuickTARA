@@ -103,7 +103,7 @@
     generating = true;
     try {
       // Call backend PDF generation endpoint
-      const response = await fetch(`http://localhost:8000/api/reports/tara-pdf/${$selectedProduct.scope_id}`);
+      const response = await fetch(`http://localhost:8080/api/reports/tara-pdf/${$selectedProduct.scope_id}`);
       
       if (!response.ok) {
         throw new Error(`Failed to generate PDF: ${response.statusText}`);
