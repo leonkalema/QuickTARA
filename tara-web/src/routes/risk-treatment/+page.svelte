@@ -7,6 +7,7 @@
 
   let riskTreatmentData: RiskTreatmentData[] = [];
   let loading = false;
+  let expandedCards: Set<string> = new Set();
 
   // Risk matrix as per ISO 21434
   const RISK_MATRIX = {
@@ -116,6 +117,15 @@
     return (TREATMENT_SUGGESTIONS as any)[riskLevel] || "Retaining";
   }
 
+  function toggleCard(scenarioId: string) {
+    if (expandedCards.has(scenarioId)) {
+      expandedCards.delete(scenarioId);
+    } else {
+      expandedCards.add(scenarioId);
+    }
+    expandedCards = expandedCards; // Trigger reactivity
+  }
+
   function generateGoalTemplate(damageScenario: RiskTreatmentData, treatment: string): string {
     const template = (GOAL_TEMPLATES as any)[treatment] || GOAL_TEMPLATES["Retaining"];
     
@@ -204,101 +214,160 @@
         {@const suggestedTreatment = getSuggestedTreatment(riskLevel)}
         {@const goalTemplate = generateGoalTemplate(damageScenario, suggestedTreatment)}
         
-        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <!-- Header -->
-          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <div class="flex items-start justify-between">
-              <div>
-                <h3 class="text-lg font-medium text-gray-900">{damageScenario.name}</h3>
-                <p class="text-sm text-gray-600 mt-1">Asset: {damageScenario.primary_component_id}</p>
-                {#if damageScenario.description}
+        {@const isExpanded = expandedCards.has(damageScenario.scenario_id)}
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden {damageScenario.treatment_status === 'approved' ? 'ring-2 ring-green-200' : ''}">
+          <!-- Header - Always Visible -->
+          <div 
+            class="px-6 py-4 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors" 
+            role="button"
+            tabindex="0"
+            on:click={() => toggleCard(damageScenario.scenario_id)}
+            on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? toggleCard(damageScenario.scenario_id) : null}
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3">
+                  <h3 class="text-lg font-medium text-gray-900">{damageScenario.name}</h3>
+                  {#if damageScenario.treatment_status === 'approved'}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                      ✓ Approved
+                    </span>
+                  {:else}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                      Draft
+                    </span>
+                  {/if}
+                  <!-- Risk Level Badge -->
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {getRiskColor(riskLevel)}">{riskLevel}</span>
+                </div>
+                
+                <!-- Minimized View - Show Goal when collapsed -->
+                {#if !isExpanded && damageScenario.treatment_goal}
+                  <div class="mt-2 text-sm text-gray-700">
+                    <span class="font-medium">Goal:</span> {damageScenario.treatment_goal}
+                  </div>
+                {:else if !isExpanded}
                   <p class="text-sm text-gray-600 mt-1">{damageScenario.description}</p>
                 {/if}
               </div>
-              <div class="text-right">
-                <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border {getRiskColor(riskLevel)}">
-                  Risk: {riskLevel}
+              
+              <div class="flex items-center space-x-4">
+                <!-- Risk Level Info -->
+                <div class="text-right text-xs text-gray-500">
+                  Impact: {damageScenario.impact_level} | Feasibility: {damageScenario.feasibility_level}
+                </div>
+                
+                <!-- Expand/Collapse Button -->
+                <button 
+                  class="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label={isExpanded ? 'Collapse card' : 'Expand card'}
+                >
+                  <svg class="w-5 h-5 transform transition-transform {isExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {#if isExpanded}
+            <!-- Risk Calculation -->
+            <div class="px-6 py-4 bg-blue-50 border-b border-gray-200">
+              <h4 class="text-sm font-medium text-gray-900 mb-3">Risk Calculation (ISO 21434)</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span class="text-gray-600">Impact Level:</span>
+                  <span class="ml-2 font-medium {impactLevel === 'Severe' ? 'text-red-700' : impactLevel === 'Major' ? 'text-orange-700' : impactLevel === 'Moderate' ? 'text-yellow-700' : 'text-green-700'}">{impactLevel}</span>
+                </div>
+                <div>
+                  <span class="text-gray-600">Feasibility Level:</span>
+                  <span class="ml-2 font-medium {feasibilityLevel === 'Very High' ? 'text-red-700' : feasibilityLevel === 'High' ? 'text-orange-700' : feasibilityLevel === 'Medium' ? 'text-yellow-700' : 'text-green-700'}">{feasibilityLevel}</span>
+                </div>
+                <div>
+                  <span class="text-gray-600">Risk Level:</span>
+                  <span class="ml-2 font-medium {riskLevel === 'Critical' ? 'text-red-700' : riskLevel === 'High' ? 'text-orange-700' : riskLevel === 'Medium' ? 'text-yellow-700' : 'text-green-700'}">{riskLevel}</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Risk Calculation -->
-          <div class="px-6 py-4 bg-blue-50 border-b border-gray-200">
-            <h4 class="text-sm font-medium text-gray-900 mb-3">Risk Calculation (ISO 21434)</h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <span class="text-gray-600">Impact Level:</span>
-                <span class="ml-2 font-medium text-gray-900">{impactLevel}</span>
-              </div>
-              <div>
-                <span class="text-gray-600">Feasibility:</span>
-                <span class="ml-2 font-medium text-gray-900">{feasibilityLevel}</span>
-              </div>
-              <div>
-                <span class="text-gray-600">Risk Matrix Result:</span>
-                <span class="ml-2 font-medium {riskLevel === 'Critical' ? 'text-red-700' : riskLevel === 'High' ? 'text-orange-700' : riskLevel === 'Medium' ? 'text-yellow-700' : 'text-green-700'}">{riskLevel}</span>
+            <!-- Treatment Decision -->
+            <div class="px-6 py-4">
+              <div class="space-y-4">
+                <!-- Treatment Selection -->
+                <div>
+                  <label for="treatment-select-{damageScenario.scenario_id}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Risk Treatment Decision
+                  </label>
+                  <select 
+                    id="treatment-select-{damageScenario.scenario_id}"
+                    bind:value={damageScenario.selected_treatment}
+                    disabled={damageScenario.treatment_status === 'approved'}
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent {damageScenario.treatment_status === 'approved' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
+                  >
+                    <option value="Reducing" selected={suggestedTreatment === 'Reducing'}>Reducing</option>
+                    <option value="Retaining" selected={suggestedTreatment === 'Retaining'}>Retaining</option>
+                    <option value="Sharing" selected={suggestedTreatment === 'Sharing'}>Sharing</option>
+                    <option value="Avoiding" selected={suggestedTreatment === 'Avoiding'}>Avoiding</option>
+                  </select>
+                  <p class="text-xs text-gray-500 mt-1">
+                    {#if damageScenario.treatment_status === 'approved'}
+                      🔒 Treatment decision is locked (approved)
+                    {:else}
+                      Auto-suggested: <span class="font-medium">{suggestedTreatment}</span> (based on {riskLevel} risk level)
+                    {/if}
+                  </p>
+                </div>
+
+                <!-- Goal/Claim -->
+                <div>
+                  <label for="treatment-goal-{damageScenario.scenario_id}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Security Goal/Claim <span class="text-red-500">*</span>
+                  </label>
+                  <textarea 
+                    id="treatment-goal-{damageScenario.scenario_id}"
+                    bind:value={damageScenario.treatment_goal}
+                    disabled={damageScenario.treatment_status === 'approved'}
+                    rows="3"
+                    placeholder={goalTemplate}
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent placeholder-italic {damageScenario.treatment_status === 'approved' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
+                  ></textarea>
+                  <p class="text-xs text-gray-500 mt-1">
+                    {#if damageScenario.treatment_status === 'approved'}
+                      🔒 Security goal is locked (approved)
+                    {:else}
+                      Review and edit the auto-generated goal above. This field is mandatory before approval.
+                    {/if}
+                  </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  {#if damageScenario.treatment_status === 'approved'}
+                    <div class="flex items-center text-sm text-green-600">
+                      <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                      </svg>
+                      Treatment Approved
+                    </div>
+                  {:else}
+                    <button 
+                      on:click={() => saveTreatment(damageScenario, 'draft')}
+                      class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Save Draft
+                    </button>
+                    <button 
+                      on:click={() => approveTreatment(damageScenario)}
+                      class="px-4 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700"
+                    >
+                      Approve Treatment
+                    </button>
+                  {/if}
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- Treatment Decision -->
-          <div class="px-6 py-4">
-            <div class="space-y-4">
-              <!-- Treatment Selection -->
-              <div>
-                <label for="treatment-select-{damageScenario.scenario_id}" class="block text-sm font-medium text-gray-700 mb-2">
-                  Risk Treatment Decision
-                </label>
-                <select 
-                  id="treatment-select-{damageScenario.scenario_id}"
-                  bind:value={damageScenario.selected_treatment}
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent"
-                >
-                  <option value="Reducing" selected={suggestedTreatment === 'Reducing'}>Reducing</option>
-                  <option value="Retaining" selected={suggestedTreatment === 'Retaining'}>Retaining</option>
-                  <option value="Sharing" selected={suggestedTreatment === 'Sharing'}>Sharing</option>
-                  <option value="Avoiding" selected={suggestedTreatment === 'Avoiding'}>Avoiding</option>
-                </select>
-                <p class="text-xs text-gray-500 mt-1">
-                  Auto-suggested: <span class="font-medium">{suggestedTreatment}</span> (based on {riskLevel} risk level)
-                </p>
-              </div>
-
-              <!-- Goal/Claim -->
-              <div>
-                <label for="treatment-goal-{damageScenario.scenario_id}" class="block text-sm font-medium text-gray-700 mb-2">
-                  Security Goal/Claim <span class="text-red-500">*</span>
-                </label>
-                <textarea 
-                  id="treatment-goal-{damageScenario.scenario_id}"
-                  bind:value={damageScenario.treatment_goal}
-                  rows="3"
-                  placeholder={goalTemplate}
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent placeholder-italic"
-                ></textarea>
-                <p class="text-xs text-gray-500 mt-1">
-                  Review and edit the auto-generated goal above. This field is mandatory before approval.
-                </p>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button 
-                  on:click={() => saveTreatment(damageScenario, 'draft')}
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Save Draft
-                </button>
-                <button 
-                  on:click={() => approveTreatment(damageScenario)}
-                  class="px-4 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700"
-                >
-                  Approve Treatment
-                </button>
-              </div>
-            </div>
-          </div>
+          {/if}
         </div>
       {/each}
     </div>
