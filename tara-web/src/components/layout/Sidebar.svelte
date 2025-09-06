@@ -1,13 +1,15 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { selectedProduct } from '../../lib/stores/productStore';
+  import { authStore } from '../../lib/stores/auth';
   import { 
     FileText, 
     Package, 
     Zap, 
     AlertTriangle, 
     Shield, 
-    BarChart3 
+    BarChart3,
+    Settings
   } from '@lucide/svelte';
 
   const steps = [
@@ -68,12 +70,28 @@
     }
   ];
 
-  function isStepAccessible(step: typeof steps[0]) {
-    if (!step.requiresProduct) return true;
-    return $selectedProduct !== null;
+  const adminSteps = [
+    {
+      id: 'settings',
+      title: 'Settings',
+      icon: Settings,
+      path: '/settings',
+      description: 'System configuration',
+      adminOnly: true
+    }
+  ];
+
+  function isStepAccessible(step: typeof steps[0] | typeof adminSteps[0]) {
+    if ('adminOnly' in step && step.adminOnly) {
+      return $authStore.user?.organizations?.[0]?.role === 'Tool Admin';
+    }
+    if ('requiresProduct' in step && step.requiresProduct) {
+      return $selectedProduct !== null;
+    }
+    return true;
   }
 
-  function isCurrentStep(step: typeof steps[0]) {
+  function isCurrentStep(step: typeof steps[0] | typeof adminSteps[0]) {
     return $page.url.pathname.startsWith(step.path);
   }
 </script>
@@ -138,6 +156,42 @@
           <div class="flex-shrink-0 w-2 h-2 rounded-full bg-gray-200"></div>
         {/if}
       </a>
+    {/each}
+
+    <!-- Admin Settings Section -->
+    {#each adminSteps as step}
+      {@const isAccessible = isStepAccessible(step)}
+      {@const isCurrent = isCurrentStep(step)}
+      
+      {#if isAccessible}
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 px-3">
+            Administration
+          </p>
+          <a
+            href={step.path}
+            class="flex items-center p-3 rounded-lg transition-colors group {isCurrent 
+              ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}"
+          >
+            <svelte:component 
+              this={step.icon} 
+              class="w-5 h-5 mr-3 {isCurrent ? 'text-blue-600' : 'text-gray-500'}" 
+            />
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-medium truncate">{step.title}</span>
+              <p class="text-xs mt-1 {isCurrent ? 'text-blue-600' : 'text-gray-500'}">
+                {step.description}
+              </p>
+            </div>
+            {#if isCurrent}
+              <div class="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500"></div>
+            {:else}
+              <div class="flex-shrink-0 w-2 h-2 rounded-full bg-gray-200"></div>
+            {/if}
+          </a>
+        </div>
+      {/if}
     {/each}
   </nav>
 

@@ -34,7 +34,10 @@ export async function authGuard(options: RouteGuardOptions = {}) {
 
 	// Check roles
 	if (requiredRoles.length > 0) {
-		const hasRequiredRole = requiredRoles.some(role => authStore.hasRole(role));
+		const hasRequiredRole = requiredRoles.some(role => {
+			const userRole = auth.user?.organizations?.[0]?.role;
+			return userRole === role;
+		});
 		if (!hasRequiredRole) {
 			throw redirect(302, '/unauthorized');
 		}
@@ -42,9 +45,9 @@ export async function authGuard(options: RouteGuardOptions = {}) {
 
 	// Check permissions
 	if (requiredPermissions.length > 0) {
-		const hasRequiredPermission = requiredPermissions.some(permission => 
-			authStore.hasPermission(permission)
-		);
+		// For now, assume Tool Admin has all permissions
+		const userRole = auth.user?.organizations?.[0]?.role;
+		const hasRequiredPermission = userRole === 'Tool Admin';
 		if (!hasRequiredPermission) {
 			throw redirect(302, '/unauthorized');
 		}

@@ -12,8 +12,9 @@
 
 	let { children } = $props();
 	
-	// Check if current route is auth page
+	// Check if current route is auth page or settings page
 	let isAuthPage = $derived($page.url.pathname === '/auth');
+	let isSettingsPage = $derived($page.url.pathname.startsWith('/settings'));
 	
 	// Initialize auth store without immediate redirects
 	onMount(() => {
@@ -40,14 +41,20 @@
 			
 			<!-- Main Layout with Sidebar -->
 			<div class="flex flex-1">
-				<!-- Left Sidebar -->
-				<Sidebar />
+				<!-- Left Sidebar - only show for non-settings pages -->
+				{#if !isSettingsPage}
+					<Sidebar />
+				{/if}
 				
 				<!-- Main Content -->
 				<main class="flex-1 overflow-auto">
-					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+					{#if isSettingsPage}
 						{@render children?.()}
-					</div>
+					{:else}
+						<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+							{@render children?.()}
+						</div>
+					{/if}
 				</main>
 			</div>
 			

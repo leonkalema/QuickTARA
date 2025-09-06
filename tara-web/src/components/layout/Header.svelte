@@ -14,14 +14,14 @@
   <div class="flex items-center justify-between">
     <!-- Logo and Brand -->
     <div class="flex items-center space-x-6">
-      <div class="flex items-center space-x-2">
+      <a href="/products" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
         <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
           <span class="text-white font-bold text-sm">QT</span>
         </div>
         <div>
           <h1 class="text-xl font-bold text-gray-900">QuickTARA</h1>
         </div>
-      </div>
+      </a>
       
       <!-- Product Selector -->
       <ProductSelector />
@@ -29,10 +29,10 @@
 
     <!-- User Menu -->
     <div class="flex items-center space-x-4">
-      <button class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+      <a href="/settings" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
         <Settings class="w-5 h-5" />
         <span class="hidden sm:inline">Settings</span>
-      </button>
+      </a>
       
       {#if $authStore.user}
         <UserMenu user={$authStore.user} on:logout={handleLogout} />
