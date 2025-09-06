@@ -16,6 +16,9 @@ from api.routes import components, analysis, reports, review, settings_routes, s
 # Import new product-centric model routers
 from api.routes import products, assets
 
+# Import risk treatment router
+from api.routers import risk_treatment
+
 def create_app(settings=None):
     """
     Create FastAPI application with all routes and middleware
@@ -72,6 +75,7 @@ def create_app(settings=None):
     # Add attack path analysis router
     app.include_router(simple_attack_path.router, prefix="/api/attack-paths", tags=["attack-paths"])
     app.include_router(attack_path.router, prefix="/api/attack-paths-analysis", tags=["attack-paths-analysis"])
+    app.include_router(risk_treatment.router, prefix="/api", tags=["risk-treatment"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["settings"])

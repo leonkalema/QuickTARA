@@ -51,6 +51,14 @@
       requiresProduct: true
     },
     {
+      id: 'risk-treatment',
+      title: 'Risk Treatment',
+      icon: Shield,
+      path: '/risk-treatment',
+      description: 'Treat and mitigate risks',
+      requiresProduct: true
+    },
+    {
       id: 'reports',
       title: 'Reports & Export',
       icon: BarChart3,
