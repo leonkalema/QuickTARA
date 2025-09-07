@@ -4,33 +4,60 @@
   import { notifications } from '../../lib/stores/notificationStore';
   import { assetApi } from '../../lib/api/assetApi';
   import type { Asset } from '../../lib/types/asset';
+  import type { APIError } from '$lib/utils/errorHandler';
+  import { parseAPIError, withRetry } from '$lib/utils/errorHandler';
   import AssetTable from '../../features/assets/components/AssetTable.svelte';
+  import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+  import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 
   let assets: Asset[] = [];
   let isLoading = true;
-  let error = '';
+  let error: APIError | null = null;
+  let retryCount = 0;
+  const maxRetries = 3;
 
   async function loadAssets() {
     if (!$selectedProduct) return;
     
     isLoading = true;
-    error = '';
+    error = null;
     
     try {
-      const response = await assetApi.getByProduct($selectedProduct.scope_id);
+      const response = await withRetry(
+        () => assetApi.getByProduct($selectedProduct.scope_id),
+        maxRetries,
+        1000
+      );
       assets = response.assets;
+      retryCount = 0; // Reset retry count on success
+      
+      if (assets.length === 0) {
+        notifications.show('No assets found for this product', 'info');
+      }
     } catch (err) {
       console.error('Error loading assets:', err);
-      error = 'Failed to load assets';
-      notifications.show('Failed to load assets', 'error');
+      error = parseAPIError(err);
+      
+      // Show user-friendly notification
+      const errorMsg = error.message || 'Failed to load assets';
+      notifications.show(errorMsg, 'error');
     } finally {
       isLoading = false;
     }
   }
+  
+  async function retryLoadAssets() {
+    retryCount++;
+    await loadAssets();
+  }
+  
+  function dismissError() {
+    error = null;
+  }
 
   function handleAssetCreated(event: CustomEvent<Asset>) {
     assets = [...assets, event.detail];
-    notifications.show('Asset created successfully', 'success');
+    notifications.show(`Asset "${event.detail.name}" created successfully`, 'success');
   }
 
   function handleAssetUpdated(event: CustomEvent<Asset>) {
@@ -39,7 +66,14 @@
     if (index !== -1) {
       assets[index] = updatedAsset;
       assets = [...assets];
+      notifications.show(`Asset "${updatedAsset.name}" updated successfully`, 'success');
     }
+  }
+  
+  function handleAssetDeleted(event: CustomEvent<{asset_id: string, name: string}>) {
+    const { asset_id, name } = event.detail;
+    assets = assets.filter(a => a.asset_id !== asset_id);
+    notifications.show(`Asset "${name}" deleted successfully`, 'success');
   }
 
   onMount(() => {
@@ -97,28 +131,17 @@
   {:else}
     <!-- Content -->
     {#if isLoading}
-      <div class="flex flex-col justify-center items-center py-16">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mb-4"></div>
-        <p class="text-gray-500">Loading assets...</p>
-      </div>
+      <LoadingSpinner 
+        size="lg" 
+        message="Loading assets for {$selectedProduct.name}..." 
+      />
     {:else if error}
-      <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-        <div class="flex items-start">
-          <svg class="w-6 h-6 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Error loading assets</h3>
-            <p class="text-sm text-red-700 mt-1">{error}</p>
-            <button
-              on:click={loadAssets}
-              class="mt-3 bg-red-100 text-red-800 px-3 py-1 rounded text-sm hover:bg-red-200 transition-colors"
-            >
-              Try again
-            </button>
-          </div>
-        </div>
-      </div>
+      <ErrorMessage 
+        {error} 
+        showRetry={retryCount < maxRetries}
+        onRetry={retryLoadAssets}
+        onDismiss={dismissError}
+      />
     {:else}
       <!-- Asset Table -->
       <AssetTable 
@@ -131,11 +154,3 @@
   {/if}
 </div>
 
-<style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-</style>

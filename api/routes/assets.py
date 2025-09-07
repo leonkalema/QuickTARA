@@ -4,11 +4,13 @@ Asset API routes for product-centric model
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import logging
 from datetime import datetime
 
 from api.deps.db import get_db
 from api.models.asset import Asset, AssetCreate, AssetUpdate, AssetList, AssetHistory
+from api.utils.error_handlers import handle_database_error, create_success_response, NotFoundAPIError
 from db.product_asset_models import Asset as DBAsset, AssetHistory as DBAssetHistory
 from db.product_asset_models import ProductScope as DBProductScope
 
@@ -28,13 +30,46 @@ async def list_assets(
     List all assets with pagination and optional filtering
     """
     try:
+        # Validate pagination parameters
+        if skip < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": "Skip parameter must be non-negative", "error_type": "invalid_parameter"}
+            )
+        if limit <= 0 or limit > 1000:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": "Limit must be between 1 and 1000", "error_type": "invalid_parameter"}
+            )
+        
         query = db.query(DBAsset).filter(DBAsset.is_current == True)
         
         # Apply filters if provided
         if scope_id:
+            # Validate scope exists
+            scope_exists = db.query(DBProductScope).filter(
+                DBProductScope.scope_id == scope_id,
+                DBProductScope.is_current == True
+            ).first()
+            if not scope_exists:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={"message": f"Product scope '{scope_id}' not found", "error_type": "resource_not_found"}
+                )
             query = query.filter(DBAsset.scope_id == scope_id)
         
         if asset_type:
+            # Validate asset_type is valid
+            valid_types = ["Hardware", "Software", "Data", "Communication"]
+            if asset_type not in valid_types:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "message": f"Invalid asset type '{asset_type}'",
+                        "error_type": "invalid_parameter",
+                        "valid_types": valid_types
+                    }
+                )
             query = query.filter(DBAsset.asset_type == asset_type)
         
         # Get count before pagination
@@ -43,14 +78,19 @@ async def list_assets(
         # Apply pagination
         assets = query.offset(skip).limit(limit).all()
         
-        logger.info(f"Found {total} assets")
+        logger.info(f"Found {total} assets (showing {len(assets)})")
         
         return {"assets": assets, "total": total}
+        
+    except HTTPException:
+        raise
+    except (IntegrityError, SQLAlchemyError) as e:
+        raise handle_database_error(e, "list assets")
     except Exception as e:
-        logger.error(f"Error listing assets: {str(e)}")
+        logger.error(f"Unexpected error listing assets: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error listing assets: {str(e)}"
+            detail={"message": "Failed to retrieve assets", "error_type": "internal_error"}
         )
 
 
@@ -64,6 +104,27 @@ async def create_asset(
     Create a new asset
     """
     try:
+        # Validate required fields
+        if not asset.name or not asset.name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "message": "Asset name is required",
+                    "error_type": "validation_error",
+                    "field_errors": {"name": "Asset name cannot be empty"}
+                }
+            )
+        
+        if len(asset.name.strip()) < 3:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "message": "Asset name too short",
+                    "error_type": "validation_error",
+                    "field_errors": {"name": "Asset name must be at least 3 characters"}
+                }
+            )
+        
         # Verify product exists
         product = db.query(DBProductScope).filter(
             DBProductScope.scope_id == asset.scope_id,
@@ -73,7 +134,11 @@ async def create_asset(
         if not product:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product with ID {asset.scope_id} not found"
+                detail={
+                    "message": f"Product scope '{asset.scope_id}' not found",
+                    "error_type": "resource_not_found",
+                    "field_errors": {"scope_id": "Selected product does not exist"}
+                }
             )
         
         # Generate asset_id if not provided
@@ -85,8 +150,12 @@ async def create_asset(
         existing = db.query(DBAsset).filter(DBAsset.asset_id == asset.asset_id).first()
         if existing:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Asset with ID {asset.asset_id} already exists"
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "message": f"Asset with ID '{asset.asset_id}' already exists",
+                    "error_type": "duplicate_resource",
+                    "field_errors": {"asset_id": "This asset ID is already in use"}
+                }
             )
         
         # Create new asset
@@ -141,16 +210,22 @@ async def create_asset(
         db.commit()
         db.refresh(new_asset)
         
+        logger.info(f"Successfully created asset {asset.asset_id}")
+        
         return new_asset
+        
     except HTTPException:
         db.rollback()
         raise
+    except (IntegrityError, SQLAlchemyError) as e:
+        db.rollback()
+        raise handle_database_error(e, "create asset")
     except Exception as e:
         db.rollback()
-        logger.error(f"Error creating asset: {str(e)}")
+        logger.error(f"Unexpected error creating asset: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating asset: {str(e)}"
+            detail={"message": "Failed to create asset", "error_type": "internal_error"}
         )
 
 
