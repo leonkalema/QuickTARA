@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Plus, Edit, Trash2, Building } from '@lucide/svelte';
+	import { Plus, Edit, Trash2, Building, Save, X } from '@lucide/svelte';
 	import { notifications } from '$lib/stores/notifications';
+	import { authStore } from '$lib/stores/auth';
+	import { get } from 'svelte/store';
+	import OrganizationMembers from './OrganizationMembers.svelte';
 
 	interface Organization {
 		organization_id: string;
@@ -13,13 +16,15 @@
 
 	let organizations: Organization[] = [];
 	let loading = false;
-	let showForm = false;
-	let editingOrg: Organization | null = null;
+	let editingId: string | null = null;
+	let showCreateForm = false;
 
-	let formData = {
+	let createFormData = {
 		name: '',
 		description: ''
 	};
+
+	let editFormData: { [key: string]: { name: string; description: string } } = {};
 
 	onMount(() => {
 		loadOrganizations();
@@ -28,7 +33,30 @@
 	async function loadOrganizations() {
 		loading = true;
 		try {
-			// Mock data for now - replace with actual API call
+			const auth = get(authStore);
+			const response = await fetch('http://127.0.0.1:8080/api/organizations', {
+				headers: {
+					'Authorization': `Bearer ${auth.token}`,
+					'Content-Type': 'application/json'
+				}
+			});
+			if (response.ok) {
+				const data = await response.json();
+				organizations = data.organizations || [];
+			} else {
+				// Fallback to mock data if API not available
+				organizations = [
+					{
+						organization_id: '1',
+						name: 'Default Organization',
+						description: 'Main organization for QuickTARA',
+						created_at: '2024-01-01',
+						user_count: 5
+					}
+				];
+			}
+		} catch (error) {
+			// Fallback to mock data
 			organizations = [
 				{
 					organization_id: '1',
@@ -38,61 +66,109 @@
 					user_count: 5
 				}
 			];
-		} catch (error) {
-			notifications.show('Failed to load organizations', 'error');
 		} finally {
 			loading = false;
 		}
 	}
 
-	function openCreateForm() {
-		editingOrg = null;
-		formData = { name: '', description: '' };
-		showForm = true;
-	}
-
-	function openEditForm(org: Organization) {
-		editingOrg = org;
-		formData = {
+	function startEdit(org: Organization) {
+		editingId = org.organization_id;
+		editFormData[org.organization_id] = {
 			name: org.name,
 			description: org.description
 		};
-		showForm = true;
 	}
 
-	function closeForm() {
-		showForm = false;
-		editingOrg = null;
-		formData = { name: '', description: '' };
+	function cancelEdit() {
+		editingId = null;
+		editFormData = {};
 	}
 
-	async function handleSubmit() {
+	async function saveEdit(org: Organization) {
+		const formData = editFormData[org.organization_id];
 		if (!formData.name.trim()) {
 			notifications.show('Organization name is required', 'error');
 			return;
 		}
 
 		try {
-			if (editingOrg) {
-				// Update organization
+			const auth = get(authStore);
+			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${org.organization_id}`, {
+				method: 'PUT',
+				headers: {
+					'Authorization': `Bearer ${auth.token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(formData)
+			});
+
+			if (response.ok) {
 				notifications.show('Organization updated successfully', 'success');
+				editingId = null;
+				editFormData = {};
+				await loadOrganizations();
 			} else {
-				// Create organization
-				notifications.show('Organization created successfully', 'success');
+				throw new Error('Failed to update organization');
 			}
-			closeForm();
-			await loadOrganizations();
 		} catch (error) {
 			notifications.show('Failed to save organization', 'error');
 		}
+	}
+
+	async function createOrganization() {
+		if (!createFormData.name.trim()) {
+			notifications.show('Organization name is required', 'error');
+			return;
+		}
+
+		try {
+			const auth = get(authStore);
+			const response = await fetch('http://127.0.0.1:8080/api/organizations', {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${auth.token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(createFormData)
+			});
+
+			if (response.ok) {
+				notifications.show('Organization created successfully', 'success');
+				showCreateForm = false;
+				createFormData = { name: '', description: '' };
+				await loadOrganizations();
+			} else {
+				throw new Error('Failed to create organization');
+			}
+		} catch (error) {
+			notifications.show('Failed to create organization', 'error');
+		}
+	}
+
+	function cancelCreate() {
+		showCreateForm = false;
+		createFormData = { name: '', description: '' };
 	}
 
 	async function deleteOrganization(org: Organization) {
 		if (!confirm(`Are you sure you want to delete "${org.name}"?`)) return;
 
 		try {
-			notifications.show('Organization deleted successfully', 'success');
-			await loadOrganizations();
+			const auth = get(authStore);
+			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${org.organization_id}`, {
+				method: 'DELETE',
+				headers: {
+					'Authorization': `Bearer ${auth.token}`,
+					'Content-Type': 'application/json'
+				}
+			});
+
+			if (response.ok) {
+				notifications.show('Organization deleted successfully', 'success');
+				await loadOrganizations();
+			} else {
+				throw new Error('Failed to delete organization');
+			}
 		} catch (error) {
 			notifications.show('Failed to delete organization', 'error');
 		}
@@ -102,11 +178,47 @@
 <div class="organization-settings">
 	<div class="header">
 		<h2>Organization Management</h2>
-		<button class="btn-primary" on:click={openCreateForm}>
+		<button class="btn-primary" on:click={() => showCreateForm = true}>
 			<Plus class="w-4 h-4" />
 			Add Organization
 		</button>
 	</div>
+
+	{#if showCreateForm}
+		<div class="create-form">
+			<h3>Create New Organization</h3>
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="create-name">Organization Name</label>
+					<input
+						id="create-name"
+						type="text"
+						bind:value={createFormData.name}
+						placeholder="Enter organization name"
+					/>
+				</div>
+				<div class="form-group">
+					<label for="create-description">Description</label>
+					<input
+						id="create-description"
+						type="text"
+						bind:value={createFormData.description}
+						placeholder="Enter description"
+					/>
+				</div>
+			</div>
+			<div class="form-actions">
+				<button class="btn-secondary" on:click={cancelCreate}>
+					<X class="w-4 h-4" />
+					Cancel
+				</button>
+				<button class="btn-primary" on:click={createOrganization}>
+					<Save class="w-4 h-4" />
+					Create
+				</button>
+			</div>
+		</div>
+	{/if}
 
 	{#if loading}
 		<div class="loading">Loading organizations...</div>
@@ -114,79 +226,75 @@
 		<div class="organizations-grid">
 			{#each organizations as org}
 				<div class="org-card">
-					<div class="org-header">
-						<div class="org-icon">
-							<Building class="w-6 h-6" />
+					{#if editingId === org.organization_id}
+						<div class="edit-form">
+							<div class="form-group">
+								<label for="edit-name-{org.organization_id}">Organization Name</label>
+								<input
+									id="edit-name-{org.organization_id}"
+									type="text"
+									bind:value={editFormData[org.organization_id].name}
+									placeholder="Enter organization name"
+								/>
+							</div>
+							<div class="form-group">
+								<label for="edit-description-{org.organization_id}">Description</label>
+								<input
+									id="edit-description-{org.organization_id}"
+									type="text"
+									bind:value={editFormData[org.organization_id].description}
+									placeholder="Enter description"
+								/>
+							</div>
+							<div class="form-actions">
+								<button class="btn-secondary" on:click={cancelEdit}>
+									<X class="w-4 h-4" />
+									Cancel
+								</button>
+								<button class="btn-primary" on:click={() => saveEdit(org)}>
+									<Save class="w-4 h-4" />
+									Save
+								</button>
+							</div>
 						</div>
-						<div class="org-info">
-							<h3>{org.name}</h3>
-							<p>{org.description}</p>
+					{:else}
+						<div class="org-header">
+							<div class="org-icon">
+								<Building class="w-6 h-6" />
+							</div>
+							<div class="org-info">
+								<h3>{org.name}</h3>
+								<p>{org.description}</p>
+							</div>
 						</div>
-					</div>
-					
-					<div class="org-stats">
-						<div class="stat">
-							<span class="stat-value">{org.user_count}</span>
-							<span class="stat-label">Users</span>
+						
+						<div class="org-stats">
+							<div class="stat">
+								<span class="stat-value">{org.user_count}</span>
+								<span class="stat-label">Users</span>
+							</div>
 						</div>
-					</div>
 
-					<div class="org-actions">
-						<button class="btn-icon" on:click={() => openEditForm(org)}>
-							<Edit class="w-4 h-4" />
-						</button>
-						<button class="btn-icon danger" on:click={() => deleteOrganization(org)}>
-							<Trash2 class="w-4 h-4" />
-						</button>
-					</div>
+						<div class="org-actions">
+							<button class="btn-icon" on:click={() => startEdit(org)}>
+								<Edit class="w-4 h-4" />
+							</button>
+							<button class="btn-icon danger" on:click={() => deleteOrganization(org)}>
+								<Trash2 class="w-4 h-4" />
+							</button>
+						</div>
+					{/if}
+
+					<!-- Members section for each organization -->
+					<OrganizationMembers 
+						organizationId={org.organization_id} 
+						organizationName={org.name} 
+					/>
 				</div>
 			{/each}
 		</div>
 	{/if}
 </div>
-
-{#if showForm}
-	<div class="modal-overlay" on:click={closeForm}>
-		<div class="modal" on:click|stopPropagation>
-			<div class="modal-header">
-				<h3>{editingOrg ? 'Edit Organization' : 'Create Organization'}</h3>
-				<button class="close-btn" on:click={closeForm}>×</button>
-			</div>
-
-			<form on:submit|preventDefault={handleSubmit} class="org-form">
-				<div class="form-group">
-					<label for="name">Organization Name</label>
-					<input
-						id="name"
-						type="text"
-						bind:value={formData.name}
-						placeholder="Enter organization name"
-						required
-					/>
-				</div>
-
-				<div class="form-group">
-					<label for="description">Description</label>
-					<textarea
-						id="description"
-						bind:value={formData.description}
-						placeholder="Enter organization description"
-						rows="3"
-					></textarea>
-				</div>
-
-				<div class="form-actions">
-					<button type="button" class="btn-secondary" on:click={closeForm}>
-						Cancel
-					</button>
-					<button type="submit" class="btn-primary">
-						{editingOrg ? 'Update' : 'Create'} Organization
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
 
 <style>
 	.organization-settings {
@@ -320,78 +428,56 @@
 		background: #fef2f2;
 	}
 
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
-
-	.modal {
-		background: white;
+	.create-form,
+	.edit-form {
+		background: #f9fafb;
+		border: 1px solid #e5e7eb;
 		border-radius: 8px;
-		width: 90%;
-		max-width: 500px;
-	}
-
-	.modal-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
 		padding: 1.5rem;
-		border-bottom: 1px solid #e5e7eb;
+		margin-bottom: 1.5rem;
 	}
 
-	.modal-header h3 {
-		margin: 0;
-		font-size: 1.25rem;
+	.create-form h3 {
+		margin: 0 0 1rem 0;
+		font-size: 1.125rem;
 		font-weight: 600;
+		color: #111827;
 	}
 
-	.close-btn {
-		background: none;
-		border: none;
-		font-size: 1.5rem;
-		cursor: pointer;
-		color: #6b7280;
-	}
-
-	.org-form {
-		padding: 1.5rem;
-		display: flex;
-		flex-direction: column;
+	.form-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: 1rem;
+		margin-bottom: 1rem;
 	}
 
 	.form-group {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		margin-bottom: 1rem;
 	}
 
-	label {
+	.form-group label {
+		display: block;
+		margin-bottom: 0.5rem;
 		font-weight: 500;
 		color: #374151;
+		font-size: 0.875rem;
 	}
 
-	input, textarea {
+	.form-group input {
+		width: 100%;
 		padding: 0.75rem;
 		border: 1px solid #d1d5db;
 		border-radius: 6px;
 		font-size: 0.875rem;
+		background: white;
 	}
 
-	input:focus, textarea:focus {
+	.form-group input:focus {
 		outline: none;
 		border-color: #3b82f6;
 		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 	}
+
 
 	.form-actions {
 		display: flex;

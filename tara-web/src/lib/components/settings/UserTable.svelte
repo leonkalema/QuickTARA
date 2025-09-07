@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { notifications } from '$lib/stores/notifications';
   import { userApi, type User, type CreateUserRequest } from '$lib/api/userApi';
+  import { authStore } from '$lib/stores/auth';
+  import { get } from 'svelte/store';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
 
   export let users: User[] = [];
@@ -17,8 +19,12 @@
     last_name: '',
     password: '',
     role: 'tara_analyst',
-    status: 'active'
+    status: 'active',
+    organization_id: '',
+    organization_role: 'TARA_ANALYST'
   };
+
+  let organizations: Array<{organization_id: string, name: string}> = [];
 
   // Delete confirmation
   let showDeleteDialog = false;
@@ -38,6 +44,38 @@
     'auditor'
   ];
 
+  const orgRoles = [
+    { value: 'VIEWER', label: 'Viewer' },
+    { value: 'TARA_ANALYST', label: 'TARA Analyst' },
+    { value: 'RISK_MANAGER', label: 'Risk Manager' },
+    { value: 'ORG_ADMIN', label: 'Organization Admin' }
+  ];
+
+  onMount(() => {
+    loadOrganizations();
+  });
+
+  async function loadOrganizations() {
+    try {
+      const auth = get(authStore);
+      const response = await fetch('http://127.0.0.1:8080/api/organizations', {
+        headers: {
+          'Authorization': `Bearer ${auth.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        organizations = data.organizations || [];
+        if (organizations.length > 0 && !newUser.organization_id) {
+          newUser.organization_id = organizations[0].organization_id;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load organizations:', error);
+    }
+  }
+
   function resetForm() {
     newUser = {
       email: '',
@@ -46,7 +84,9 @@
       last_name: '',
       password: '',
       role: 'tara_analyst',
-      status: 'active'
+      status: 'active',
+      organization_id: organizations.length > 0 ? organizations[0].organization_id : '',
+      organization_role: 'TARA_ANALYST'
     };
     dispatch('cancelAdd');
   }
@@ -74,6 +114,28 @@
       };
 
       const response = await userApi.createUser(userData);
+      
+      // Add user to organization if selected
+      if (newUser.organization_id && newUser.organization_role) {
+        try {
+          const auth = get(authStore);
+          await fetch(`http://127.0.0.1:8080/api/organizations/${newUser.organization_id}/members`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${auth.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              user_id: response.user_id,
+              role: newUser.organization_role
+            })
+          });
+        } catch (orgError) {
+          console.error('Failed to add user to organization:', orgError);
+          notifications.show('User created but failed to add to organization', 'warning');
+        }
+      }
+      
       users = [...users, response];
       resetForm();
       notifications.show('User created successfully', 'success');
@@ -206,6 +268,27 @@
             <option value={role}>{role}</option>
           {/each}
         </select>
+      </div>
+      
+      <!-- Organization Assignment -->
+      <div class="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-md">
+        <div>
+          <label for="org-select" class="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+          <select id="org-select" bind:value={newUser.organization_id} class="px-3 py-2 border rounded-md w-full">
+            <option value="">Select Organization</option>
+            {#each organizations as org}
+              <option value={org.organization_id}>{org.name}</option>
+            {/each}
+          </select>
+        </div>
+        <div>
+          <label for="org-role-select" class="block text-sm font-medium text-gray-700 mb-1">Organization Role</label>
+          <select id="org-role-select" bind:value={newUser.organization_role} class="px-3 py-2 border rounded-md w-full">
+            {#each orgRoles as role}
+              <option value={role.value}>{role.label}</option>
+            {/each}
+          </select>
+        </div>
       </div>
       
       <div class="flex gap-2">

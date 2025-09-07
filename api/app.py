@@ -11,19 +11,11 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Import all routers
-from api.routes import components, analysis, reports, review, settings_routes, scope, risk, threat, vulnerability, attack_path, damage_scenarios, impact_ratings, threat_scenarios, simple_attack_path
-
-# Import new product-centric model routers
-from api.routes import products, assets
-
-# Import risk treatment router
-from api.routers import risk_treatment, reports as reports_router
-
-# Import authentication router
-from api.routers import auth
-
-# Import user management router
-from api.routers import users
+from api.routers import (
+    attack_path, 
+    risk_treatment, reports as reports_router, auth, users, 
+    settings as settings_router, organizations, organization_members
+)
 
 def create_app(settings=None):
     """
@@ -69,19 +61,22 @@ def create_app(settings=None):
     # User management routes (admin auth required)
     app.include_router(users.router, tags=["users"])
     
+    # Import and include legacy routes from api.routes
+    from api.routes import scope, components, damage_scenarios, threat_scenarios, impact_ratings, risk, threat, vulnerability, analysis, simple_attack_path, products, assets, reports, review
+    
     # New product-centric model routes (takes precedence)
     app.include_router(products.router, prefix="/api/products", tags=["products"])  # Product (scope) routes
     app.include_router(assets.router, prefix="/api/assets", tags=["assets"])      # Asset (component) routes
     
     # Legacy routes (kept for backward compatibility)
-    app.include_router(scope.router, prefix="/api/scope", tags=["scope"])        # Legacy scope router
-    app.include_router(components.router, prefix="/api/components", tags=["components"])  # Legacy components router
-    app.include_router(damage_scenarios.router, prefix="/api/damage-scenarios", tags=["damage-scenarios"])  # Add damage scenarios router
-    app.include_router(threat_scenarios.router, prefix="/api/threat-scenarios", tags=["threat-scenarios"])  # Add threat scenarios router
-    app.include_router(impact_ratings.router, prefix="/api/impact-ratings", tags=["impact-ratings"])  # Add impact ratings router
-    app.include_router(risk.router, prefix="/api/risk", tags=["risk"])  # Add risk framework router
-    app.include_router(threat.router, prefix="/api/threat", tags=["threat"])  # Add threat analysis router
-    app.include_router(vulnerability.router, prefix="/api/vulnerability", tags=["vulnerability"])  # Add vulnerability assessment router
+    app.include_router(scope.router, prefix="/api/scope", tags=["scope"])
+    app.include_router(components.router, prefix="/api/components", tags=["components"])
+    app.include_router(damage_scenarios.router, prefix="/api/damage-scenarios", tags=["damage-scenarios"])
+    app.include_router(threat_scenarios.router, prefix="/api/threat-scenarios", tags=["threat-scenarios"])
+    app.include_router(impact_ratings.router, prefix="/api/impact-ratings", tags=["impact-ratings"])
+    app.include_router(risk.router, prefix="/api/risk", tags=["risk"])
+    app.include_router(threat.router, prefix="/api/threat", tags=["threat"])
+    app.include_router(vulnerability.router, prefix="/api/vulnerability", tags=["vulnerability"])
     app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
     
     # Add attack path analysis router
@@ -91,7 +86,9 @@ def create_app(settings=None):
     app.include_router(reports_router.router, prefix="/api", tags=["reports-pdf"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])
-    app.include_router(settings_routes.router, prefix="/api/settings", tags=["settings"])
+    app.include_router(settings_router.router, tags=["settings"])
+    app.include_router(organizations.router, tags=["organizations"])
+    app.include_router(organization_members.router, tags=["organization-members"])
     
     # Serve static files (for production when frontend is built)
     frontend_dir = Path(__file__).parent.parent / "frontend" / "dist"

@@ -1,36 +1,49 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { Users, Building, Shield } from '@lucide/svelte';
+	import { Users, Building2, Database, Settings } from '@lucide/svelte';
 
 	let { children } = $props();
+
+	const tabs = [
+		{ id: 'users', label: 'User Management', icon: Users },
+		{ id: 'organizations', label: 'Organizations', icon: Building2 },
+		{ id: 'database', label: 'Database', icon: Database },
+		{ id: 'system', label: 'System Settings', icon: Settings }
+	];
 
 	const adminSteps = [
 		{
 			id: 'users',
 			title: 'User Management',
 			icon: Users,
-			path: '/settings',
+			path: '/settings/users',
 			description: 'Manage users and roles'
 		},
 		{
 			id: 'organizations',
 			title: 'Organizations',
-			icon: Building,
-			path: '/settings?tab=organizations',
+			icon: Building2,
+			path: '/settings/organizations',
 			description: 'Manage organizations'
+		},
+		{
+			id: 'database',
+			title: 'Database',
+			icon: Database,
+			path: '/settings/database',
+			description: 'Database configuration'
 		},
 		{
 			id: 'system',
 			title: 'System Settings',
-			icon: Shield,
-			path: '/settings?tab=system',
+			icon: Settings,
+			path: '/settings/system',
 			description: 'Configure system'
 		}
 	];
 
 	function isCurrentStep(step: typeof adminSteps[0]) {
-		const currentTab = $page.url.searchParams.get('tab') || 'users';
-		return step.id === currentTab;
+		return $page.url.pathname === step.path;
 	}
 </script>
 

@@ -18,6 +18,32 @@ def get_database_url(settings=None):
     Get database URL from settings or environment
     """
     if not settings:
+        # Try to load from database.json config file
+        try:
+            import json
+            import os
+            config_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "database.json")
+            if os.path.exists(config_file):
+                with open(config_file, 'r') as f:
+                    db_config = json.load(f)
+                
+                if db_config.get("type") == "mysql":
+                    host = db_config.get("host", "localhost")
+                    port = db_config.get("port", 3306)
+                    name = db_config.get("name", "quicktara")
+                    user = db_config.get("user", "root")
+                    password = db_config.get("password", "")
+                    return f"mysql+pymysql://{user}:{password}@{host}:{port}/{name}"
+                elif db_config.get("type") == "postgresql":
+                    host = db_config.get("host", "localhost")
+                    port = db_config.get("port", 5432)
+                    name = db_config.get("name", "quicktara")
+                    user = db_config.get("user", "postgres")
+                    password = db_config.get("password", "")
+                    return f"postgresql://{user}:{password}@{host}:{port}/{name}"
+        except Exception:
+            pass
+        
         return DEFAULT_DATABASE_URL
     
     db_type = settings.get("database", {}).get("type", "sqlite")
@@ -38,7 +64,7 @@ def get_database_url(settings=None):
         name = settings.get("database", {}).get("name", "quicktara")
         user = settings.get("database", {}).get("user", "root")
         password = settings.get("database", {}).get("password", "")
-        return f"mysql://{user}:{password}@{host}:{port}/{name}"
+        return f"mysql+pymysql://{user}:{password}@{host}:{port}/{name}"
     else:
         logger.warning(f"Unsupported database type: {db_type}, using SQLite")
         return DEFAULT_DATABASE_URL

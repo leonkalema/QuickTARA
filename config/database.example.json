@@ -1,0 +1,8 @@
+{
+  "type": "mysql",
+  "host": "your-mysql-host.com",
+  "port": 22893,
+  "name": "your-database-name",
+  "user": "your-username",
+  "password": "your-password"
+}

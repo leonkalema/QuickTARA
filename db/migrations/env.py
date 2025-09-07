@@ -24,16 +24,37 @@ from db.base import Base
 from db.base import Component, Analysis, ComponentAnalysis, Report, ReviewDecision, SystemScope, RiskFramework
 from db.base import Vulnerability, VulnerabilityCWEMapping, VulnerabilityCVEMapping, VulnerabilityAssessment, VulnerabilityMitigation
 
-# Update the SQLAlchemy URL based on environment or settings file
-from db.session import get_database_url
-
-# Try to load configuration file
+# Update the SQLAlchemy URL based on current database config
 try:
-    from config.settings import load_settings
-    settings = load_settings()
-    sqlalchemy_url = get_database_url(settings)
-    config.set_main_option("sqlalchemy.url", sqlalchemy_url)
-except ImportError:
+    import json
+    config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "config", "database.json")
+    if os.path.exists(config_file):
+        with open(config_file, 'r') as f:
+            db_config = json.load(f)
+        
+        if db_config.get("type") == "mysql":
+            host = db_config.get("host", "localhost")
+            port = db_config.get("port", 3306)
+            name = db_config.get("name", "quicktara")
+            user = db_config.get("user", "root")
+            password = db_config.get("password", "")
+            sqlalchemy_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{name}"
+            config.set_main_option("sqlalchemy.url", sqlalchemy_url)
+        elif db_config.get("type") == "postgresql":
+            host = db_config.get("host", "localhost")
+            port = db_config.get("port", 5432)
+            name = db_config.get("name", "quicktara")
+            user = db_config.get("user", "postgres")
+            password = db_config.get("password", "")
+            sqlalchemy_url = f"postgresql://{user}:{password}@{host}:{port}/{name}"
+            config.set_main_option("sqlalchemy.url", sqlalchemy_url)
+        else:
+            # Use SQLite default
+            sqlalchemy_url = config.get_main_option("sqlalchemy.url")
+    else:
+        # Use default from alembic.ini
+        sqlalchemy_url = config.get_main_option("sqlalchemy.url")
+except Exception:
     # Use default from alembic.ini
     sqlalchemy_url = config.get_main_option("sqlalchemy.url")
 

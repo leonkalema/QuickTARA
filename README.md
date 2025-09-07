@@ -39,7 +39,6 @@ Enhanced threat and risk assessment tool for automotive systems, incorporating S
 - Residual risk calculation
 - Stakeholder approval tracking
 - Reassessment scheduling
-- Evidence references
 
 ### 6. Manual Review Workflow
 - Human review interface for all risk treatments
@@ -50,13 +49,20 @@ Enhanced threat and risk assessment tool for automotive systems, incorporating S
 
 ## Installation
 
+1. Clone the repository:
 ```bash
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate     # Windows
+git clone https://github.com/leonkalema/QuickTARA.git
+cd QuickTARA
+```
 
-# Install dependencies
+2. Create a virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+3. Install Python dependencies:
+```bash
 pip install -r requirements.txt
 ```
 

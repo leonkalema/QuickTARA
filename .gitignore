@@ -40,6 +40,13 @@ dist/
 frontend/dist/
 
 # --------------------------------
+# Configuration & Secrets
+# --------------------------------
+config/database.json
+*.env
+.env*
+
+# --------------------------------
 # IDE/Editor
 # --------------------------------
 .idea/

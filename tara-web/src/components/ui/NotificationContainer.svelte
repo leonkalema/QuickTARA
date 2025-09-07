@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { notifications } from '../../lib/stores/notificationStore';
+  import { notifications } from '../../lib/stores/notifications';
   import { Check, Info, AlertTriangle, X as XIcon } from '@lucide/svelte';
 
   function getIcon(type: string) {

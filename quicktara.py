@@ -14,6 +14,9 @@ from dataclasses import dataclass
 from enum import Enum
 from compliance_mappings import map_threat_to_standards, format_compliance_mappings
 from export_formats import export_report
+from api.routers import (
+    reports, auth, users, organizations, settings
+)
 from stride_analysis import (
     analyze_stride_categories,
     get_stride_recommendations,
