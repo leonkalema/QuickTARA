@@ -210,7 +210,9 @@ python quicktara_web.py
 
 #### 1️⃣ **Access the Platform**
 - Open your browser to `http://localhost:8080`
-- Login with default credentials (admin/admin)
+- Login with default credentials:
+  - **Email:** `admin@quicktara.local`
+  - **Password:** `admin123`
 - Navigate to the dashboard
 
 #### 2️⃣ **Create Your Project**

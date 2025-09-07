@@ -81,6 +81,9 @@ QUICKTARA_REPORTS_DIR=./reports
 - **Host**: 127.0.0.1 (local only)
 - **Port**: 8080
 - **Data**: Stored in `./quicktara.db`
+- **Default Login**: 
+  - Email: `admin@quicktara.local`
+  - Password: `admin123`
 
 ## 🌐 Network Access
 
