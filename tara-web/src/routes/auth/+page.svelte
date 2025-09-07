@@ -5,6 +5,7 @@
 	import LoginForm from '$lib/components/LoginForm.svelte';
 	let showSuccessMessage = false;
 	let successMessage = '';
+	const currentYear = new Date().getFullYear();
 
 	// Check if user is already authenticated on mount only
 	onMount(() => {
@@ -40,7 +41,7 @@
 		<div class="auth-header">
 			<div class="logo">
 				<h1>QuickTARA</h1>
-				<p>Threat Analysis & Risk Assessment</p>
+				<p>Automotive Cybersecurity Platform</p>
 			</div>
 		</div>
 
@@ -58,7 +59,7 @@
 		</div>
 
 		<div class="auth-footer">
-			<p>&copy; 2025 QuickTARA. All rights reserved.</p>
+			<p>&copy; {currentYear} All rights reserved.</p>
 		</div>
 	</div>
 </div>

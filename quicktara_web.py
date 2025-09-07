@@ -87,6 +87,15 @@ def main():
     
     # Initialize database
     logger.info("Initializing database...")
+    
+    # Default to SQLite if no database config exists
+    if not settings.get("database"):
+        settings["database"] = {
+            "type": "sqlite",
+            "path": "./quicktara.db"
+        }
+        logger.info("No database config found, using SQLite default")
+    
     init_db(settings)
     
     # Create FastAPI application

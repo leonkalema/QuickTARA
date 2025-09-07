@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  quicktara:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=sqlite:///app/data/quicktara.db
+      - QUICKTARA_SERVER_HOST=0.0.0.0
+      - QUICKTARA_SERVER_PORT=8080
+    volumes:
+      - quicktara_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add MySQL for production use
+  quicktara-mysql:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - QUICKTARA_DB_TYPE=mysql
+      - QUICKTARA_DB_HOST=mysql
+      - QUICKTARA_DB_PORT=3306
+      - QUICKTARA_DB_NAME=quicktara
+      - QUICKTARA_DB_USER=quicktara
+      - QUICKTARA_DB_PASSWORD=secure_password_123
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    profiles: ["mysql"]
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password_123
+      - MYSQL_DATABASE=quicktara
+      - MYSQL_USER=quicktara
+      - MYSQL_PASSWORD=secure_password_123
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    profiles: ["mysql"]
+
+volumes:
+  quicktara_data:
+  mysql_data:

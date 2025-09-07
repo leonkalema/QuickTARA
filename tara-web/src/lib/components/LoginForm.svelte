@@ -70,7 +70,7 @@
 <div class="login-form">
 	<div class="form-header">
 		<h2>Sign In</h2>
-		<p>Welcome back to QuickTARA</p>
+		<p>Welcome back</p>
 	</div>
 
 	<form on:submit|preventDefault={handleLogin} class="form">
@@ -128,7 +128,7 @@
 
 	<div class="form-footer">
 		<p class="text-center text-gray-600">
-			Contact your administrator to get access to QuickTARA
+			Contact your administrator for access
 		</p>
 	</div>
 </div>
