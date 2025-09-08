@@ -36,17 +36,15 @@
 </td>
 <td width="50%">
 
-### 📋 **Enterprise Workflow**
-- **Human Review Interface** - Manual risk treatment approval
-- **Audit Trail** - Complete decision documentation
-- **Stakeholder Management** - Multi-level approval process
-- **Evidence Tracking** - Regulatory compliance support
+### 📋 **Workflow UI**
+- Guided 6-step TARA navigation
+- CRUD for products, assets, damage and threat scenarios
+- Organization and user management (RBAC)
 
-### 📊 **Professional Reporting**
-- **Multi-Format Output** - PDF, Excel, JSON reports
-- **Regulatory Compliance** - ISO 21434 documentation
-- **Executive Summaries** - C-level risk dashboards
-- **Technical Details** - Engineering implementation guides
+### 📊 **Report Generation**
+- Multi-format output: PDF, Excel, JSON, Text
+- ISO 21434 documentation sections
+- Technical details and traceability
 
 </td>
 </tr>
@@ -283,32 +281,30 @@ QuickTARA implements comprehensive role-based access control (RBAC) for enterpri
 - **Attack Path Analysis** - Multi-hop threat chains
 - **Feasibility Assessment** - Attacker capability modeling
 
-### 🔒 **Enterprise Security**
-- **Role-Based Access Control** - Granular permissions
-- **Multi-Tenancy Support** - Organization isolation
-- **Audit Trail** - Complete action logging
-- **Data Encryption** - At-rest and in-transit
-- **Session Management** - Secure authentication
-- **API Security** - JWT-based authorization
+### 🔒 **Security Features**
+- **Role-Based Access Control** - 4-tier user roles with permission hierarchy
+- **Organization Management** - Multi-organization user assignment
+- **Secure Authentication** - JWT tokens with refresh mechanism
+- **Password Security** - bcrypt hashing with salt
+- **Session Management** - Automatic token refresh and expiry
+- **API Security** - JWT-based endpoint protection
 
 </td>
 <td width="50%">
 
-### 📊 **Professional Reporting**
-- **Multi-Format Export** - PDF, Excel, JSON, CSV
-- **Executive Dashboards** - C-level risk summaries
-- **Technical Documentation** - Implementation details
-- **Compliance Reports** - Regulatory submission ready
-- **Custom Templates** - Branded report generation
-- **Automated Scheduling** - Periodic report delivery
+### 📊 **Report Generation**
+- **Multi-Format Export** - PDF, Excel, JSON, Text formats
+- **Compliance Documentation** - ISO 21434 regulatory reports
+- **Technical Analysis** - Detailed threat and risk documentation
+- **Structured Sections** - Assets, damage scenarios, risk summaries
+- **Professional Layout** - ReportLab-based PDF generation
+- **Data Export** - Machine-readable formats for integration
 
-### 🔄 **Workflow Management**
-- **State Tracking** - Complete workflow visibility
-- **Approval Processes** - Multi-level review chains
-- **Version Control** - Change history tracking
-- **Collaboration Tools** - Team-based analysis
-- **Progress Monitoring** - Real-time status updates
-- **Notification System** - Automated alerts
+### 🔄 **Basic Workflow**
+- **TARA Process Flow** - 6-step guided workflow
+- **Data Management** - Create, read, update operations
+- **User Interface** - Web-based forms and tables
+- **Simple Notifications** - Basic UI feedback messages
 
 </td>
 </tr>
@@ -316,48 +312,23 @@ QuickTARA implements comprehensive role-based access control (RBAC) for enterpri
 
 ---
 
-## 💼 **Enterprise Ready**
+## 🔎 **Project Status & Roadmap**
 
-<table>
-<tr>
-<td width="25%" align="center">
+### Implemented
+- RBAC: system admin, org admin, risk manager, analyst
+- JWT authentication with refresh tokens
+- Organization membership and settings UI
+- Reporting exports: PDF (ReportLab), Excel, JSON, Text
+- TARA workflow UI and APIs for products, assets, damage/threat scenarios, risk, reports
 
-### 🏆 **Compliance**
-- ISO 21434 Certified
-- UN R155 Compliant
-- NIST Framework
-- SAE J3061 Aligned
-
-</td>
-<td width="25%" align="center">
-
-### 🔒 **Security**
-- Role-Based Access
-- Audit Logging
-- Data Encryption
-- Multi-Tenancy
-
-</td>
-<td width="25%" align="center">
-
-### 📈 **Scalability**
-- Cloud Native
-- API-First Design
-- Microservices Ready
-- Load Balancer Support
-
-</td>
-<td width="25%" align="center">
-
-### 🛠️ **Integration**
-- REST API
-- Webhook Support
-- LDAP/SSO
-- Custom Plugins
-
-</td>
-</tr>
-</table>
+### Planned (not yet implemented)
+- Executive dashboards and C-level summaries
+- Custom report templates and branding
+- Audit trail (immutable action logging)
+- Automated scheduling/periodic report delivery
+- SSO/LDAP integration
+- Strong multi-tenant isolation
+- Encryption at rest and default HTTPS deployment
 
 ---
 
@@ -526,50 +497,9 @@ python quicktara.py -i assets.csv --pdf --excel --json
 
 ## 📞 **Support & Contact**
 
-<div align="center">
-
-### 🚀 **Ready to Get Started?**
-
-<table>
-<tr>
-<td width="33%" align="center">
-
-**📧 Enterprise Sales**  
-[sales@quicktara.com](mailto:sales@quicktara.com)  
-*Custom pricing & deployment*
-
-</td>
-<td width="33%" align="center">
-
-**🛠️ Technical Support**  
-[support@quicktara.com](mailto:support@quicktara.com)  
-*Implementation assistance*
-
-</td>
-<td width="33%" align="center">
-
-**📚 Documentation**  
-[docs.quicktara.com](https://docs.quicktara.com)  
-*Complete user guides*
-
-</td>
-</tr>
-</table>
-
-### 🌟 **Why Choose QuickTARA?**
-
-> *"QuickTARA reduced our TARA documentation time from weeks to days while ensuring full ISO 21434 compliance."*  
-> **— Chief Security Officer, Major OEM**
-
-**✅ Proven Results:** 50+ automotive projects completed  
-**✅ Regulatory Approved:** Used in production vehicle programs  
-**✅ Expert Support:** Automotive cybersecurity specialists on-call  
-**✅ Future-Proof:** Regular updates for new regulations
+For questions or contributions, please open an issue on GitHub.
 
 ---
 
-**© 2025 QuickTARA. All rights reserved.**  
-*Professional automotive cybersecurity analysis platform*
-
-</div>
+**© 2025 QuickTARA. All rights reserved.**
 
