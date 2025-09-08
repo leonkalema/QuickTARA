@@ -33,16 +33,14 @@ def build_assets_section(assets: List[Dict[str, Any]], styles) -> List:
         name = a.get('name', 'N/A')
         desc = a.get('description', '') or ''
 
-        # Truncate for layout
-        if name and len(str(name)) > 40:
-            name = str(name)[:37] + '...'
-        if desc and len(str(desc)) > 70:
-            desc = str(desc)[:67] + '...'
+        # Use Paragraphs for automatic wrapping (no truncation)
+        name_para = Paragraph(str(name), styles['Normal'])
+        desc_para = Paragraph(str(desc), styles['Normal'])
 
-        table_data.append([asset_id, name, desc])
+        table_data.append([asset_id, name_para, desc_para])
 
     # Create table
-    table = Table(table_data, colWidths=[1.5*inch, 2.0*inch, 3.0*inch])
+    table = Table(table_data, colWidths=[1.5*inch, 2.2*inch, 3.3*inch])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),

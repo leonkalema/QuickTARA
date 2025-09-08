@@ -51,13 +51,9 @@ def build_damage_scenarios_section(damage_scenarios: List[Dict[str, Any]], style
         name = scenario.get('name', 'N/A')
         overall_sfop = calculate_overall_sfop(scenario)
         
-        # Truncate long text
-        if name and len(str(name)) > 35:
-            name = str(name)[:32] + "..."
-        if scenario_id and len(str(scenario_id)) > 12:
-            scenario_id = str(scenario_id)[:9] + "..."
-        
-        table_data.append([scenario_id, name, overall_sfop])
+        # Use Paragraph for automatic wrapping (no truncation)
+        name_para = Paragraph(str(name), styles['Normal'])
+        table_data.append([str(scenario_id), name_para, overall_sfop])
     
     # Create and style table
     table = Table(table_data, colWidths=[1.5*inch, 3.5*inch, 1.5*inch])
@@ -74,6 +70,14 @@ def build_damage_scenarios_section(damage_scenarios: List[Dict[str, Any]], style
     ]))
     
     story.append(table)
+    story.append(Spacer(1, 8))
+
+    # Add brief SFOP legend/key
+    legend = (
+        "<b>SFOP rating:</b> Severe = highest damage impact; "
+        "Major = significant impact; Moderate = limited impact; Negligible = minimal impact."
+    )
+    story.append(Paragraph(legend, styles['Normal']))
     story.append(Spacer(1, 20))
     
     return story

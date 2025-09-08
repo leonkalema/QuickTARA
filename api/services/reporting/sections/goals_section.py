@@ -89,17 +89,18 @@ def build_goals_section(approved_goals: List[Dict[str, Any]], styles) -> List:
     ))
     story.append(Spacer(1, 6))
     
-    # Build table data - only Goal ID and Goal
+    # Build table data - only Goal ID and Goal (wrapped)
     table_data = [['Goal ID', 'Cybersecurity Goal']]
     
     for i, goal in enumerate(approved_goals):
         goal_id = f"CG{i+1:03d}"
         goal_text = goal.get('goal_text', 'No goal specified')
+        goal_para = Paragraph(str(goal_text), styles['Normal'])
         
-        table_data.append([goal_id, goal_text])
+        table_data.append([goal_id, goal_para])
     
     # Create and style table
-    table = Table(table_data, colWidths=[0.8*inch, 4.4*inch])
+    table = Table(table_data, colWidths=[1.0*inch, 4.2*inch])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
