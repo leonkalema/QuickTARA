@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy built frontend from builder stage (vite default outDir is "dist")
-COPY --from=frontend-builder /app/frontend/dist ./tara-web/dist
+# Copy built frontend from builder stage (SvelteKit outputs to .svelte-kit/output)
+COPY --from=frontend-builder /app/frontend/.svelte-kit/output ./tara-web/.svelte-kit/output
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
