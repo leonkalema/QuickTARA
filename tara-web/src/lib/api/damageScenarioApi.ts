@@ -5,8 +5,7 @@ import type {
   DamageScenariosResponse
 } from '../types/damageScenario';
 import { DamageScenarioApiError } from '../types/damageScenario';
-
-const API_BASE_URL = 'http://127.0.0.1:8080/api';
+import { API_BASE_URL } from '$lib/config';
 
 class DamageScenarioApi {
   private async handleResponse<T>(response: Response): Promise<T> {

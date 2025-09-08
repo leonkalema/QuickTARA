@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import Modal from '../../../components/ui/Modal.svelte';
   import type { Product } from '../../../lib/types/product';
+  import { API_BASE_URL } from '$lib/config';
 
   export let isOpen = false;
 
@@ -73,7 +74,7 @@
     error = '';
 
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/products', {
+      const response = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

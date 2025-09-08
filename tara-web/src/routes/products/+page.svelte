@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { selectedProduct } from '../../lib/stores/productStore';
+  import { API_BASE_URL } from '$lib/config';
   import { productApi } from '../../lib/api/productApi';
   import type { Product } from '../../lib/types/product';
   // Replace Lucide icons with SVG for SSR compatibility
@@ -31,7 +32,7 @@
     error = '';
     
     try {
-      const response = await fetch('http://127.0.0.1:8080/api/products?skip=0&limit=100');
+      const response = await fetch(`${API_BASE_URL}/products?skip=0&limit=100`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -91,7 +92,7 @@
 
     isDeleting = true;
     try {
-      const response = await fetch(`http://127.0.0.1:8080/api/products/${productToDelete.scope_id}`, {
+      const response = await fetch(`${API_BASE_URL}/products/${productToDelete.scope_id}`, {
         method: 'DELETE'
       });
 

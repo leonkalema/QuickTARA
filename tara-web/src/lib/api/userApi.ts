@@ -1,7 +1,6 @@
 import { authStore } from '$lib/stores/auth';
 import { get } from 'svelte/store';
-
-const API_BASE = 'http://localhost:8080';
+import { API_BASE_URL } from '$lib/config';
 
 export interface User {
   user_id: string;
@@ -44,7 +43,7 @@ class UserApiService {
   }
 
   async getUsers(): Promise<User[]> {
-    const response = await fetch(`${API_BASE}/api/users`, {
+    const response = await fetch(`${API_BASE_URL}/users`, {
       headers: this.getAuthHeaders()
     });
 
@@ -56,7 +55,7 @@ class UserApiService {
   }
 
   async createUser(userData: CreateUserRequest): Promise<User> {
-    const response = await fetch(`${API_BASE}/api/users`, {
+    const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(userData)
@@ -72,7 +71,7 @@ class UserApiService {
   }
 
   async updateUser(userId: string, updates: UpdateUserRequest): Promise<User> {
-    const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       body: JSON.stringify(updates)
@@ -87,7 +86,7 @@ class UserApiService {
   }
 
   async deleteUser(userId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/users/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders()
     });
@@ -99,7 +98,7 @@ class UserApiService {
   }
 
   async toggleUserStatus(userId: string): Promise<User> {
-    const response = await fetch(`${API_BASE}/api/users/${userId}/toggle-status`, {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/toggle-status`, {
       method: 'PATCH',
       headers: this.getAuthHeaders()
     });

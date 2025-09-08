@@ -1,10 +1,9 @@
 import type { AttackPath, CreateAttackPathRequest, AttackPathResponse } from '../types/attackPath';
-
-const API_BASE = 'http://127.0.0.1:8080/api';
+import { API_BASE_URL } from '$lib/config';
 
 export const attackPathApi = {
   async getByThreatScenario(threatScenarioId: string): Promise<AttackPathResponse> {
-    const response = await fetch(`${API_BASE}/attack-paths/threat-scenario/${threatScenarioId}`);
+    const response = await fetch(`${API_BASE_URL}/attack-paths-analysis?threat_scenario_id=${threatScenarioId}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch attack paths: ${response.statusText}`);
     }
@@ -12,7 +11,7 @@ export const attackPathApi = {
   },
 
   async getByProduct(productId: string): Promise<AttackPathResponse> {
-    const response = await fetch(`${API_BASE}/attack-paths/product/${productId}`);
+    const response = await fetch(`${API_BASE_URL}/attack-paths/product/${productId}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch attack paths: ${response.statusText}`);
     }
@@ -20,7 +19,7 @@ export const attackPathApi = {
   },
 
   async create(attackPath: CreateAttackPathRequest): Promise<AttackPath> {
-    const response = await fetch(`${API_BASE}/attack-paths`, {
+    const response = await fetch(`${API_BASE_URL}/attack-paths`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,7 +36,7 @@ export const attackPathApi = {
   },
 
   async update(attackPathId: string, attackPath: Partial<CreateAttackPathRequest>): Promise<AttackPath> {
-    const response = await fetch(`${API_BASE}/attack-paths/${attackPathId}`, {
+    const response = await fetch(`${API_BASE_URL}/attack-paths/${attackPathId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +53,7 @@ export const attackPathApi = {
   },
 
   async delete(attackPathId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/attack-paths/${attackPathId}`, {
+    const response = await fetch(`${API_BASE_URL}/attack-paths/${attackPathId}`, {
       method: 'DELETE',
     });
     

@@ -1,10 +1,15 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { API_BASE_URL } from '$lib/config';
 	
 	let productScopes = [];
 	let totalProducts = 0;
 	let totalAssets = 0;
+	let totalDamageScenarios = 0;
+	let totalThreatScenarios = 0;
+	let totalRiskAssessments = 0; // projects currently in Risk Assessment stage
+	let totalTreatments = 0;
 	let tarasByStage = {
 		scoping: [],
 		assets: [],
@@ -15,7 +20,7 @@
 	};
 	
 	const taraStages = [
-		{ id: 'scoping', name: 'Scoping', icon: '🎯', route: '/product-scopes' },
+		{ id: 'scoping', name: 'Scoping', icon: '🎯', route: '/products' },
 		{ id: 'assets', name: 'Assets', icon: '🔧', route: '/assets-components' },
 		{ id: 'damageScenarios', name: 'Damage Scenarios', icon: '⚠️', route: '/damage-scenarios' },
 		{ id: 'threatScenarios', name: 'Threat Scenarios', icon: '🎭', route: '/threat-scenarios' },
@@ -29,7 +34,7 @@
 	
 	async function loadDashboardData() {
 		try {
-			const response = await fetch('http://127.0.0.1:8080/api/products?skip=0&limit=100');
+			const response = await fetch(`${API_BASE_URL}/products?skip=0&limit=100`);
 			if (response.ok) {
 				const data = await response.json();
 				// The API returns { scopes: Product[], total: number }
@@ -54,12 +59,22 @@
 
 		// Reset totals
 		totalAssets = 0;
+		totalDamageScenarios = 0;
+		totalThreatScenarios = 0;
+		totalRiskAssessments = 0;
+		totalTreatments = 0;
 		
 		for (const scope of productScopes) {
 			const result = await determineProjectStage(scope);
 			tarasByStage[result.stage].push(scope);
 			totalAssets += result.assetsCount;
+			totalDamageScenarios += result.damageCount;
+			totalThreatScenarios += result.threatCount;
+			totalTreatments += result.treatmentCount;
 		}
+
+		// projects in risk assessment stage (by our pipeline rule)
+		totalRiskAssessments = tarasByStage.riskAssessment.length;
 		
 		// Trigger reactivity
 		tarasByStage = { ...tarasByStage };
@@ -69,32 +84,44 @@
 		try {
 			// Check what data exists for this scope to determine current stage
 			const [assetsRes, damageRes, threatRes, riskRes] = await Promise.all([
-				fetch(`http://127.0.0.1:8080/api/assets?scope_id=${scope.scope_id}`),
-				fetch(`http://127.0.0.1:8080/api/damage-scenarios?scope_id=${scope.scope_id}`),
-				fetch(`http://127.0.0.1:8080/api/threat-scenarios?scope_id=${scope.scope_id}`),
-				fetch(`http://127.0.0.1:8080/api/risk-treatment?scope_id=${scope.scope_id}`)
+				fetch(`${API_BASE_URL}/assets?scope_id=${scope.scope_id}`),
+				fetch(`${API_BASE_URL}/damage-scenarios?scope_id=${scope.scope_id}`),
+				fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${scope.scope_id}`),
+				fetch(`${API_BASE_URL}/risk-treatment?scope_id=${scope.scope_id}`)
 			]);
 			
-			const [assetsData, damageScenarios, threatScenarios, riskTreatments] = await Promise.all([
+			const [assetsData, damageData, threatData, riskData] = await Promise.all([
 				assetsRes.ok ? assetsRes.json() : { assets: [] },
-				damageRes.ok ? damageRes.json() : [],
-				threatRes.ok ? threatRes.json() : [],
-				riskRes.ok ? riskRes.json() : []
+				damageRes.ok ? damageRes.json() : { scenarios: [], total: 0 },
+				threatRes.ok ? threatRes.json() : { threat_scenarios: [], total: 0 },
+				riskRes.ok ? riskRes.json() : { damage_scenarios: [], total_count: 0 }
 			]);
 			
-			// Extract assets array from the response structure
+			// Extract arrays and totals from response structures
 			const assets = assetsData.assets || [];
+			const damageList = damageData.scenarios || [];
+			const damageTotal = (typeof damageData.total === 'number') ? damageData.total : damageList.length;
+			const threatList = threatData.threat_scenarios || [];
+			const threatTotal = (typeof threatData.total === 'number') ? threatData.total : threatList.length;
+			const treatmentList = riskData.damage_scenarios || [];
+			const treatmentTotal = (typeof riskData.total_count === 'number') ? riskData.total_count : treatmentList.length;
 			
 			// Determine stage based on data completeness
 			let stage = 'scoping';
-			if (riskTreatments.length > 0) stage = 'treatment';
-			else if (threatScenarios.length > 0) stage = 'riskAssessment';
-			else if (damageScenarios.length > 0) stage = 'threatScenarios';
+			if (treatmentTotal > 0) stage = 'treatment';
+			else if (threatTotal > 0) stage = 'riskAssessment';
+			else if (damageTotal > 0) stage = 'threatScenarios';
 			else if (assets.length > 0) stage = 'assets';
-			return { stage, assetsCount: assets.length };
+			return { 
+				stage, 
+				assetsCount: assets.length,
+				damageCount: damageTotal,
+				threatCount: threatTotal,
+				treatmentCount: treatmentTotal
+			};
 		} catch (error) {
 			console.error('Error determining project stage:', error);
-			return { stage: 'scoping', assetsCount: 0 };
+			return { stage: 'scoping', assetsCount: 0, damageCount: 0, threatCount: 0, treatmentCount: 0 };
 		}
 	}
 	
@@ -123,17 +150,7 @@
 		<div class="bg-white rounded-lg shadow-md p-6 mb-8">
 			<div class="flex justify-between items-center mb-6">
 				<h2 class="text-xl font-semibold text-gray-900">TARA Workflow Pipeline</h2>
-				<div class="text-sm text-gray-600 flex gap-6">
-					<div>
-						Total Projects: <span class="font-semibold text-gray-900">{productScopes.length}</span>
-					</div>
-					<div>
-						Total Products: <span class="font-semibold text-gray-900">{totalProducts}</span>
-					</div>
-					<div>
-						Total Assets: <span class="font-semibold text-gray-900">{totalAssets}</span>
-					</div>
-				</div>
+				
 			</div>
 			
 			<div class="grid grid-cols-1 lg:grid-cols-6 gap-4">
@@ -153,6 +170,18 @@
 									{:else if stage.id === 'assets'}
 										<div class="text-2xl font-bold text-blue-600 mb-1">{totalAssets}</div>
 										<div class="text-xs text-gray-500">total assets</div>
+									{:else if stage.id === 'damageScenarios'}
+										<div class="text-2xl font-bold text-blue-600 mb-1">{totalDamageScenarios}</div>
+										<div class="text-xs text-gray-500">total damage scenarios</div>
+									{:else if stage.id === 'threatScenarios'}
+										<div class="text-2xl font-bold text-blue-600 mb-1">{totalThreatScenarios}</div>
+										<div class="text-xs text-gray-500">total threats</div>
+									{:else if stage.id === 'riskAssessment'}
+										<div class="text-2xl font-bold text-blue-600 mb-1">{totalRiskAssessments}</div>
+										<div class="text-xs text-gray-500">projects in risk assessment</div>
+									{:else if stage.id === 'treatment'}
+										<div class="text-2xl font-bold text-blue-600 mb-1">{totalTreatments}</div>
+										<div class="text-xs text-gray-500">total treatments</div>
 									{:else}
 										{#if tarasByStage[stage.id].length > 0}
 											<div class="text-2xl font-bold text-blue-600 mb-1">

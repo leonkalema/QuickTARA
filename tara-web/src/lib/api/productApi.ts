@@ -1,6 +1,5 @@
 import type { Product, CreateProductRequest, ProductsResponse } from '../types/product';
-
-const API_BASE = 'http://127.0.0.1:8080/api';
+import { API_BASE_URL } from '$lib/config';
 
 class ProductApiError extends Error {
   constructor(message: string, public status?: number) {
@@ -36,7 +35,7 @@ export const productApi = {
     if (params?.product_type) searchParams.set('product_type', params.product_type);
     if (params?.status) searchParams.set('status', params.status);
 
-    const response = await fetch(`${API_BASE}/products?${searchParams}`);
+    const response = await fetch(`${API_BASE_URL}/products?${searchParams}`);
     return handleResponse<ProductsResponse>(response);
   },
 
@@ -44,7 +43,7 @@ export const productApi = {
    * Get a specific product by ID
    */
   async getById(id: string): Promise<Product> {
-    const response = await fetch(`${API_BASE}/products/${id}`);
+    const response = await fetch(`${API_BASE_URL}/products/${id}`);
     return handleResponse<Product>(response);
   },
 
@@ -52,7 +51,7 @@ export const productApi = {
    * Create a new product
    */
   async create(product: CreateProductRequest): Promise<Product> {
-    const response = await fetch(`${API_BASE}/products`, {
+    const response = await fetch(`${API_BASE_URL}/products`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +65,7 @@ export const productApi = {
    * Update an existing product
    */
   async update(id: string, product: Partial<CreateProductRequest>): Promise<Product> {
-    const response = await fetch(`${API_BASE}/products/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -80,7 +79,7 @@ export const productApi = {
    * Delete a product
    */
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/products/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
@@ -92,7 +91,7 @@ export const productApi = {
    * Get product statistics
    */
   async getStats(): Promise<any> {
-    const response = await fetch(`${API_BASE}/products/stats`);
+    const response = await fetch(`${API_BASE_URL}/products/stats`);
     return handleResponse(response);
   }
 };

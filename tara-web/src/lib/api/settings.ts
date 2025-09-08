@@ -48,12 +48,14 @@ export interface ApiResponse<T> {
 /**
  * Settings API client
  */
+import { API_BASE_URL } from '$lib/config';
+
 const settingsApi = {
   /**
    * Get current database configuration
    */
   async getDatabaseConfig(): Promise<DatabaseConfig> {
-    const response = await fetch('http://127.0.0.1:8080/api/settings/database');
+    const response = await fetch(`${API_BASE_URL}/settings/database`);
     if (!response.ok) {
       throw new Error(`Failed to get database config: ${response.statusText}`);
     }
@@ -64,7 +66,7 @@ const settingsApi = {
    * Update database configuration
    */
   async updateDatabaseConfig(config: DatabaseConfig): Promise<DatabaseConfig> {
-    const response = await fetch('http://127.0.0.1:8080/api/settings/database', {
+    const response = await fetch(`${API_BASE_URL}/settings/database`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +83,7 @@ const settingsApi = {
    * Test database connection
    */
   async testDatabaseConnection(config: DatabaseConfig): Promise<{ success: boolean; message: string }> {
-    const response = await fetch('http://127.0.0.1:8080/api/settings/database/test', {
+    const response = await fetch(`${API_BASE_URL}/settings/database/test`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -102,7 +104,7 @@ const settingsApi = {
    * Get database migration status
    */
   async getMigrationStatus(): Promise<MigrationInfo> {
-    const response = await fetch('http://127.0.0.1:8080/api/settings/database/migrations');
+    const response = await fetch(`${API_BASE_URL}/settings/database/migrations`);
     if (!response.ok) {
       throw new Error(`Failed to get migration status: ${response.statusText}`);
     }
@@ -113,7 +115,7 @@ const settingsApi = {
    * Run database migrations
    */
   async runMigrations(): Promise<{ success: boolean; message: string; migrations_applied: string[] }> {
-    const response = await fetch('http://127.0.0.1:8080/api/settings/database/migrations/upgrade', {
+    const response = await fetch(`${API_BASE_URL}/settings/database/migrations/upgrade`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -129,7 +131,7 @@ const settingsApi = {
    * Initialize a new database
    */
   async initializeDatabase(): Promise<{ success: boolean; message: string }> {
-    const response = await fetch('http://127.0.0.1:8080/api/settings/database/initialize', {
+    const response = await fetch(`${API_BASE_URL}/settings/database/initialize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

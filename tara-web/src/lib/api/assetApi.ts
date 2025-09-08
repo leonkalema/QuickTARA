@@ -1,6 +1,5 @@
 import type { Asset, CreateAssetRequest, AssetsResponse, AssetApiError } from '../types/asset';
-
-const API_BASE = 'http://127.0.0.1:8080/api';
+import { API_BASE_URL } from '$lib/config';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -26,7 +25,7 @@ export const assetApi = {
     if (params?.scope_id) searchParams.set('scope_id', params.scope_id);
     if (params?.asset_type) searchParams.set('asset_type', params.asset_type);
 
-    const response = await fetch(`${API_BASE}/assets?${searchParams}`);
+    const response = await fetch(`${API_BASE_URL}/assets?${searchParams}`);
     return handleResponse<AssetsResponse>(response);
   },
 
@@ -34,7 +33,7 @@ export const assetApi = {
    * Get a specific asset by ID
    */
   async getById(id: string): Promise<Asset> {
-    const response = await fetch(`${API_BASE}/assets/${id}`);
+    const response = await fetch(`${API_BASE_URL}/assets/${id}`);
     return handleResponse<Asset>(response);
   },
 
@@ -42,7 +41,7 @@ export const assetApi = {
    * Create a new asset
    */
   async create(asset: CreateAssetRequest): Promise<Asset> {
-    const response = await fetch(`${API_BASE}/assets`, {
+    const response = await fetch(`${API_BASE_URL}/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -56,7 +55,7 @@ export const assetApi = {
    * Update an existing asset
    */
   async update(id: string, asset: Partial<CreateAssetRequest>): Promise<Asset> {
-    const response = await fetch(`${API_BASE}/assets/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -70,7 +69,7 @@ export const assetApi = {
    * Delete an asset
    */
   async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/assets/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/assets/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
@@ -89,7 +88,7 @@ export const assetApi = {
     if (params?.skip) searchParams.set('skip', params.skip.toString());
     if (params?.limit) searchParams.set('limit', params.limit.toString());
 
-    const response = await fetch(`${API_BASE}/assets/product/${productId}?${searchParams}`);
+    const response = await fetch(`${API_BASE_URL}/assets/product/${productId}?${searchParams}`);
     return handleResponse<AssetsResponse>(response);
   },
 
@@ -97,7 +96,7 @@ export const assetApi = {
    * Get asset history
    */
   async getHistory(id: string): Promise<Asset[]> {
-    const response = await fetch(`${API_BASE}/assets/${id}/history`);
+    const response = await fetch(`${API_BASE_URL}/assets/${id}/history`);
     return handleResponse<Asset[]>(response);
   }
 };

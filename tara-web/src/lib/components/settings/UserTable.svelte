@@ -5,6 +5,7 @@
   import { authStore } from '$lib/stores/auth';
   import { get } from 'svelte/store';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
+  import { API_BASE_URL } from '$lib/config';
 
   export let users: User[] = [];
   export let isAddingNew: boolean = false;
@@ -58,7 +59,7 @@
   async function loadOrganizations() {
     try {
       const auth = get(authStore);
-      const response = await fetch('http://127.0.0.1:8080/api/organizations', {
+      const response = await fetch(`${API_BASE_URL}/organizations`, {
         headers: {
           'Authorization': `Bearer ${auth.token}`,
           'Content-Type': 'application/json'
@@ -119,7 +120,7 @@
       if (newUser.organization_id && newUser.organization_role) {
         try {
           const auth = get(authStore);
-          await fetch(`http://127.0.0.1:8080/api/organizations/${newUser.organization_id}/members`, {
+          await fetch(`${API_BASE_URL}/organizations/${newUser.organization_id}/members`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${auth.token}`,

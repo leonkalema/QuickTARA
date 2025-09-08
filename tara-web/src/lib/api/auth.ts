@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080/api';
+import { API_BASE_URL } from '$lib/config';
 
 export interface LoginRequest {
 	email: string;
@@ -58,7 +58,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 export const authApi = {
 	async login(credentials: LoginRequest): Promise<LoginResponse> {
-		const response = await fetch(`${API_BASE}/auth/login`, {
+		const response = await fetch(`${API_BASE_URL}/auth/login`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ export const authApi = {
 	},
 
 	async register(userData: RegisterRequest): Promise<UserResponse> {
-		const response = await fetch(`${API_BASE}/auth/register`, {
+		const response = await fetch(`${API_BASE_URL}/auth/register`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export const authApi = {
 	},
 
 	async getCurrentUser(token: string): Promise<UserResponse> {
-		const response = await fetch(`${API_BASE}/auth/me`, {
+		const response = await fetch(`${API_BASE_URL}/auth/me`, {
 			method: 'GET',
 			headers: {
 				'Authorization': `Bearer ${token}`,
@@ -94,7 +94,7 @@ export const authApi = {
 	},
 
 	async refreshToken(refreshToken: string): Promise<LoginResponse> {
-		const response = await fetch(`${API_BASE}/auth/refresh`, {
+		const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export const authApi = {
 	},
 
 	async logout(refreshToken: string): Promise<void> {
-		const response = await fetch(`${API_BASE}/auth/logout`, {
+		const response = await fetch(`${API_BASE_URL}/auth/logout`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

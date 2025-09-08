@@ -159,3 +159,30 @@ npm run build
 cd ..
 python quicktara_web.py
 ```
+
+## 🌱 Frontend Environment Configuration (tara-web)
+
+The frontend reads its API base URL from an environment variable. If not set, it defaults to `window.location.origin + /api` via `tara-web/src/lib/config.ts`.
+
+1) Local development (same-origin, no env needed)
+- If your backend is available at the same origin under `/api`, no configuration is necessary.
+
+2) Local development (different API origin)
+- Create `tara-web/.env.local` with:
+
+```
+VITE_API_BASE_URL="http://127.0.0.1:8080/api"
+```
+
+- Restart Vite dev server after changing envs.
+
+3) Production hosting (Netlify/Vercel/etc.)
+- Set `VITE_API_BASE_URL` in the platform's environment variables to point to your API, for example:
+
+```
+VITE_API_BASE_URL="https://quicktara.fly.dev/api"
+```
+
+4) Version control
+- `tara-web/.gitignore` already ignores `.env` and `.env.*` (except `.env.example`).
+- Use `tara-web/.env.example` as a template for environment variables.

@@ -4,6 +4,7 @@
 	import { activeOrgStore, type ActiveOrganization } from '$lib/stores/activeOrganization';
 	import { authStore } from '$lib/stores/auth';
 	import { get } from 'svelte/store';
+	import { API_BASE_URL } from '$lib/config';
 
 	interface Organization {
 		organization_id: string;
@@ -43,7 +44,7 @@
 				}
 			} else {
 				// Fallback: fetch from API if not in token
-				const response = await fetch('http://127.0.0.1:8080/api/organizations', {
+				const response = await fetch(`${API_BASE_URL}/organizations`, {
 					headers: {
 						'Authorization': `Bearer ${auth.token}`,
 						'Content-Type': 'application/json'

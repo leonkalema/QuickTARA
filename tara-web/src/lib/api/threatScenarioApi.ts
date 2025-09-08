@@ -4,8 +4,7 @@ import type {
   UpdateThreatScenarioRequest, 
   ThreatScenarioListResponse 
 } from '../types/threatScenario';
-
-const API_BASE_URL = 'http://127.0.0.1:8080/api';
+import { API_BASE_URL } from '$lib/config';
 
 class ThreatScenarioApiError extends Error {
   constructor(message: string, public status?: number) {

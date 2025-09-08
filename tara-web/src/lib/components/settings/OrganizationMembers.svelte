@@ -4,6 +4,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { authStore } from '$lib/stores/auth';
 	import { get } from 'svelte/store';
+	import { API_BASE_URL } from '$lib/config';
 
 	export let organizationId: string;
 	export let organizationName: string;
@@ -55,7 +56,7 @@
 		loading = true;
 		try {
 			const auth = get(authStore);
-			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${organizationId}/members`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${organizationId}/members`, {
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,
 					'Content-Type': 'application/json'
@@ -77,7 +78,7 @@
 	async function loadAvailableUsers() {
 		try {
 			const auth = get(authStore);
-			const response = await fetch('http://127.0.0.1:8080/api/users', {
+			const response = await fetch(`${API_BASE_URL}/users`, {
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,
 					'Content-Type': 'application/json'
@@ -109,7 +110,7 @@
 		const formData = editFormData[member.user_id];
 		try {
 			const auth = get(authStore);
-			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${organizationId}/members/${member.user_id}`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${organizationId}/members/${member.user_id}`, {
 				method: 'PUT',
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,
@@ -139,7 +140,7 @@
 
 		try {
 			const auth = get(authStore);
-			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${organizationId}/members`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${organizationId}/members`, {
 				method: 'POST',
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,
@@ -171,7 +172,7 @@
 
 		try {
 			const auth = get(authStore);
-			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${organizationId}/members/${member.user_id}`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${organizationId}/members/${member.user_id}`, {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,

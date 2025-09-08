@@ -5,6 +5,7 @@
   import { threatScenarioApi } from '$lib/api/threatScenarioApi';
   import { attackPathApi } from '$lib/api/attackPathApi';
   import { riskTreatmentApi } from '$lib/api/riskTreatmentApi';
+  import { API_BASE_URL } from '$lib/config';
   import type { ThreatScenario } from '$lib/types/threatScenario';
   import type { AttackPath } from '$lib/types/attackPath';
   import type { RiskTreatmentData } from '$lib/api/riskTreatmentApi';
@@ -39,7 +40,7 @@
       threatScenarios = threatResponse.threat_scenarios;
       attackPaths = attackPathResponse.attack_paths;
       riskTreatmentData = riskResponse.damage_scenarios;
-      console.log('Loaded data:', { threatScenarios: threatScenarios.length, attackPaths: attackPaths.length, riskTreatmentData: riskTreatmentData.length });
+      
     } catch (error) {
       console.error('Error loading data:', error);
       notifications.show('Failed to load report data', 'error');
@@ -103,7 +104,7 @@
     generating = true;
     try {
       // Call backend PDF generation endpoint
-      const response = await fetch(`http://localhost:8080/api/reports/tara-pdf/${$selectedProduct.scope_id}`);
+      const response = await fetch(`${API_BASE_URL}/reports/tara-pdf/${$selectedProduct.scope_id}`);
       
       if (!response.ok) {
         throw new Error(`Failed to generate PDF: ${response.statusText}`);

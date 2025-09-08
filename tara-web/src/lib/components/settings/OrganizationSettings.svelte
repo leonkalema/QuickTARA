@@ -4,6 +4,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { authStore } from '$lib/stores/auth';
 	import { get } from 'svelte/store';
+	import { API_BASE_URL } from '$lib/config';
 	import OrganizationMembers from './OrganizationMembers.svelte';
 
 	interface Organization {
@@ -34,7 +35,7 @@
 		loading = true;
 		try {
 			const auth = get(authStore);
-			const response = await fetch('http://127.0.0.1:8080/api/organizations', {
+			const response = await fetch(`${API_BASE_URL}/organizations`, {
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,
 					'Content-Type': 'application/json'
@@ -93,7 +94,7 @@
 
 		try {
 			const auth = get(authStore);
-			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${org.organization_id}`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${org.organization_id}`, {
 				method: 'PUT',
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,
@@ -123,7 +124,7 @@
 
 		try {
 			const auth = get(authStore);
-			const response = await fetch('http://127.0.0.1:8080/api/organizations', {
+			const response = await fetch(`${API_BASE_URL}/organizations`, {
 				method: 'POST',
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,
@@ -155,7 +156,7 @@
 
 		try {
 			const auth = get(authStore);
-			const response = await fetch(`http://127.0.0.1:8080/api/organizations/${org.organization_id}`, {
+			const response = await fetch(`${API_BASE_URL}/organizations/${org.organization_id}`, {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${auth.token}`,

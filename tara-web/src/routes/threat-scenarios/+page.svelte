@@ -57,8 +57,7 @@
       // Load damage scenarios first
       const damageResponse = await damageScenarioApi.getDamageScenariosByProduct($selectedProduct.scope_id);
       damageScenarios = damageResponse.scenarios;
-      console.log('Loaded damage scenarios:', damageScenarios);
-      console.log('Selected product:', $selectedProduct);
+     
       
       // Load threat scenarios
       await loadThreatScenarios();
@@ -83,7 +82,7 @@
         threatResponse = await threatScenarioApi.getThreatScenariosByProduct($selectedProduct.scope_id);
       }
       threatScenarios = threatResponse.threat_scenarios;
-      console.log('Loaded threat scenarios:', threatScenarios);
+      
     } catch (error) {
       console.error('Error loading threat scenarios:', error);
       notifications.show('Failed to load threat scenarios', 'error');
