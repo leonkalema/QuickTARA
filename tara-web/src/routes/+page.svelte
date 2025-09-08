@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	
 	let productScopes = [];
+	let totalProducts = 0;
+	let totalAssets = 0;
 	let tarasByStage = {
 		scoping: [],
 		assets: [],
@@ -36,6 +38,7 @@
 				} else {
 					productScopes = [];
 				}
+				totalProducts = data.total ?? productScopes.length;
 				categorizeProjectsByStage();
 			}
 		} catch (error) {
@@ -48,10 +51,14 @@
 		Object.keys(tarasByStage).forEach(stage => {
 			tarasByStage[stage] = [];
 		});
+
+		// Reset totals
+		totalAssets = 0;
 		
 		for (const scope of productScopes) {
-			const stage = await determineProjectStage(scope);
-			tarasByStage[stage].push(scope);
+			const result = await determineProjectStage(scope);
+			tarasByStage[result.stage].push(scope);
+			totalAssets += result.assetsCount;
 		}
 		
 		// Trigger reactivity
@@ -79,14 +86,15 @@
 			const assets = assetsData.assets || [];
 			
 			// Determine stage based on data completeness
-			if (riskTreatments.length > 0) return 'treatment';
-			if (threatScenarios.length > 0) return 'riskAssessment';
-			if (damageScenarios.length > 0) return 'threatScenarios';
-			if (assets.length > 0) return 'assets';
-			return 'scoping';
+			let stage = 'scoping';
+			if (riskTreatments.length > 0) stage = 'treatment';
+			else if (threatScenarios.length > 0) stage = 'riskAssessment';
+			else if (damageScenarios.length > 0) stage = 'threatScenarios';
+			else if (assets.length > 0) stage = 'assets';
+			return { stage, assetsCount: assets.length };
 		} catch (error) {
 			console.error('Error determining project stage:', error);
-			return 'scoping';
+			return { stage: 'scoping', assetsCount: 0 };
 		}
 	}
 	
@@ -115,8 +123,16 @@
 		<div class="bg-white rounded-lg shadow-md p-6 mb-8">
 			<div class="flex justify-between items-center mb-6">
 				<h2 class="text-xl font-semibold text-gray-900">TARA Workflow Pipeline</h2>
-				<div class="text-sm text-gray-600">
-					Total Projects: <span class="font-semibold text-gray-900">{productScopes.length}</span>
+				<div class="text-sm text-gray-600 flex gap-6">
+					<div>
+						Total Projects: <span class="font-semibold text-gray-900">{productScopes.length}</span>
+					</div>
+					<div>
+						Total Products: <span class="font-semibold text-gray-900">{totalProducts}</span>
+					</div>
+					<div>
+						Total Assets: <span class="font-semibold text-gray-900">{totalAssets}</span>
+					</div>
 				</div>
 			</div>
 			
@@ -129,17 +145,25 @@
 								<div class="text-2xl mb-2">{stage.icon}</div>
 								<h3 class="font-semibold text-sm text-gray-900 mb-2">{stage.name}</h3>
 								
-								<!-- Project Count Display -->
+								<!-- Metrics per stage -->
 								<div class="text-center">
-									{#if tarasByStage[stage.id].length > 0}
-										<div class="text-2xl font-bold text-blue-600 mb-1">
-											{tarasByStage[stage.id].length}
-										</div>
-										<div class="text-xs text-gray-500">
-											{tarasByStage[stage.id].length === 1 ? 'project' : 'projects'}
-										</div>
+									{#if stage.id === 'scoping'}
+										<div class="text-2xl font-bold text-blue-600 mb-1">{totalProducts}</div>
+										<div class="text-xs text-gray-500">total products</div>
+									{:else if stage.id === 'assets'}
+										<div class="text-2xl font-bold text-blue-600 mb-1">{totalAssets}</div>
+										<div class="text-xs text-gray-500">total assets</div>
 									{:else}
-										<div class="text-lg text-gray-300">—</div>
+										{#if tarasByStage[stage.id].length > 0}
+											<div class="text-2xl font-bold text-blue-600 mb-1">
+												{tarasByStage[stage.id].length}
+											</div>
+											<div class="text-xs text-gray-500">
+												{tarasByStage[stage.id].length === 1 ? 'project' : 'projects'}
+											</div>
+										{:else}
+											<div class="text-lg text-gray-300">—</div>
+										{/if}
 									{/if}
 								</div>
 							</div>
