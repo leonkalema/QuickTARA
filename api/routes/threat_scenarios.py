@@ -8,29 +8,40 @@ from api.deps.db import get_db
 from api.models.threat_scenario import ThreatScenario, ThreatScenarioCreate, ThreatScenarioUpdate, ThreatScenarioList
 from db.threat_scenario import ThreatScenario as DBThreatScenario
 from db.product_asset_models import ProductScope as DBProductScope
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def generate_threat_scenario_id(db: Session, scope_id: str) -> str:
     """Generate next available threat scenario ID (TS-001, TS-002, etc.)"""
-    # Get the highest existing ID for this scope
+    # Get ALL existing threat scenario IDs (not just for this scope)
+    # to ensure global uniqueness across all products
     existing_scenarios = db.query(DBThreatScenario).filter(
-        DBThreatScenario.scope_id == scope_id,
         DBThreatScenario.is_deleted == False
     ).all()
     
     # Extract numeric parts and find the highest
     max_num = 0
     for scenario in existing_scenarios:
-        if scenario.threat_scenario_id.startswith("TS-"):
+        if scenario.threat_scenario_id and scenario.threat_scenario_id.startswith("TS-"):
             try:
                 num = int(scenario.threat_scenario_id[3:])
                 max_num = max(max_num, num)
             except ValueError:
                 continue
     
-    return f"TS-{max_num + 1:03d}"
+    # Generate next ID and check if it already exists
+    next_num = max_num + 1
+    while True:
+        candidate_id = f"TS-{next_num:03d}"
+        existing = db.query(DBThreatScenario).filter(
+            DBThreatScenario.threat_scenario_id == candidate_id
+        ).first()
+        if not existing:
+            return candidate_id
+        next_num += 1
 
 
 @router.get("", response_model=ThreatScenarioList)
@@ -81,54 +92,62 @@ async def create_threat_scenario(
     db: Session = Depends(get_db)
 ):
     """Create a new threat scenario"""
-    # Verify the product scope exists
-    product = db.query(DBProductScope).filter(
-        DBProductScope.scope_id == threat_scenario.scope_id,
-        DBProductScope.is_current == True
-    ).first()
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product scope {threat_scenario.scope_id} not found"
+    try:
+        # Verify the product scope exists
+        product = db.query(DBProductScope).filter(
+            DBProductScope.scope_id == threat_scenario.scope_id,
+            DBProductScope.is_current == True
+        ).first()
+        if not product:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Product scope {threat_scenario.scope_id} not found"
+            )
+        
+        # Generate ID if not provided
+        if not threat_scenario.threat_scenario_id:
+            threat_scenario.threat_scenario_id = generate_threat_scenario_id(db, threat_scenario.scope_id)
+        
+        # Create new threat scenario (without damage_scenario_id in main table)
+        db_threat_scenario = DBThreatScenario(
+            threat_scenario_id=threat_scenario.threat_scenario_id,
+            damage_scenario_id=None,  # Will use junction table instead
+            name=threat_scenario.name,
+            description=threat_scenario.description,
+            attack_vector=threat_scenario.attack_vector,
+            scope_id=threat_scenario.scope_id,
+            scope_version=threat_scenario.scope_version,
+            version=1,
+            is_deleted=False
         )
-    
-    # Generate ID if not provided
-    if not threat_scenario.threat_scenario_id:
-        threat_scenario.threat_scenario_id = generate_threat_scenario_id(db, threat_scenario.scope_id)
-    
-    # Create new threat scenario (without damage_scenario_id in main table)
-    db_threat_scenario = DBThreatScenario(
-        threat_scenario_id=threat_scenario.threat_scenario_id,
-        damage_scenario_id=None,  # Will use junction table instead
-        name=threat_scenario.name,
-        description=threat_scenario.description,
-        attack_vector=threat_scenario.attack_vector,
-        scope_id=threat_scenario.scope_id,
-        scope_version=threat_scenario.scope_version,
-        version=1,
-        is_deleted=False
-    )
-    
-    db.add(db_threat_scenario)
-    db.commit()
-    db.refresh(db_threat_scenario)
-    
-    # Handle damage scenario links for many-to-many relationship
-    from sqlalchemy import text
-    if hasattr(threat_scenario, 'damage_scenario_ids') and threat_scenario.damage_scenario_ids:
-        for damage_scenario_id in threat_scenario.damage_scenario_ids:
+        
+        db.add(db_threat_scenario)
+        db.commit()
+        db.refresh(db_threat_scenario)
+        
+        # Handle damage scenario links for many-to-many relationship
+        from sqlalchemy import text
+        if hasattr(threat_scenario, 'damage_scenario_ids') and threat_scenario.damage_scenario_ids:
+            for damage_scenario_id in threat_scenario.damage_scenario_ids:
+                db.execute(
+                    text("INSERT OR IGNORE INTO threat_damage_links (threat_scenario_id, damage_scenario_id) VALUES (:threat_scenario_id, :damage_scenario_id)"),
+                    {"threat_scenario_id": threat_scenario.threat_scenario_id, "damage_scenario_id": damage_scenario_id}
+                )
+        elif threat_scenario.damage_scenario_id:
+            # Support legacy single damage scenario ID
             db.execute(
                 text("INSERT OR IGNORE INTO threat_damage_links (threat_scenario_id, damage_scenario_id) VALUES (:threat_scenario_id, :damage_scenario_id)"),
-                {"threat_scenario_id": threat_scenario.threat_scenario_id, "damage_scenario_id": damage_scenario_id}
-            )
-    elif threat_scenario.damage_scenario_id:
-        # Support legacy single damage scenario ID
-        db.execute(
-            text("INSERT OR IGNORE INTO threat_damage_links (threat_scenario_id, damage_scenario_id) VALUES (:threat_scenario_id, :damage_scenario_id)"),
-            {"threat_scenario_id": threat_scenario.threat_scenario_id, "damage_scenario_id": threat_scenario.damage_scenario_id}
-        )  
-    db.commit()
-    return db_threat_scenario
+                {"threat_scenario_id": threat_scenario.threat_scenario_id, "damage_scenario_id": threat_scenario.damage_scenario_id}
+            )  
+        db.commit()
+        return db_threat_scenario
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating threat scenario: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create threat scenario: {str(e)}"
+        )
 
 
 @router.get("/{threat_scenario_id}", response_model=ThreatScenario)

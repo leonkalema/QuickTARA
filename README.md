@@ -268,7 +268,7 @@ GWY001,Telematics Gateway,Gateway,ASIL C,CAN|Ethernet|4G,Debug Port|USB,All Traf
 ## ⚙️ **Advanced Configuration**
 
 <details>
-<summary>Click to see advanced configuration options</summary>
+<summary>Click settings to see advanced configuration options</summary>
 
 ### 🔧 **Command Line Options**
 

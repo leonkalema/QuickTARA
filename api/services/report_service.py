@@ -24,8 +24,8 @@ from api.models.analysis import Analysis
 from api.services.analysis_service import get_analysis
 
 # Import the export functionality
-# We're directly importing from the export_formats module
-from export_formats import export_to_json, export_to_excel, export_to_pdf
+# We're directly importing from the core.export_formats module
+from core.export_formats import export_to_json, export_to_excel, export_to_text
 
 logger = logging.getLogger(__name__)
 
@@ -333,7 +333,7 @@ class ReportService:
         elif format == ReportFormat.XLSX:
             export_to_excel(data, output_path)
         elif format == ReportFormat.PDF:
-            export_to_pdf(data, output_path)
+            export_to_text(data, output_path.with_suffix('.txt'))
         elif format == ReportFormat.TXT:
             self._generate_txt_report(data, output_path)
         else:
