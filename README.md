@@ -1,17 +1,17 @@
 <div align="center">
 
 # 🚗 QuickTARA
-### Professional Automotive Cybersecurity Analysis Platform
+### Complete Automotive Cybersecurity Analysis Platform
 
-[![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![ISO 21434](https://img.shields.io/badge/ISO%2021434-Compliant-green.svg)](https://www.iso.org/standard/70918.html)
 [![UN R155](https://img.shields.io/badge/UN%20R155-Compliant-green.svg)](https://unece.org/transport/documents/2021/03/standards/un-regulation-no-155-cyber-security-and-cyber-security)
-[![Version](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)](https://github.com/leonkalema/QuickTARA/releases)
+[![Version](https://img.shields.io/badge/Version-2.0.0-brightgreen.svg)](https://github.com/leonkalema/QuickTARA/releases)
 
-**Enterprise-grade threat analysis and risk assessment for automotive systems**  
-*Trusted by automotive OEMs and Tier 1 suppliers worldwide*
+**Professional-grade Threat Analysis and Risk Assessment (TARA) for automotive cybersecurity**  
+*Complete workflow from asset identification to regulatory compliance documentation*
 
-[🚀 Quick Start](#-quick-start-5-minutes) • [📖 Documentation](README-DEPLOYMENT.md) • [🎯 Features](#-key-features) • [💼 Enterprise](#-enterprise-ready)
+[🚀 One-Line Install](#-one-line-installation) • [👥 User Roles](#-user-roles--permissions) • [🎯 Features](#-comprehensive-features) • [⚙️ Requirements](#️-system-requirements)
 
 </div>
 
@@ -54,66 +54,265 @@
 
 ---
 
-## 🚀 **Quick Start (5 Minutes)**
+## 🚀 **One-Line Installation**
 
-> **Choose your deployment scenario below** 👇
-
-<table>
-<tr>
-<td width="33%" align="center">
-
-### 🖥️ **Local Development**
-*For developers and testing*
-
-```bash
-git clone https://github.com/leonkalema/QuickTARA.git
-cd QuickTARA
-python quicktara_web.py
-```
-
-**Access:** `http://localhost:8080`  
-**Time:** 30 seconds  
-**Requirements:** Python 3.8+
-
-</td>
-<td width="33%" align="center">
-
-### 🏢 **Office/LAN Deployment**
-*For team collaboration*
+**Get QuickTARA running in 5 minutes with zero configuration:**
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-deploy.sh | bash
 ```
 
-**Access:** `http://your-lan-ip:8080`  
-**Time:** 5 minutes  
-**Requirements:** Python + Node.js
+**What this does:**
+- ✅ Downloads and installs QuickTARA
+- ✅ Sets up Python backend (FastAPI + SQLite)
+- ✅ Builds and starts SvelteKit frontend
+- ✅ Creates default admin user
+- ✅ Preserves existing data on updates
+- ✅ Provides both local and LAN access URLs
+
+**Access URLs:**
+- **Frontend (UI):** `http://localhost:4173`
+- **Backend (API):** `http://localhost:8080`
+- **LAN Access:** `http://your-ip:4173` and `http://your-ip:8080`
+
+**Default Login:**
+- **Email:** `admin@quicktara.local`
+- **Password:** `admin123`
+
+---
+
+## ⚙️ **System Requirements**
+
+<table>
+<tr>
+<td width="50%">
+
+### 🖥️ **Required Software**
+- **Python 3.8+** - Backend API server
+- **Node.js 16+** - Frontend build system
+- **npm** - Package manager (comes with Node.js)
+- **Git** - Version control (for installation)
+
+### 💾 **System Resources**
+- **RAM:** 2GB minimum, 4GB recommended
+- **Storage:** 1GB for application + data
+- **CPU:** Any modern processor (x64/ARM64)
+- **Network:** Internet for initial download
 
 </td>
-<td width="33%" align="center">
+<td width="50%">
 
-### ☁️ **Cloud/Production**
-*For enterprise deployment*
+### 🌐 **Supported Platforms**
+- **macOS** 10.15+ (Intel/Apple Silicon)
+- **Linux** (Ubuntu 18.04+, CentOS 7+, etc.)
+- **Windows** 10+ (WSL2 recommended)
+- **Docker** (any platform with Docker support)
 
-```bash
-git clone https://github.com/leonkalema/QuickTARA.git
-cd QuickTARA
-docker-compose up -d
-```
-
-**Access:** `http://your-server:8080`  
-**Time:** 2 minutes  
-**Requirements:** Docker
+### 🔧 **Installation Methods**
+- **One-liner** (recommended) - Automated setup
+- **Manual** - Step-by-step installation
+- **Docker** - Containerized deployment
+- **Development** - Local development setup
 
 </td>
 </tr>
 </table>
 
-<div align="center">
+### 📦 **Quick Prerequisites Check**
 
-📖 **Need help?** See our [Complete Deployment Guide](README-DEPLOYMENT.md) for detailed instructions
+```bash
+# Check if you have the required tools
+python3 --version    # Should be 3.8+
+node --version       # Should be 16+
+npm --version        # Should be 6+
+git --version        # Any recent version
+```
 
-</div>
+**Missing tools?** Install them:
+- **Python:** [python.org/downloads](https://python.org/downloads)
+- **Node.js:** [nodejs.org](https://nodejs.org) (includes npm)
+- **Git:** [git-scm.com](https://git-scm.com)
+
+## 👥 **User Roles & Permissions**
+
+QuickTARA implements comprehensive role-based access control (RBAC) for enterprise security and workflow management:
+
+<table>
+<tr>
+<td width="25%">
+
+### 🔧 **System Administrator**
+**Full system control**
+- ✅ User management
+- ✅ System configuration
+- ✅ Database administration
+- ✅ All TARA operations
+- ✅ Settings access
+- ✅ Audit logs
+
+*Default: `admin@quicktara.local`*
+
+</td>
+<td width="25%">
+
+### 🏢 **Organization Admin**
+**Organization-wide management**
+- ✅ User management (org scope)
+- ✅ Project oversight
+- ✅ All TARA operations
+- ✅ Settings access
+- ✅ Compliance reporting
+- ❌ System configuration
+
+*Manages organizational users*
+
+</td>
+<td width="25%">
+
+### 🛡️ **Risk Manager**
+**Risk assessment authority**
+- ✅ All TARA operations
+- ✅ Risk treatment approval
+- ✅ Compliance validation
+- ✅ Report generation
+- ❌ User management
+- ❌ Settings access
+
+*Approves risk treatments*
+
+</td>
+<td width="25%">
+
+### 📊 **Analyst**
+**Day-to-day TARA work**
+- ✅ Asset management
+- ✅ Threat/damage scenarios
+- ✅ Risk assessment (draft)
+- ✅ Report viewing
+- ❌ Risk treatment approval
+- ❌ User management
+
+*Creates and analyzes scenarios*
+
+</td>
+</tr>
+</table>
+
+### 🔐 **Permission Matrix**
+
+| Feature | System Admin | Org Admin | Risk Manager | Analyst |
+|---------|:------------:|:---------:|:------------:|:-------:|
+| **User Management** | ✅ | ✅ (org) | ❌ | ❌ |
+| **Settings Access** | ✅ | ✅ | ❌ | ❌ |
+| **Create Assets** | ✅ | ✅ | ✅ | ✅ |
+| **Edit/Delete Assets** | ✅ | ✅ | ✅ | ❌ |
+| **Create Scenarios** | ✅ | ✅ | ✅ | ✅ |
+| **Delete Scenarios** | ✅ | ✅ | ❌ | ❌ |
+| **Risk Assessment** | ✅ | ✅ | ✅ | ✅ (draft) |
+| **Approve Treatments** | ✅ | ✅ | ✅ | ❌ |
+| **Generate Reports** | ✅ | ✅ | ✅ | ✅ (view) |
+| **System Configuration** | ✅ | ❌ | ❌ | ❌ |
+
+---
+
+## 🎯 **Comprehensive Features**
+
+### 📋 **Complete TARA Workflow**
+
+<table>
+<tr>
+<td width="33%">
+
+#### 1️⃣ **Product Scope Definition**
+- Multi-product management
+- Global product selection
+- Scope versioning
+- Asset categorization
+
+#### 2️⃣ **Asset & Component Management**
+- Interactive asset creation
+- CIA property assignment
+- Component relationships
+- Trust boundary mapping
+
+</td>
+<td width="33%">
+
+#### 3️⃣ **Damage Scenario Analysis**
+- Asset-specific scenarios
+- SFOP impact rating (Safety, Financial, Operational, Privacy)
+- Severity classification
+- Regulatory compliance mapping
+
+#### 4️⃣ **Threat Scenario Modeling**
+- Many-to-many threat-damage linking
+- Attack vector analysis
+- STRIDE categorization
+- Attack path visualization
+
+</td>
+<td width="33%">
+
+#### 5️⃣ **Risk Assessment & Treatment**
+- Automated risk calculation
+- Manual review workflow
+- Treatment approval process
+- Mitigation strategy documentation
+
+#### 6️⃣ **Compliance & Reporting**
+- ISO 21434 documentation
+- UN R155 compliance
+- Executive summaries
+- Technical implementation guides
+
+</td>
+</tr>
+</table>
+
+### 🔧 **Advanced Capabilities**
+
+<table>
+<tr>
+<td width="50%">
+
+### 🧠 **Intelligent Analysis**
+- **Automated Threat Detection** - STRIDE-based analysis
+- **Risk Scoring Engine** - Multi-factor risk calculation  
+- **Impact Assessment** - SFOP methodology
+- **Compliance Mapping** - Regulatory requirement tracking
+- **Attack Path Analysis** - Multi-hop threat chains
+- **Feasibility Assessment** - Attacker capability modeling
+
+### 🔒 **Enterprise Security**
+- **Role-Based Access Control** - Granular permissions
+- **Multi-Tenancy Support** - Organization isolation
+- **Audit Trail** - Complete action logging
+- **Data Encryption** - At-rest and in-transit
+- **Session Management** - Secure authentication
+- **API Security** - JWT-based authorization
+
+</td>
+<td width="50%">
+
+### 📊 **Professional Reporting**
+- **Multi-Format Export** - PDF, Excel, JSON, CSV
+- **Executive Dashboards** - C-level risk summaries
+- **Technical Documentation** - Implementation details
+- **Compliance Reports** - Regulatory submission ready
+- **Custom Templates** - Branded report generation
+- **Automated Scheduling** - Periodic report delivery
+
+### 🔄 **Workflow Management**
+- **State Tracking** - Complete workflow visibility
+- **Approval Processes** - Multi-level review chains
+- **Version Control** - Change history tracking
+- **Collaboration Tools** - Team-based analysis
+- **Progress Monitoring** - Real-time status updates
+- **Notification System** - Automated alerts
+
+</td>
+</tr>
+</table>
 
 ---
 
