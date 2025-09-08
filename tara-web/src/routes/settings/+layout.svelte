@@ -1,8 +1,34 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Users, Building2, Database, Settings } from '@lucide/svelte';
+	import { authStore } from '$lib/stores/auth';
+	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 
 	let { children } = $props();
+
+	onMount(() => {
+		const state = get(authStore) as any;
+		const isAuthed = !!state?.token;
+		if (!isAuthed) {
+			window.location.href = '/auth';
+			return;
+		}
+
+		// Only admins can access settings
+		let isSuperuser = !!state?.user?.is_superuser;
+		if (!isSuperuser && state?.token) {
+			try {
+				const payload = JSON.parse(atob(state.token.split('.')[1]));
+				isSuperuser = !!payload.is_superuser;
+			} catch {}
+		}
+
+		const allowed = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+		if (!allowed) {
+			window.location.href = '/unauthorized';
+		}
+	});
 
 	const tabs = [
 		{ id: 'users', label: 'User Management', icon: Users },

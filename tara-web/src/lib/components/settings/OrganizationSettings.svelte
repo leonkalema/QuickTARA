@@ -19,6 +19,7 @@
 	let loading = false;
 	let editingId: string | null = null;
 	let showCreateForm = false;
+	let canManageOrgs = false;
 
 	let createFormData = {
 		name: '',
@@ -29,6 +30,8 @@
 
 	onMount(() => {
 		loadOrganizations();
+		const isSuperuser = (get(authStore).user as any)?.is_superuser === true;
+		canManageOrgs = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
 	});
 
 	async function loadOrganizations() {
@@ -185,15 +188,17 @@
 					<h1 class="text-2xl font-semibold text-gray-900">Organizations</h1>
 					<p class="mt-1 text-sm text-gray-500">Manage your organization structure and team members</p>
 				</div>
-				<div class="mt-4 sm:mt-0">
-					<button 
-						class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-						on:click={() => showCreateForm = true}
-					>
-						<Plus class="w-4 h-4 mr-2" />
-						New Organization
-					</button>
-				</div>
+				{#if canManageOrgs}
+					<div class="mt-4 sm:mt-0">
+						<button 
+							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+							on:click={() => showCreateForm = true}
+						>
+							<Plus class="w-4 h-4 mr-2" />
+							New Organization
+						</button>
+					</div>
+				{/if}
 			</div>
 		</div>
 
@@ -204,17 +209,19 @@
 				</div>
 				<h3 class="text-lg font-semibold text-gray-900 mb-2">No organizations yet</h3>
 				<p class="text-gray-500 mb-6 max-w-md mx-auto">Get started by creating your first organization to manage teams and access controls.</p>
-				<button 
-					class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-					on:click={() => showCreateForm = true}
-				>
-					<Plus class="w-4 h-4 mr-2" />
-					Create Organization
-				</button>
+				{#if canManageOrgs}
+					<button 
+						class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+						on:click={() => showCreateForm = true}
+					>
+						<Plus class="w-4 h-4 mr-2" />
+						Create Organization
+					</button>
+				{/if}
 			</div>
 		{/if}
 
-		{#if showCreateForm}
+		{#if showCreateForm && canManageOrgs}
 			<div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-8">
 				<div class="px-6 py-4 border-b border-gray-200">
 					<h3 class="text-lg font-semibold text-gray-900">Create New Organization</h3>
@@ -330,22 +337,24 @@
 											<p class="text-sm text-gray-500">{org.description || 'No description provided'}</p>
 										</div>
 									</div>
-									<div class="flex items-center space-x-2">
-										<button 
-											class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-											on:click={() => startEdit(org)}
-										>
-											<Edit class="w-4 h-4 mr-1.5" />
-											Edit
-										</button>
-										<button 
-											class="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-											on:click={() => deleteOrganization(org)}
-										>
-											<Trash2 class="w-4 h-4 mr-1.5" />
-											Delete
-										</button>
-									</div>
+									{#if canManageOrgs}
+										<div class="flex items-center space-x-2">
+											<button 
+												class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+												on:click={() => startEdit(org)}
+											>
+												<Edit class="w-4 h-4 mr-1.5" />
+												Edit
+											</button>
+											<button 
+												class="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+												on:click={() => deleteOrganization(org)}
+											>
+												<Trash2 class="w-4 h-4 mr-1.5" />
+												Delete
+											</button>
+										</div>
+									{/if}
 								</div>
 								
 								<!-- Organization Stats -->

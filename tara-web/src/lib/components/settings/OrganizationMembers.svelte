@@ -32,6 +32,7 @@
 	let loading = false;
 	let showAddForm = false;
 	let editingUserId: string | null = null;
+	let canManageMembers = false;
 
 	let addFormData = {
 		user_id: '',
@@ -50,6 +51,8 @@
 	onMount(() => {
 		loadMembers();
 		loadAvailableUsers();
+		const isSuperuser = (get(authStore).user as any)?.is_superuser === true;
+		canManageMembers = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
 	});
 
 	async function loadMembers() {
@@ -107,6 +110,7 @@
 	}
 
 	async function saveEdit(member: Member) {
+		if (!canManageMembers) return;
 		const formData = editFormData[member.user_id];
 		try {
 			const auth = get(authStore);
@@ -133,6 +137,7 @@
 	}
 
 	async function addMember() {
+		if (!canManageMembers) return;
 		if (!addFormData.user_id) {
 			notifications.show('Please select a user', 'error');
 			return;
@@ -168,6 +173,7 @@
 	}
 
 	async function removeMember(member: Member) {
+		if (!canManageMembers) return;
 		if (!confirm(`Remove ${member.first_name} ${member.last_name} from ${organizationName}?`)) return;
 
 		try {
@@ -211,16 +217,18 @@
 				{members.length}
 			</span>
 		</div>
-		<button
-			class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-			on:click={() => showAddForm = !showAddForm}
-		>
-			<Plus class="w-4 h-4 mr-1.5" />
-			Add Member
-		</button>
+		{#if canManageMembers}
+			<button
+				class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+				on:click={() => showAddForm = !showAddForm}
+			>
+				<Plus class="w-4 h-4 mr-1.5" />
+				Add Member
+			</button>
+		{/if}
 	</div>
 
-	{#if showAddForm}
+	{#if showAddForm && canManageMembers}
 		<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
 			<h5 class="text-sm font-medium text-blue-900 mb-3">Add New Member</h5>
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -296,9 +304,11 @@
 						<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 							Joined
 						</th>
-						<th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Actions
-						</th>
+						{#if canManageMembers}
+							<th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+						{:else}
+							<th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+						{/if}
 					</tr>
 				</thead>
 				<tbody class="bg-white divide-y divide-gray-200">
@@ -319,6 +329,7 @@
 									</div>
 								</td>
 								<td class="px-4 py-3">
+									{#if canManageMembers}
 									<select
 										bind:value={editFormData[member.user_id].role}
 										class="w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
@@ -327,12 +338,16 @@
 											<option value={option.value}>{option.label}</option>
 										{/each}
 									</select>
+									{:else}
+									<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{getRoleLabel(member.role)}</span>
+									{/if}
 								</td>
 								<td class="px-4 py-3 text-sm text-gray-500">
 									{new Date(member.joined_at).toLocaleDateString()}
 								</td>
 								<td class="px-4 py-3 text-right">
 									<div class="flex justify-end space-x-2">
+										{#if canManageMembers}
 										<button
 											class="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors"
 											on:click={cancelEdit}
@@ -347,6 +362,7 @@
 											<Save class="w-3 h-3 mr-1" />
 											Save
 										</button>
+										{/if}
 									</div>
 								</td>
 							{:else}
@@ -373,6 +389,7 @@
 								</td>
 								<td class="px-4 py-3 text-right">
 									<div class="flex justify-end space-x-1">
+										{#if canManageMembers}
 										<button
 											class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
 											on:click={() => startEdit(member)}
@@ -387,6 +404,7 @@
 										>
 											<Trash2 class="w-4 h-4" />
 										</button>
+										{/if}
 									</div>
 								</td>
 							{/if}

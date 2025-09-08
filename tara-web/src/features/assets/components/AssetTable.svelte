@@ -4,6 +4,7 @@
   import { notifications } from '../../../lib/stores/notificationStore';
   import { AssetType, SecurityLevel, type Asset, type CreateAssetRequest } from '../../../lib/types/asset';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
+  import { authStore } from '$lib/stores/auth';
 
   export let assets: Asset[] = [];
   export let productId: string;
@@ -26,9 +27,18 @@
   let assetToDelete: Asset | null = null;
   let isDeleting = false;
 
+  // Role-based capabilities
+  let canManageAssets = false;
+  $: {
+    const state: any = $authStore;
+    const isSuperuser = !!state?.user?.is_superuser;
+    canManageAssets = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+  }
+
   $: newAsset.scope_id = productId;
 
   function startEdit(asset: Asset, field: string) {
+    if (!canManageAssets) return;
     editingCell = { assetId: asset.asset_id, field };
     editingValue = getFieldValue(asset, field);
   }
@@ -52,6 +62,7 @@
       return;
     }
 
+    if (!canManageAssets) { cancelEdit(); return; }
     isSaving = true;
     try {
       const updateData: any = { [field]: editingValue };
@@ -89,6 +100,7 @@
   }
 
   async function addNewAsset() {
+    if (!canManageAssets) return;
     if (!newAsset.name?.trim()) {
       notifications.show('Asset name is required', 'error');
       return;
@@ -167,11 +179,13 @@
   }
 
   function confirmDelete(asset: Asset) {
+    if (!canManageAssets) return;
     assetToDelete = asset;
     showDeleteDialog = true;
   }
 
   async function deleteAsset() {
+    if (!canManageAssets) return;
     if (!assetToDelete) return;
     
     isDeleting = true;
@@ -203,12 +217,14 @@
   <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-medium text-gray-900">Assets</h3>
-      <button
-        on:click={() => isAddingNew = true}
-        class="px-3 py-1.5 bg-slate-600 text-white text-sm rounded-md hover:bg-slate-700 transition-colors"
-      >
-        + Add Asset
-      </button>
+      {#if canManageAssets}
+        <button
+          on:click={() => isAddingNew = true}
+          class="px-3 py-1.5 bg-slate-600 text-white text-sm rounded-md hover:bg-slate-700 transition-colors"
+        >
+          + Add Asset
+        </button>
+      {/if}
     </div>
   </div>
 
@@ -268,12 +284,16 @@
                   autofocus
                 />
               {:else}
-                <button
-                  on:click={() => startEdit(asset, 'name')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors font-medium text-gray-900"
-                >
-                  {asset.name}
-                </button>
+                {#if canManageAssets}
+                  <button
+                    on:click={() => startEdit(asset, 'name')}
+                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors font-medium text-gray-900"
+                  >
+                    {asset.name}
+                  </button>
+                {:else}
+                  <div class="px-2 py-1 font-medium text-gray-900">{asset.name}</div>
+                {/if}
               {/if}
             </td>
 
@@ -293,12 +313,16 @@
                   {/each}
                 </select>
               {:else}
-                <button
-                  on:click={() => startEdit(asset, 'asset_type')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm"
-                >
-                  {asset.asset_type}
-                </button>
+                {#if canManageAssets}
+                  <button
+                    on:click={() => startEdit(asset, 'asset_type')}
+                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm"
+                  >
+                    {asset.asset_type}
+                  </button>
+                {:else}
+                  <div class="px-2 py-1 text-sm">{asset.asset_type}</div>
+                {/if}
               {/if}
             </td>
 
@@ -318,14 +342,20 @@
                   {/each}
                 </select>
               {:else}
-                <button
-                  on:click={() => startEdit(asset, 'confidentiality')}
-                  class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
-                >
+                {#if canManageAssets}
+                  <button
+                    on:click={() => startEdit(asset, 'confidentiality')}
+                    class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                  >
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.confidentiality)}">
+                      {asset.confidentiality}
+                    </span>
+                  </button>
+                {:else}
                   <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.confidentiality)}">
                     {asset.confidentiality}
                   </span>
-                </button>
+                {/if}
               {/if}
             </td>
 
@@ -345,14 +375,20 @@
                   {/each}
                 </select>
               {:else}
-                <button
-                  on:click={() => startEdit(asset, 'integrity')}
-                  class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
-                >
+                {#if canManageAssets}
+                  <button
+                    on:click={() => startEdit(asset, 'integrity')}
+                    class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                  >
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.integrity)}">
+                      {asset.integrity}
+                    </span>
+                  </button>
+                {:else}
                   <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.integrity)}">
                     {asset.integrity}
                   </span>
-                </button>
+                {/if}
               {/if}
             </td>
 
@@ -372,14 +408,20 @@
                   {/each}
                 </select>
               {:else}
-                <button
-                  on:click={() => startEdit(asset, 'availability')}
-                  class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
-                >
+                {#if canManageAssets}
+                  <button
+                    on:click={() => startEdit(asset, 'availability')}
+                    class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                  >
+                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.availability)}">
+                      {asset.availability}
+                    </span>
+                  </button>
+                {:else}
                   <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.availability)}">
                     {asset.availability}
                   </span>
-                </button>
+                {/if}
               {/if}
             </td>
 
@@ -396,12 +438,16 @@
                   autofocus
                 />
               {:else}
-                <button
-                  on:click={() => startEdit(asset, 'storage_location')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
-                >
-                  {asset.storage_location || 'Click to add...'}
-                </button>
+                {#if canManageAssets}
+                  <button
+                    on:click={() => startEdit(asset, 'storage_location')}
+                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
+                  >
+                    {asset.storage_location || 'Click to add...'}
+                  </button>
+                {:else}
+                  <div class="text-sm text-gray-600 px-2 py-1">{asset.storage_location || '-'}</div>
+                {/if}
               {/if}
             </td>
 
@@ -418,30 +464,36 @@
                   autofocus
                 ></textarea>
               {:else}
-                <button
-                  on:click={() => startEdit(asset, 'description')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
-                >
-                  {asset.description || 'Click to add...'}
-                </button>
+                {#if canManageAssets}
+                  <button
+                    on:click={() => startEdit(asset, 'description')}
+                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
+                  >
+                    {asset.description || 'Click to add...'}
+                  </button>
+                {:else}
+                  <div class="text-sm text-gray-600 px-2 py-1">{asset.description || '-'}</div>
+                {/if}
               {/if}
             </td>
 
             <!-- Actions -->
             <td class="px-4 py-3">
-              <button
-                  on:click={() => confirmDelete(asset)}
-                class="text-red-600 hover:text-red-900 text-sm font-medium"
-                disabled={isSaving}
-              >
-                Delete
-              </button>
+              {#if canManageAssets}
+                <button
+                    on:click={() => confirmDelete(asset)}
+                  class="text-red-600 hover:text-red-900 text-sm font-medium"
+                  disabled={isSaving}
+                >
+                  Delete
+                </button>
+              {/if}
             </td>
           </tr>
         {/each}
 
         <!-- Add New Asset Row -->
-        {#if isAddingNew}
+        {#if isAddingNew && canManageAssets}
           <tr class="bg-blue-50 border-2 border-blue-200">
             <!-- Type Icon -->
             <td class="px-4 py-3 text-center">
@@ -581,12 +633,14 @@
       <div class="text-gray-400 text-6xl mb-4">📦</div>
       <h3 class="text-lg font-medium text-gray-900 mb-2">No assets yet</h3>
       <p class="text-gray-500 mb-4">Start by adding your first asset to this product.</p>
-      <button
-        on:click={() => isAddingNew = true}
-        class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
-      >
-        Add First Asset
-      </button>
+      {#if canManageAssets}
+        <button
+          on:click={() => isAddingNew = true}
+          class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+        >
+          Add First Asset
+        </button>
+      {/if}
     </div>
   {/if}
 </div>

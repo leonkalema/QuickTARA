@@ -3,21 +3,34 @@ import { get } from 'svelte/store';
 import { authStore } from '$lib/stores/auth';
 
 export interface RouteGuardOptions {
-	requireAuth?: boolean;
-	requiredRoles?: string[];
-	requiredPermissions?: string[];
-	redirectTo?: string;
+    requireAuth?: boolean;
+    requiredRoles?: string[];
+    requiredPermissions?: string[];
+    redirectTo?: string;
 }
 
-export async function authGuard(options: RouteGuardOptions = {}) {
-	const {
-		requireAuth = true,
-		requiredRoles = [],
-		requiredPermissions = [],
-		redirectTo = '/auth'
-	} = options;
+// Backend role values (snake_case)
+export const Role = {
+    TOOL_ADMIN: 'tool_admin',
+    ORG_ADMIN: 'org_admin',
+    RISK_MANAGER: 'risk_manager',
+    TARA_ANALYST: 'tara_analyst',
+    SECURITY_ENGINEER: 'security_engineer',
+    COMPLIANCE_OFFICER: 'compliance_officer',
+    PRODUCT_OWNER: 'product_owner',
+    AUDITOR: 'auditor',
+    VIEWER: 'viewer'
+} as const;
 
-	const auth = get(authStore);
+export async function authGuard(options: RouteGuardOptions = {}) {
+    const {
+        requireAuth = true,
+        requiredRoles = [],
+        requiredPermissions = [],
+        redirectTo = '/auth'
+    } = options;
+
+    const auth = get(authStore);
 
 	// Check authentication
 	if (requireAuth && !auth.isAuthenticated) {
@@ -32,51 +45,64 @@ export async function authGuard(options: RouteGuardOptions = {}) {
 		}
 	}
 
-	// Check roles
-	if (requiredRoles.length > 0) {
-		const hasRequiredRole = requiredRoles.some(role => {
-			const userRole = auth.user?.organizations?.[0]?.role;
-			return userRole === role;
-		});
-		if (!hasRequiredRole) {
-			throw redirect(302, '/unauthorized');
-		}
-	}
+	    // Helper: determine superuser, prefer user payload, fallback to token decode
+    const isSuperuser = (() => {
+        const userFlag = (auth.user as any)?.is_superuser === true;
+        if (userFlag) return true;
+        try {
+            const token = auth.token as string | null;
+            if (!token) return false;
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return !!payload.is_superuser;
+        } catch {
+            return false;
+        }
+    })();
 
-	// Check permissions
-	if (requiredPermissions.length > 0) {
-		// For now, assume Tool Admin has all permissions
-		const userRole = auth.user?.organizations?.[0]?.role;
-		const hasRequiredPermission = userRole === 'Tool Admin';
-		if (!hasRequiredPermission) {
-			throw redirect(302, '/unauthorized');
-		}
-	}
+    // Check roles (compare against backend snake_case roles). Superuser bypasses.
+    if (requiredRoles.length > 0) {
+        const userRole = auth.user?.organizations?.[0]?.role;
+        const hasRequiredRole = isSuperuser || (!!userRole && requiredRoles.includes(userRole));
+        if (!hasRequiredRole) {
+            throw redirect(302, '/unauthorized');
+        }
+    }
 
-	return true;
+    // Check permissions. Superuser bypasses.
+    if (requiredPermissions.length > 0) {
+        if (!isSuperuser) {
+            const userRole = auth.user?.organizations?.[0]?.role;
+            const hasRequiredPermission = userRole === Role.TOOL_ADMIN;
+            if (!hasRequiredPermission) {
+                throw redirect(302, '/unauthorized');
+            }
+        }
+    }
+
+    return true;
 }
 
 // Predefined guard functions for common use cases
 export const requireAuth = () => authGuard({ requireAuth: true });
 
-export const requireAdmin = () => authGuard({ 
-	requireAuth: true, 
-	requiredRoles: ['Tool Admin'] 
+export const requireAdmin = () => authGuard({
+    requireAuth: true,
+    requiredRoles: [Role.TOOL_ADMIN]
 });
 
-export const requireOrgAdmin = () => authGuard({ 
-	requireAuth: true, 
-	requiredRoles: ['Tool Admin', 'Org Admin'] 
+export const requireOrgAdmin = () => authGuard({
+    requireAuth: true,
+    requiredRoles: [Role.TOOL_ADMIN, Role.ORG_ADMIN]
 });
 
-export const requireRiskManager = () => authGuard({ 
-	requireAuth: true, 
-	requiredRoles: ['Tool Admin', 'Org Admin', 'Risk Manager'] 
+export const requireRiskManager = () => authGuard({
+    requireAuth: true,
+    requiredRoles: [Role.TOOL_ADMIN, Role.ORG_ADMIN, Role.RISK_MANAGER]
 });
 
-export const requireAnalyst = () => authGuard({ 
-	requireAuth: true, 
-	requiredRoles: ['Tool Admin', 'Org Admin', 'Risk Manager', 'TARA Analyst', 'Security Engineer'] 
+export const requireAnalyst = () => authGuard({
+    requireAuth: true,
+    requiredRoles: [Role.TOOL_ADMIN, Role.ORG_ADMIN, Role.RISK_MANAGER, Role.TARA_ANALYST, Role.SECURITY_ENGINEER]
 });
 
 // Permission-based guards

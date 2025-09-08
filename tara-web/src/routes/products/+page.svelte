@@ -9,6 +9,8 @@
   import ProductCard from '../../features/products/components/ProductCard.svelte';
   import CreateProductModal from '../../features/products/components/CreateProductModal.svelte';
   import ConfirmationModal from '../../components/ui/ConfirmationModal.svelte';
+  import { authStore } from '$lib/stores/auth';
+  import { get } from 'svelte/store';
 
   let products: Product[] = [];
   let filteredProducts: Product[] = [];
@@ -20,11 +22,17 @@
   let isDeleting = false;
   let viewMode = 'grid'; // 'grid' or 'list'
   
+  // Role-based UI control
+  let canManageProducts = false;
+  
   // Filters
   let searchQuery = '';
 
   onMount(() => {
     loadProducts();
+    // Compute role-based permission for product management
+    const isSuperuser = (get(authStore).user as any)?.is_superuser === true;
+    canManageProducts = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
   });
 
   async function loadProducts() {
@@ -83,6 +91,7 @@
   }
 
   function handleDeleteProduct(product: Product) {
+    if (!canManageProducts) return;
     productToDelete = product;
     showDeleteModal = true;
   }
@@ -151,15 +160,17 @@
         Manage your product ecosystem and threat analysis scope. Select a product to begin your security assessment workflow.
       </p>
     </div>
-    <button
-      class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2 self-start"
-      on:click={() => showCreateModal = true}
-    >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-      </svg>
-      <span>New Product</span>
-    </button>
+    {#if canManageProducts}
+      <button
+        class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2 self-start"
+        on:click={() => showCreateModal = true}
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        <span>New Product</span>
+      </button>
+    {/if}
   </div>
 
   <!-- Filters and Controls -->

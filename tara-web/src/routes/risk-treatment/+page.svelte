@@ -4,10 +4,12 @@
   import { riskTreatmentApi } from '$lib/api/riskTreatmentApi';
   import type { RiskTreatmentData } from '$lib/api/riskTreatmentApi';
   import { notifications } from '$lib/stores/notificationStore';
+  import { authStore } from '$lib/stores/auth';
 
   let riskTreatmentData: RiskTreatmentData[] = [];
   let loading = false;
   let expandedCards: Set<string> = new Set();
+  let canApprove = false;
   
   // Filter states
   let selectedRiskFilter = 'All';
@@ -36,6 +38,16 @@
       await loadData();
     }
   });
+
+  // Compute approval capability based on role (risk_manager, org_admin, tool_admin or superuser)
+  $: {
+    const state: any = $authStore;
+    const isSuperuser: boolean = !!state?.user?.is_superuser;
+    canApprove = isSuperuser 
+      || authStore.hasRole('tool_admin') 
+      || authStore.hasRole('org_admin') 
+      || authStore.hasRole('risk_manager');
+  }
 
   $: if ($selectedProduct?.scope_id) {
     loadData();
@@ -420,12 +432,14 @@
                     >
                       Save Draft
                     </button>
-                    <button 
-                      on:click={() => approveTreatment(damageScenario)}
-                      class="px-4 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700"
-                    >
-                      Approve Treatment
-                    </button>
+                    {#if canApprove}
+                      <button 
+                        on:click={() => approveTreatment(damageScenario)}
+                        class="px-4 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700"
+                      >
+                        Approve Treatment
+                      </button>
+                    {/if}
                   {/if}
                 </div>
               </div>

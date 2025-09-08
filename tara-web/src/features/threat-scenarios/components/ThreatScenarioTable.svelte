@@ -7,6 +7,7 @@
   import type { DamageScenario } from '$lib/types/damageScenario';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
   import DamageScenarioTagSelector from './DamageScenarioTagSelector.svelte';
+  import { authStore } from '$lib/stores/auth';
 
   export let threatScenarios: ThreatScenario[] = [];
   export let damageScenarios: DamageScenario[] = [];
@@ -27,6 +28,12 @@
   let showDeleteDialog = false;
   let scenarioToDelete: ThreatScenario | null = null;
   let isDeleting = false;
+  let canDelete = false;
+  $: {
+    const state: any = $authStore;
+    const isSuperuser = !!state?.user?.is_superuser;
+    canDelete = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+  }
 
   // Inline editing
   let editingCell: { scenarioId: string; field: string } | null = null;
@@ -104,12 +111,13 @@
   }
 
   function confirmDelete(scenario: ThreatScenario) {
+    if (!canDelete) return;
     scenarioToDelete = scenario;
     showDeleteDialog = true;
   }
 
   async function deleteThreatScenario() {
-    if (!scenarioToDelete) return;
+    if (!canDelete || !scenarioToDelete) return;
     
     isDeleting = true;
     try {
@@ -304,12 +312,14 @@
                 {/if}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  on:click={() => confirmDelete(scenario)}
-                  class="text-red-600 hover:text-red-900 ml-4"
-                >
-                  Delete
-                </button>
+                {#if canDelete}
+                  <button
+                    on:click={() => confirmDelete(scenario)}
+                    class="text-red-600 hover:text-red-900 ml-4"
+                  >
+                    Delete
+                  </button>
+                {/if}
               </td>
             </tr>
           {/each}

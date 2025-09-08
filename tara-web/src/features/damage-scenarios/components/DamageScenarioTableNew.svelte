@@ -6,6 +6,7 @@
   import { onMount, createEventDispatcher } from 'svelte';
   import { getOverallSfopRating, getSfopBadgeClass, getCIABadgeClass, getSfopImpacts } from '$lib/utils/sfopUtils';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
+  import { authStore } from '$lib/stores/auth';
 
   export let damageScenarios: DamageScenario[] = [];
   export let assets: any[] = [];
@@ -52,6 +53,12 @@
   let showDeleteDialog = false;
   let scenarioToDelete: DamageScenario | null = null;
   let isDeleting = false;
+  let canDelete = false;
+  $: {
+    const state: any = $authStore;
+    const isSuperuser = !!state?.user?.is_superuser;
+    canDelete = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+  }
 
   // Update scope when product changes
   $: if ($selectedProduct?.scope_id) {
@@ -139,12 +146,13 @@
   }
 
   function confirmDelete(scenario: DamageScenario) {
+    if (!canDelete) return;
     scenarioToDelete = scenario;
     showDeleteDialog = true;
   }
 
   async function deleteDamageScenario() {
-    if (!scenarioToDelete) return;
+    if (!canDelete || !scenarioToDelete) return;
     
     isDeleting = true;
 
@@ -360,7 +368,9 @@
                 <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(getOverallSfopRating(scenario))}">{getOverallSfopRating(scenario)}</span>
               </td>
               <td class="px-4 py-3">
-                <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                {#if canDelete}
+                  <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                {/if}
               </td>
             </tr>
           {/each}

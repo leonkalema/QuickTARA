@@ -3,10 +3,19 @@
   import ProductSelector from '../ui/ProductSelector.svelte';
   import UserMenu from '$lib/components/UserMenu.svelte';
   import { authStore } from '$lib/stores/auth';
+  import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
 
   function handleLogout() {
     goto('/auth');
+  }
+
+  // Only admins should see Settings (superuser, tool_admin, org_admin)
+  let canSeeSettings = false;
+  $: {
+    const state: any = $authStore;
+    const isSuperuser: boolean = !!state?.user?.is_superuser;
+    canSeeSettings = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
   }
 </script>
 
@@ -29,10 +38,12 @@
 
     <!-- User Menu -->
     <div class="flex items-center space-x-4">
-      <a href="/settings" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-        <Settings class="w-5 h-5" />
-        <span class="hidden sm:inline">Settings</span>
-      </a>
+      {#if canSeeSettings}
+        <a href="/settings" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+          <Settings class="w-5 h-5" />
+          <span class="hidden sm:inline">Settings</span>
+        </a>
+      {/if}
       
       {#if $authStore.user}
         <UserMenu user={$authStore.user} on:logout={handleLogout} />
