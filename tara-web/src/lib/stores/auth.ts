@@ -29,6 +29,7 @@ export interface User {
 	last_name: string;
 	status: string;
 	is_verified: boolean;
+	is_superuser: boolean;
 	created_at: string;
 	organizations: Array<{
 		organization_id: string;
