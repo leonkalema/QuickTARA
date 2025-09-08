@@ -23,6 +23,11 @@ export interface RiskTreatmentData {
   selected_treatment?: string;
   treatment_goal?: string;
   treatment_status?: string;
+  // New fields from backend for auto-suggestion
+  product_name?: string;
+  asset_name?: string;
+  cia?: string;
+  suggested_goal?: string;
 }
 
 export interface AttackPathData {

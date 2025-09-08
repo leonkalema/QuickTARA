@@ -45,7 +45,16 @@
     loading = true;
     try {
       const response = await riskTreatmentApi.getRiskTreatmentData($selectedProduct!.scope_id);
-      riskTreatmentData = response.damage_scenarios || [];
+      // Initialize client state using backend-provided suggestions
+      const rows = response.damage_scenarios || [];
+      riskTreatmentData = rows.map((d) => {
+        const suggested = (TREATMENT_SUGGESTIONS as any)[d.risk_level || ''] || 'Retaining';
+        return {
+          ...d,
+          selected_treatment: d.selected_treatment ?? suggested,
+          treatment_goal: d.treatment_goal ?? d.suggested_goal
+        };
+      });
       
     } catch (error) {
       console.error('Error loading data:', error);
@@ -266,7 +275,7 @@
         {@const feasibilityLevel = damageScenario.feasibility_level || 'Unknown'}
         {@const riskLevel = damageScenario.risk_level || 'Unknown'}
         {@const suggestedTreatment = getSuggestedTreatment(riskLevel)}
-        {@const goalTemplate = generateGoalTemplate(damageScenario, suggestedTreatment)}
+        {@const goalTemplate = damageScenario.suggested_goal || generateGoalTemplate(damageScenario, suggestedTreatment)}
         
         {@const isExpanded = expandedCards.has(damageScenario.scenario_id)}
         
@@ -297,9 +306,9 @@
                 </div>
                 
                 <!-- Minimized View - Show Goal when collapsed -->
-                {#if !isExpanded && damageScenario.treatment_goal}
+                {#if !isExpanded && (damageScenario.treatment_goal || damageScenario.suggested_goal)}
                   <div class="mt-2 text-sm text-gray-700">
-                    <span class="font-medium">Goal:</span> {damageScenario.treatment_goal}
+                    <span class="font-medium">Goal:</span> {damageScenario.treatment_goal || damageScenario.suggested_goal}
                   </div>
                 {:else if !isExpanded}
                   <p class="text-sm text-gray-600 mt-1">{damageScenario.description}</p>
@@ -383,7 +392,7 @@
                     bind:value={damageScenario.treatment_goal}
                     disabled={damageScenario.treatment_status === 'approved'}
                     rows="3"
-                    placeholder={goalTemplate}
+                    placeholder={damageScenario.suggested_goal || goalTemplate}
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent placeholder-italic {damageScenario.treatment_status === 'approved' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
                   ></textarea>
                   <p class="text-xs text-gray-500 mt-1">

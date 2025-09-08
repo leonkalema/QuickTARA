@@ -40,6 +40,14 @@
   let operational_impact = '';
   let privacy_impact = '';
   
+  // Form validity (all fields mandatory for add form)
+  $: formValid =
+    newScenario.name.trim().length > 0 &&
+    newScenario.description.trim().length > 0 &&
+    !!newScenario.primary_component_id &&
+    (newScenario.confidentiality_impact || newScenario.integrity_impact || newScenario.availability_impact) &&
+    !!safety_impact && !!financial_impact && !!operational_impact && !!privacy_impact;
+  
   // Delete confirmation dialog
   let showDeleteDialog = false;
   let scenarioToDelete: DamageScenario | null = null;
@@ -61,7 +69,9 @@
       integrity_impact: false,
       availability_impact: false,
       primary_component_id: '',
-      secondary_component_id: ''
+      scope_id: $selectedProduct?.scope_id || '',
+      version: '1.0',
+      revision_notes: 'Initial version'
     };
 
     safety_impact = '';
@@ -73,18 +83,30 @@
   }
 
   async function addNewScenario() {
-    if (!newScenario.name.trim()) {
-      notifications.show('Please enter a scenario name', 'error');
-      return;
-    }
-
     if (!$selectedProduct?.scope_id) {
       notifications.show('Please select a product first', 'error');
       return;
     }
 
+    // Mandatory fields validation
+    if (!newScenario.name.trim()) {
+      notifications.show('Scenario name is required', 'error');
+      return;
+    }
+    if (!newScenario.description.trim()) {
+      notifications.show('Description is required', 'error');
+      return;
+    }
+    if (!newScenario.primary_component_id) {
+      notifications.show('Asset selection is required', 'error');
+      return;
+    }
     if (!newScenario.confidentiality_impact && !newScenario.integrity_impact && !newScenario.availability_impact) {
-      notifications.show('Please select at least one CIA security property', 'error');
+      notifications.show('Select at least one CIA property (C, I, or A)', 'error');
+      return;
+    }
+    if (!safety_impact || !financial_impact || !operational_impact || !privacy_impact) {
+      notifications.show('All SFOP impact ratings (Safety, Financial, Operational, Privacy) are required', 'error');
       return;
     }
 
@@ -93,10 +115,10 @@
         ...newScenario,
         scope_id: $selectedProduct.scope_id,
         impact_rating: {
-          safety: safety_impact || 'negligible',
-          financial: financial_impact || 'negligible',
-          operational: operational_impact || 'negligible',
-          privacy: privacy_impact || 'negligible'
+          safety: (safety_impact || 'negligible') as any,
+          financial: (financial_impact || 'negligible') as any,
+          operational: (operational_impact || 'negligible') as any,
+          privacy: (privacy_impact || 'negligible') as any
         }
       };
 
@@ -212,37 +234,37 @@
   {#if isAddingNew}
     <form on:submit|preventDefault={addNewScenario} class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
       <div class="grid grid-cols-2 gap-3 mb-3">
-        <input bind:value={newScenario.name} placeholder="Scenario name *" class="px-3 py-2 border rounded-md" />
-        <select bind:value={newScenario.primary_component_id} class="px-3 py-2 border rounded-md">
-          <option value="">Select asset...</option>
+        <input bind:value={newScenario.name} placeholder="Scenario name *" class="px-3 py-2 border rounded-md" required />
+        <select bind:value={newScenario.primary_component_id} class="px-3 py-2 border rounded-md" required>
+          <option value="">Select asset... *</option>
           {#each assets as asset}<option value={asset.asset_id}>{asset.name}</option>{/each}
         </select>
       </div>
-      <textarea bind:value={newScenario.description} placeholder="Description" class="w-full px-3 py-2 border rounded-md mb-3" rows="2"></textarea>
+      <textarea bind:value={newScenario.description} placeholder="Description *" class="w-full px-3 py-2 border rounded-md mb-3" rows="2" required></textarea>
       <div class="grid grid-cols-4 gap-2 mb-3">
-        <select bind:value={safety_impact} class="px-2 py-1 border rounded text-sm">
-          <option value="">Safety</option>
+        <select bind:value={safety_impact} class="px-2 py-1 border rounded text-sm" required>
+          <option value="">Safety *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
           <option value="major">Major</option>
           <option value="severe">Severe</option>
         </select>
-        <select bind:value={financial_impact} class="px-2 py-1 border rounded text-sm">
-          <option value="">Financial</option>
+        <select bind:value={financial_impact} class="px-2 py-1 border rounded text-sm" required>
+          <option value="">Financial *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
           <option value="major">Major</option>
           <option value="severe">Severe</option>
         </select>
-        <select bind:value={operational_impact} class="px-2 py-1 border rounded text-sm">
-          <option value="">Operational</option>
+        <select bind:value={operational_impact} class="px-2 py-1 border rounded text-sm" required>
+          <option value="">Operational *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
           <option value="major">Major</option>
           <option value="severe">Severe</option>
         </select>
-        <select bind:value={privacy_impact} class="px-2 py-1 border rounded text-sm">
-          <option value="">Privacy</option>
+        <select bind:value={privacy_impact} class="px-2 py-1 border rounded text-sm" required>
+          <option value="">Privacy *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
           <option value="major">Major</option>
@@ -262,7 +284,7 @@
       </div>
       <div class="flex justify-end space-x-2">
         <button type="button" on:click={resetForm} class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Cancel</button>
-        <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">Create</button>
+        <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!formValid}>Create</button>
       </div>
     </form>
   {/if}

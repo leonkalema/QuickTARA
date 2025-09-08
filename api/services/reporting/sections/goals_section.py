@@ -37,7 +37,8 @@ def select_approved_goals(
                 'scenario_id': scenario_id,
                 'scenario_name': scenario.get('name', 'N/A'),
                 'risk_level': risk_level,
-                'goal_text': goal_text
+                'goal_text': goal_text,
+                'treatment': rt.get('selected_treatment') or rt.get('suggested_treatment') or ''
             })
 
     return approved_goals
@@ -89,18 +90,20 @@ def build_goals_section(approved_goals: List[Dict[str, Any]], styles) -> List:
     ))
     story.append(Spacer(1, 6))
     
-    # Build table data - only Goal ID and Goal (wrapped)
-    table_data = [['Goal ID', 'Cybersecurity Goal']]
+    # Build table data - include Treatment decision and Goal (wrapped)
+    table_data = [['Goal ID', 'Risk Treatment Decision', 'Cybersecurity Goal']]
     
     for i, goal in enumerate(approved_goals):
         goal_id = f"CG{i+1:03d}"
         goal_text = goal.get('goal_text', 'No goal specified')
+        treatment = goal.get('treatment', '') or '—'
         goal_para = Paragraph(str(goal_text), styles['Normal'])
+        treatment_para = Paragraph(str(treatment), styles['Normal'])
         
-        table_data.append([goal_id, goal_para])
+        table_data.append([goal_id, treatment_para, goal_para])
     
     # Create and style table
-    table = Table(table_data, colWidths=[1.0*inch, 4.2*inch])
+    table = Table(table_data, colWidths=[0.9*inch, 1.6*inch, 2.7*inch])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),

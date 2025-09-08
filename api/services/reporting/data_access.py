@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Dict, Any, Optional
 from db.product_asset_models import ProductScope
+from api.models.user import Organization
 
 
 def get_scope_info(scope_id: str, db: Session) -> Optional[Dict[str, Any]]:
@@ -14,13 +15,23 @@ def get_scope_info(scope_id: str, db: Session) -> Optional[Dict[str, Any]]:
     if not scope:
         return None
     
+    # Best-effort fetch of organization name (first org) until scopes are org-linked
+    org_name = None
+    try:
+        org = db.query(Organization).first()
+        if org:
+            org_name = org.name
+    except Exception:
+        org_name = None
+
     return {
         "scope_id": scope.scope_id,
         "name": scope.name,
         "product_type": scope.product_type,
         "safety_level": scope.safety_level,
         "version": scope.version,
-        "description": scope.description
+        "description": scope.description,
+        "organization_name": org_name
     }
 
 
@@ -158,3 +169,45 @@ def get_assets(scope_id: str, db: Session) -> List[Dict[str, Any]]:
         })
 
     return assets
+
+
+def get_asset_damage_links(scope_id: str, db: Session) -> List[Dict[str, Any]]:
+    """Get links between assets and damage scenarios within the scope."""
+    result = db.execute(text(
+        """
+        SELECT ads.asset_id, ads.scenario_id
+        FROM asset_damage_scenario ads
+        JOIN damage_scenarios ds ON ds.scenario_id = ads.scenario_id
+        WHERE ds.scope_id = :scope_id
+        """
+    ), {"scope_id": scope_id})
+
+    links = []
+    for row in result.fetchall():
+        m = row._mapping
+        links.append({
+            "asset_id": m.get("asset_id"),
+            "scenario_id": m.get("scenario_id"),
+        })
+    return links
+
+
+def get_threat_damage_links(scope_id: str, db: Session) -> List[Dict[str, Any]]:
+    """Get links between threats and damage scenarios within the scope."""
+    result = db.execute(text(
+        """
+        SELECT tdl.threat_scenario_id, tdl.damage_scenario_id AS scenario_id
+        FROM threat_damage_links tdl
+        JOIN threat_scenarios ts ON ts.threat_scenario_id = tdl.threat_scenario_id
+        WHERE ts.scope_id = :scope_id
+        """
+    ), {"scope_id": scope_id})
+
+    links = []
+    for row in result.fetchall():
+        m = row._mapping
+        links.append({
+            "threat_scenario_id": m.get("threat_scenario_id"),
+            "scenario_id": m.get("scenario_id"),
+        })
+    return links

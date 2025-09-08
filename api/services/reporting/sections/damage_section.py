@@ -44,19 +44,21 @@ def build_damage_scenarios_section(damage_scenarios: List[Dict[str, Any]], style
     story.append(Spacer(1, 6))
     
     # Build table data
-    table_data = [['ID', 'Name', 'SFOP Rating']]
+    table_data = [['ID', 'Name', 'Description', 'SFOP Rating']]
     
     for scenario in damage_scenarios:
         scenario_id = scenario.get('scenario_id', 'N/A')
         name = scenario.get('name', 'N/A')
         overall_sfop = calculate_overall_sfop(scenario)
+        desc = scenario.get('description', '') or ''
         
         # Use Paragraph for automatic wrapping (no truncation)
         name_para = Paragraph(str(name), styles['Normal'])
-        table_data.append([str(scenario_id), name_para, overall_sfop])
+        desc_para = Paragraph(str(desc), styles['Normal'])
+        table_data.append([str(scenario_id), name_para, desc_para, overall_sfop])
     
     # Create and style table
-    table = Table(table_data, colWidths=[1.5*inch, 3.5*inch, 1.5*inch])
+    table = Table(table_data, colWidths=[1.2*inch, 2.2*inch, 2.6*inch, 1.0*inch])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),

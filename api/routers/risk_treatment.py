@@ -6,6 +6,25 @@ from api.deps.db import get_db
 
 router = APIRouter()
 
+def _pick_cia(ds_row: Any) -> str:
+    """Pick the dominant CIA property based on impact severity order."""
+    order = {"negligible": 0, "low": 1, "moderate": 2, "medium": 2, "major": 3, "high": 3, "severe": 4, "critical": 4}
+    candidates = []
+    for label, val in (
+        ("Confidentiality", getattr(ds_row, "confidentiality_impact", None)),
+        ("Integrity", getattr(ds_row, "integrity_impact", None)),
+        ("Availability", getattr(ds_row, "availability_impact", None)),
+    ):
+        if val is None:
+            continue
+        key = str(val).strip().lower()
+        candidates.append((order.get(key, 0), label))
+    if not candidates:
+        return "Confidentiality"
+    candidates.sort(reverse=True)
+    return candidates[0][1]
+
+
 @router.get("/risk-treatment")
 async def get_risk_treatment_data(scope_id: str, db: Session = Depends(get_db)):
     """
@@ -37,9 +56,15 @@ async def get_risk_treatment_data(scope_id: str, db: Session = Depends(get_db)):
                 ds.confidentiality_impact,
                 ds.integrity_impact,
                 ds.availability_impact,
-                ds.severity
+                ds.severity,
+                COALESCE(a.name, ap.name) AS asset_name,
+                ps.name AS product_name
             FROM risk_treatments rt
             JOIN damage_scenarios ds ON rt.damage_scenario_id = ds.scenario_id
+            LEFT JOIN asset_damage_scenario ads ON ads.scenario_id = ds.scenario_id
+            LEFT JOIN assets a ON a.asset_id = ads.asset_id
+            LEFT JOIN assets ap ON ap.asset_id = ds.primary_component_id
+            LEFT JOIN product_scopes ps ON ps.scope_id = rt.scope_id
             WHERE rt.scope_id = :scope_id
             ORDER BY ds.name, rt.risk_level DESC
         """)
@@ -50,6 +75,12 @@ async def get_risk_treatment_data(scope_id: str, db: Session = Depends(get_db)):
         # Convert rows to risk treatment data
         risk_treatments = []
         for row in rows:
+            # Determine CIA and suggested goal (if not explicitly set)
+            cia = _pick_cia(row)
+            product = row.product_name or "Product"
+            asset = row.asset_name or "asset"
+            auto_goal = f"The {product} shall ensure {cia.lower()} of {asset}."
+
             risk_treatment = {
                 "risk_treatment_id": row.risk_treatment_id,
                 "scenario_id": row.damage_scenario_id,
@@ -72,7 +103,11 @@ async def get_risk_treatment_data(scope_id: str, db: Session = Depends(get_db)):
                 "suggested_treatment": row.suggested_treatment,
                 "selected_treatment": row.selected_treatment,
                 "treatment_goal": row.treatment_goal,
-                "treatment_status": row.treatment_status
+                "treatment_status": row.treatment_status,
+                "asset_name": row.asset_name,
+                "product_name": row.product_name,
+                "cia": cia,
+                "suggested_goal": row.treatment_goal or auto_goal
             }
             risk_treatments.append(risk_treatment)
         

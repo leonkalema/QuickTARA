@@ -15,6 +15,7 @@ from .sections.damage_section import build_damage_scenarios_section
 from .sections.assets_section import build_assets_section
 from .sections.goals_section import select_approved_goals, build_goals_section
 from .sections.compliance_section import build_compliance_section
+from .sections.risk_summary_section import build_risk_summary_section
 from .pdf_renderer import render_pdf, create_styles
 
 
@@ -40,6 +41,9 @@ def build_complete_report(scope_id: str, db: Session) -> bytes:
     # Compliance section
     sections.append(build_compliance_section(styles))
 
+    # Risk Assessment Summary (WP-09 9.4)
+    sections.append(build_risk_summary_section(damage_scenarios, risk_treatments, styles))
+
     # Assets section (ID, Name, Description)
     sections.append(build_assets_section(assets, styles))
     
@@ -49,6 +53,8 @@ def build_complete_report(scope_id: str, db: Session) -> bytes:
     # Cybersecurity goals section
     approved_goals = select_approved_goals(damage_scenarios, risk_treatments)
     sections.append(build_goals_section(approved_goals, styles))
+
+    # Traceability section removed per request (kept data available for future use)
     
     # Render PDF
     return render_pdf(scope_info, sections)

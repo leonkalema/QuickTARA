@@ -51,7 +51,8 @@ def build_document_header(scope_info: Dict[str, Any], styles) -> List:
     
     current_date = datetime.now().strftime("%Y-%m-%d %H:%M")
     version = f"v{scope_info.get('version', '1.0')}"
-    org_name = os.environ.get("QUICKTARA_ORG_NAME", "Unknown Organization")
+    # Prefer org from DB via scope_info; fallback to env; else Unknown
+    org_name = scope_info.get('organization_name') or os.environ.get("QUICKTARA_ORG_NAME", "Unknown Organization")
     tool_name = "QuickTARA"
     generated_by = scope_info.get('created_by') or os.environ.get("QUICKTARA_GENERATED_BY")
     
