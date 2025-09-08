@@ -1,9 +1,10 @@
-FROM node:18-slim as frontend-builder
+FROM node:20-slim as frontend-builder
 
 # Build frontend
 WORKDIR /app/frontend
 COPY tara-web/package*.json ./
-RUN npm ci --only=production
+# Install devDependencies too so build tools (vite, svelte-kit) are available
+RUN npm ci
 COPY tara-web/ ./
 RUN npm run build
 
@@ -24,8 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy built frontend from builder stage
-COPY --from=frontend-builder /app/frontend/build ./tara-web/build
+# Copy built frontend from builder stage (vite default outDir is "dist")
+COPY --from=frontend-builder /app/frontend/dist ./tara-web/dist
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
