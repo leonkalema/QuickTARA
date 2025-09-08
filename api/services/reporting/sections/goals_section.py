@@ -11,26 +11,27 @@ def select_approved_goals(
     damage_scenarios: List[Dict[str, Any]], 
     risk_treatments: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
-    """Select only approved Medium/High/Critical risks for cybersecurity goals."""
-    
-    # Build lookup by damage_scenario_id
-    rt_by_scenario = {}
+    """Select approved Medium/High/Critical treatments as individual goals.
+
+    One goal per approved treatment row (not per scenario). This matches UI where each
+    approved treatment may carry its own goal text.
+    """
+    # Map scenario_id -> scenario for fallbacks
+    scenario_by_id: Dict[str, Dict[str, Any]] = {
+        s.get('scenario_id'): s for s in damage_scenarios if s.get('scenario_id')
+    }
+
+    qualifying_levels = {'critical', 'high', 'severe', 'major', 'medium'}
+    approved_goals: List[Dict[str, Any]] = []
+
     for rt in risk_treatments:
         scenario_id = rt.get('damage_scenario_id')
-        if scenario_id:
-            rt_by_scenario[scenario_id] = rt
-    
-    approved_goals = []
-    
-    for scenario in damage_scenarios:
-        scenario_id = scenario.get('scenario_id')
-        rt = rt_by_scenario.get(scenario_id, {})
-        
-        risk_level = (rt.get('risk_level') or scenario.get('severity') or '').lower()
-        status = (rt.get('treatment_status') or '').lower()
-        
-        # Include Critical/High/Medium risks that are approved
-        if risk_level in ['critical', 'high', 'severe', 'major', 'medium'] and status == 'approved':
+        if not scenario_id:
+            continue
+        status = (rt.get('treatment_status') or '').strip().lower()
+        risk_level = (rt.get('risk_level') or '').strip().lower()
+        if status == 'approved' and risk_level in qualifying_levels:
+            scenario = scenario_by_id.get(scenario_id, {})
             goal_text = generate_goal_text(scenario, rt)
             approved_goals.append({
                 'scenario_id': scenario_id,
@@ -38,7 +39,7 @@ def select_approved_goals(
                 'risk_level': risk_level,
                 'goal_text': goal_text
             })
-    
+
     return approved_goals
 
 

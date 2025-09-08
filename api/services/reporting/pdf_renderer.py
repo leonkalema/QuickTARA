@@ -9,6 +9,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+import os
 
 
 def create_styles():
@@ -50,6 +51,9 @@ def build_document_header(scope_info: Dict[str, Any], styles) -> List:
     
     current_date = datetime.now().strftime("%Y-%m-%d %H:%M")
     version = f"v{scope_info.get('version', '1.0')}"
+    org_name = os.environ.get("QUICKTARA_ORG_NAME", "Unknown Organization")
+    tool_name = "QuickTARA"
+    generated_by = scope_info.get('created_by') or os.environ.get("QUICKTARA_GENERATED_BY")
     
     # Title
     story.append(Paragraph("Threat Analysis and Risk Assessment (TARA)", styles['CustomTitle']))
@@ -57,7 +61,9 @@ def build_document_header(scope_info: Dict[str, Any], styles) -> List:
     
     # Product information
     story.append(Paragraph(f"<b>Product:</b> {scope_info.get('name', 'Unknown Product')}", styles['ProductInfo']))
-    story.append(Paragraph(f"<b>Document Version:</b> {version} | <b>Generated:</b> {current_date}", styles['ProductInfo']))
+    story.append(Paragraph(f"<b>Organization:</b> {org_name} | <b>Tool:</b> {tool_name}", styles['ProductInfo']))
+    story.append(Paragraph(f"<b>Generated:</b> {current_date}{f' | <b>By:</b> {generated_by}' if generated_by else ''}", styles['ProductInfo']))
+    story.append(Paragraph(f"<b>Document Version:</b> {version}", styles['ProductInfo']))
     story.append(Paragraph(f"<b>Product Type:</b> {scope_info.get('product_type', 'N/A')} | <b>Safety Level:</b> {scope_info.get('safety_level', 'N/A')}", styles['ProductInfo']))
     
     if scope_info.get('description'):

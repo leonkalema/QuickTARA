@@ -12,6 +12,7 @@ from .data_access import (
     get_assets
 )
 from .sections.damage_section import build_damage_scenarios_section
+from .sections.assets_section import build_assets_section
 from .sections.goals_section import select_approved_goals, build_goals_section
 from .sections.compliance_section import build_compliance_section
 from .pdf_renderer import render_pdf, create_styles
@@ -38,6 +39,9 @@ def build_complete_report(scope_id: str, db: Session) -> bytes:
     
     # Compliance section
     sections.append(build_compliance_section(styles))
+
+    # Assets section (ID, Name, Description)
+    sections.append(build_assets_section(assets, styles))
     
     # Damage scenarios section
     sections.append(build_damage_scenarios_section(damage_scenarios, styles))
