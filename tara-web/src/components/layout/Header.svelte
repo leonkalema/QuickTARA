@@ -10,12 +10,13 @@
     goto('/auth');
   }
 
-  // Only admins should see Settings (superuser, tool_admin, org_admin)
+  // Only admins should see Settings (superuser, tool_admin, org_admin, or admin email)
   let canSeeSettings = false;
   $: {
     const state: any = $authStore;
     const isSuperuser: boolean = !!state?.user?.is_superuser;
-    canSeeSettings = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+    const isAdminEmail: boolean = state?.user?.email === 'admin@quicktara.local';
+    canSeeSettings = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin') || isAdminEmail;
   }
 </script>
 

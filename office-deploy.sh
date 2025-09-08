@@ -101,11 +101,14 @@ echo ""
 # Create default SQLite database (no config needed)
 echo "🗄️  Setting up database..."
 if [ ! -f "quicktara.db" ]; then
+    echo "Creating new database..."
     python quicktara_web.py --db ./quicktara.db --host 127.0.0.1 --port ${API_PORT} &
     SERVER_PID=$!
     sleep 5
     kill $SERVER_PID 2>/dev/null || true
     echo "✅ Database initialized"
+else
+    echo "✅ Existing database found - preserving data"
 fi
 
 echo ""
