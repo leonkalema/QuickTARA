@@ -1,0 +1,40 @@
+# Fly.io configuration for QuickTARA backend-only deployment
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "quicktara"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[[mounts]]
+  source = "data"
+  destination = "/app/data"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["app"]
+
+  [services.concurrency]
+    type = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "10s"
+    grace_period = "20s"
+    method = "get"
+    path = "/api/health"
+    tls_skip_verify = false
