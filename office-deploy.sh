@@ -75,16 +75,17 @@ echo ""
 # Build and start frontend
 echo "🧩 Building QuickTARA frontend..."
 if [ -d "tara-web" ]; then
-  ( 
-    cd tara-web
-    npm install --silent
-    npm run build --silent
-    echo "🌐 Starting QuickTARA frontend..."
-    nohup npm run preview -- --host 0.0.0.0 --port "${FRONTEND_PORT}" > "$HOME/quicktara-frontend.log" 2>&1 &
-    FRONTEND_PID=$!
-  )
+  cd tara-web
+  npm install --silent
+  npm run build --silent
+  echo "🌐 Starting QuickTARA frontend..."
+  nohup npm run preview -- --host 0.0.0.0 --port "${FRONTEND_PORT}" > "$HOME/quicktara-frontend.log" 2>&1 &
+  FRONTEND_PID=$!
+  cd ..
+  echo "Frontend started with PID: $FRONTEND_PID"
 else
   echo "⚠️ 'tara-web' directory not found. Skipping frontend."
+  FRONTEND_PID=""
 fi
 
 echo ""
