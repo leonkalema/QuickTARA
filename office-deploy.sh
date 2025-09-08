@@ -4,10 +4,23 @@ set -e
 echo "🚀 QuickTARA Office Deployment Script"
 echo "======================================"
 
-# Get local IP for LAN access
-LOCAL_IP=$(hostname -I | awk '{print $1}' 2>/dev/null || ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | head -1)
+# Configuration
+FRONTEND_PORT=${FRONTEND_PORT:-4173}
+API_PORT=${API_PORT:-8080}
 
-echo "📍 Detected LAN IP: $LOCAL_IP"
+# Get local IP for LAN access
+get_lan_ip() {
+  if command -v ipconfig >/dev/null 2>&1; then
+    ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "0.0.0.0"
+  elif command -v hostname >/dev/null 2>&1; then
+    hostname -I 2>/dev/null | awk '{print $1}'
+  else
+    echo "0.0.0.0"
+  fi
+}
+LAN_IP="$(get_lan_ip)"
+
+echo "📍 Detected LAN IP: $LAN_IP"
 echo ""
 
 # Check prerequisites
@@ -59,19 +72,27 @@ pip install -r requirements.txt
 
 echo ""
 
-# Build frontend
-echo "🎨 Building frontend..."
-cd tara-web
-npm install
-npm run build
-cd ..
+# Build and start frontend
+echo "🧩 Building QuickTARA frontend..."
+if [ -d "tara-web" ]; then
+  ( 
+    cd tara-web
+    npm install --silent
+    npm run build --silent
+    echo "🌐 Starting QuickTARA frontend..."
+    nohup npm run preview -- --host 0.0.0.0 --port "${FRONTEND_PORT}" > "$HOME/quicktara-frontend.log" 2>&1 &
+    FRONTEND_PID=$!
+  )
+else
+  echo "⚠️ 'tara-web' directory not found. Skipping frontend."
+fi
 
 echo ""
 
 # Create default SQLite database (no config needed)
 echo "🗄️  Setting up database..."
 if [ ! -f "quicktara.db" ]; then
-    python quicktara_web.py --db ./quicktara.db --host 127.0.0.1 --port 8080 &
+    python quicktara_web.py --db ./quicktara.db --host 127.0.0.1 --port ${API_PORT} &
     SERVER_PID=$!
     sleep 5
     kill $SERVER_PID 2>/dev/null || true
@@ -81,12 +102,21 @@ fi
 echo ""
 echo "🎉 Setup complete!"
 echo ""
-echo "🌐 Starting QuickTARA on LAN..."
-echo "   Local access:  http://localhost:8080"
-echo "   LAN access:    http://$LOCAL_IP:8080"
+echo "🚀 QuickTARA is starting..."
+echo "   🖥️  Backend (API):"
+echo "      • Local:  http://localhost:${API_PORT}"
+echo "      • LAN:    http://${LAN_IP}:${API_PORT}"
+if [ -n "${FRONTEND_PID:-}" ]; then
+  echo "   🌐 Frontend (SvelteKit preview):"
+  echo "      • Local:  http://localhost:${FRONTEND_PORT}"
+  echo "      • LAN:    http://${LAN_IP}:${FRONTEND_PORT}"
+  echo "      (log: $HOME/quicktara-frontend.log)"
+else
+  echo "   🌐 Frontend: Not started (tara-web missing)"
+fi
 echo ""
-echo "Press Ctrl+C to stop the server"
+echo "Press Ctrl+C to stop the backend server."
 echo ""
 
 # Start server with LAN access
-python quicktara_web.py --host 0.0.0.0 --port 8080
+python quicktara_web.py --host 0.0.0.0 --port ${API_PORT}
