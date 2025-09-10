@@ -2,8 +2,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+	export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	preview: {
+		allowedHosts: ['beta.quicktara.com']
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
