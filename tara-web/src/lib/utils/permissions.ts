@@ -87,7 +87,7 @@ export function canManageOrganizations(): boolean {
  * Check if current user can view user management pages
  */
 export function canViewUserManagement(): boolean {
-  return canManageUsers();
+  return canManageUsers() || hasRole(UserRole.AUDITOR);
 }
 
 /**
@@ -163,17 +163,38 @@ export function canViewAuditLogs(): boolean {
 }
 
 /**
- * Check if current user has read-only access
+ * Check if current user can view settings pages (for audit purposes)
  */
-export function isReadOnly(): boolean {
-  return hasRole(UserRole.VIEWER) && !hasAnyRole([
+export function canViewSettings(): boolean {
+  return canManageSystemSettings() || canManageOrgSettings() || hasRole(UserRole.AUDITOR);
+}
+
+/**
+ * Check if current user is an auditor (read-only access to most features)
+ */
+export function isAuditor(): boolean {
+  return hasRole(UserRole.AUDITOR) && !hasAnyRole([
     UserRole.TOOL_ADMIN,
     UserRole.ORG_ADMIN,
     UserRole.RISK_MANAGER,
     UserRole.COMPLIANCE_OFFICER,
     UserRole.PRODUCT_OWNER,
     UserRole.SECURITY_ENGINEER,
-    UserRole.TARA_ANALYST,
-    UserRole.AUDITOR
+    UserRole.TARA_ANALYST
+  ]);
+}
+
+/**
+ * Check if current user has read-only access
+ */
+export function isReadOnly(): boolean {
+  return (hasRole(UserRole.VIEWER) || isAuditor()) && !hasAnyRole([
+    UserRole.TOOL_ADMIN,
+    UserRole.ORG_ADMIN,
+    UserRole.RISK_MANAGER,
+    UserRole.COMPLIANCE_OFFICER,
+    UserRole.PRODUCT_OWNER,
+    UserRole.SECURITY_ENGINEER,
+    UserRole.TARA_ANALYST
   ]);
 }

@@ -9,6 +9,7 @@ import {
   canManageRisk,
   canPerformTARA,
   canViewAuditLogs,
+  canViewSettings,
   isToolAdmin,
   isOrgAdmin
 } from './permissions';
@@ -154,6 +155,19 @@ export function requireAuditAccess(): boolean {
   if (!requireAuth()) return false;
   
   if (!canViewAuditLogs()) {
+    redirectToUnauthorized();
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Require settings viewing permissions (includes auditors)
+ */
+export function requireSettingsAccess(): boolean {
+  if (!requireAuth()) return false;
+  
+  if (!canViewSettings()) {
     redirectToUnauthorized();
     return false;
   }
