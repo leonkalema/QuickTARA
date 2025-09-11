@@ -144,6 +144,7 @@ export function canPerformTARA(): boolean {
     UserRole.TOOL_ADMIN,
     UserRole.ORG_ADMIN,
     UserRole.RISK_MANAGER,
+    UserRole.PRODUCT_OWNER,
     UserRole.SECURITY_ENGINEER,
     UserRole.TARA_ANALYST,
     UserRole.AUDITOR
@@ -185,15 +186,28 @@ export function isAuditor(): boolean {
 }
 
 /**
- * Check if current user has read-only access
+ * Check if current user is a product owner (read-only access to TARA workflows)
  */
-export function isReadOnly(): boolean {
-  return (hasRole(UserRole.VIEWER) || isAuditor()) && !hasAnyRole([
+export function isProductOwner(): boolean {
+  return hasRole(UserRole.PRODUCT_OWNER) && !hasAnyRole([
     UserRole.TOOL_ADMIN,
     UserRole.ORG_ADMIN,
     UserRole.RISK_MANAGER,
     UserRole.COMPLIANCE_OFFICER,
-    UserRole.PRODUCT_OWNER,
+    UserRole.SECURITY_ENGINEER,
+    UserRole.TARA_ANALYST
+  ]);
+}
+
+/**
+ * Check if current user has read-only access
+ */
+export function isReadOnly(): boolean {
+  return (hasRole(UserRole.VIEWER) || isAuditor() || isProductOwner()) && !hasAnyRole([
+    UserRole.TOOL_ADMIN,
+    UserRole.ORG_ADMIN,
+    UserRole.RISK_MANAGER,
+    UserRole.COMPLIANCE_OFFICER,
     UserRole.SECURITY_ENGINEER,
     UserRole.TARA_ANALYST
   ]);

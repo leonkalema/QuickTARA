@@ -5,6 +5,7 @@
   import { AssetType, SecurityLevel, type Asset, type CreateAssetRequest } from '../../../lib/types/asset';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
   import { authStore } from '$lib/stores/auth';
+  import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
 
   export let assets: Asset[] = [];
   export let productId: string;
@@ -29,11 +30,7 @@
 
   // Role-based capabilities
   let canManageAssets = false;
-  $: {
-    const state: any = $authStore;
-    const isSuperuser = !!state?.user?.is_superuser;
-    canManageAssets = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
-  }
+  $: canManageAssets = canPerformTARA() && !isReadOnly();
 
   $: newAsset.scope_id = productId;
 

@@ -5,7 +5,7 @@
   import { notifications } from '$lib/stores/notificationStore';
   import { threatScenarioApi } from '$lib/api/threatScenarioApi';
   import { attackPathApi } from '$lib/api/attackPathApi';
-  import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
+  import { canPerformTARA, isReadOnly, isProductOwner } from '$lib/utils/permissions';
   import type { ThreatScenario } from '$lib/types/threatScenario';
   import type { AttackPath, CreateAttackPathRequest, FeasibilityRating } from '$lib/types/attackPath';
   import FeasibilityRatingSelector from '../../components/FeasibilityRatingSelector.svelte';
@@ -78,6 +78,14 @@
       goto('/unauthorized');
       return;
     }
+    
+    // Debug logging for PRODUCT_OWNER permissions
+    console.log('Permission Debug:', {
+      canPerformTARA: canPerformTARA(),
+      isReadOnly: isReadOnly(),
+      isProductOwner: isProductOwner(),
+      canManageRisk: canPerformTARA() && !isReadOnly()
+    });
     
     canManageRisk = canPerformTARA() && !isReadOnly();
     
