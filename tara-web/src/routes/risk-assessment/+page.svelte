@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { selectedProduct } from '$lib/stores/productStore';
   import { notifications } from '$lib/stores/notificationStore';
   import { threatScenarioApi } from '$lib/api/threatScenarioApi';
   import { attackPathApi } from '$lib/api/attackPathApi';
+  import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
   import type { ThreatScenario } from '$lib/types/threatScenario';
   import type { AttackPath, CreateAttackPathRequest, FeasibilityRating } from '$lib/types/attackPath';
   import FeasibilityRatingSelector from '../../components/FeasibilityRatingSelector.svelte';
@@ -16,6 +18,7 @@
   let selectedThreatScenario = '';
   let searchTerm = '';
   let expandedCards: Set<string> = new Set();
+  let canManageRisk = false;
   
   // Form data
   let formData: CreateAttackPathRequest = {
@@ -70,6 +73,14 @@
   }
 
   onMount(async () => {
+    // Check TARA permissions first
+    if (!canPerformTARA()) {
+      goto('/unauthorized');
+      return;
+    }
+    
+    canManageRisk = canPerformTARA() && !isReadOnly();
+    
     if ($selectedProduct?.scope_id) {
       await loadData();
     }
@@ -206,7 +217,7 @@
         </p>
       {/if}
     </div>
-    {#if $selectedProduct && threatScenarios.length > 0 && !loading}
+    {#if $selectedProduct && threatScenarios.length > 0 && !loading && canManageRisk}
       <button
         class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2 self-start"
         on:click={() => startAddAttackPath()}

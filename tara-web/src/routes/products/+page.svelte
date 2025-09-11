@@ -4,6 +4,7 @@
   import { API_BASE_URL } from '$lib/config';
   import { productApi } from '../../lib/api/productApi';
   import type { Product } from '../../lib/types/product';
+  import { goto } from '$app/navigation';
   // Replace Lucide icons with SVG for SSR compatibility
   // import { Plus, Search, Filter, Package, Users, Calendar } from '@lucide/svelte';
   import ProductCard from '../../features/products/components/ProductCard.svelte';
@@ -11,6 +12,7 @@
   import ConfirmationModal from '../../components/ui/ConfirmationModal.svelte';
   import { authStore } from '$lib/stores/auth';
   import { get } from 'svelte/store';
+  import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
 
   let products: Product[] = [];
   let filteredProducts: Product[] = [];
@@ -24,15 +26,22 @@
   
   // Role-based UI control
   let canManageProducts = false;
+  let canViewTARA = false;
   
   // Filters
   let searchQuery = '';
 
   onMount(() => {
+    // Check TARA permissions first
+    canViewTARA = canPerformTARA();
+    if (!canViewTARA) {
+      goto('/unauthorized');
+      return;
+    }
+    
     loadProducts();
-    // Compute role-based permission for product management
-    const isSuperuser = (get(authStore).user as any)?.is_superuser === true;
-    canManageProducts = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+    // Use centralized permission system
+    canManageProducts = canPerformTARA() && !isReadOnly();
   });
 
   async function loadProducts() {

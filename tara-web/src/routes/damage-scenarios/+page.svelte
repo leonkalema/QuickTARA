@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { selectedProduct } from '$lib/stores/productStore';
   import { damageScenarioApi } from '$lib/api/damageScenarioApi';
   import { assetApi } from '$lib/api/assetApi';
   import { notifications } from '$lib/stores/notificationStore';
+  import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
   import DamageScenarioTableNew from '../../features/damage-scenarios/components/DamageScenarioTableNew.svelte';
   import DamageScenarioFilters from '../../components/DamageScenarioFilters.svelte';
   import Pagination from '../../components/Pagination.svelte';
@@ -15,6 +17,7 @@
   let assets: any[] = [];
   let loading = true;
   let error: string | null = null;
+  let canManageScenarios = false;
   
   // Pagination
   let currentPage = 1;
@@ -132,10 +135,16 @@
   }
 
   // Load data when component mounts or when selected product changes
-  onMount(loadData);
-  $: if ($selectedProduct?.scope_id) {
+  onMount(() => {
+    // Check TARA permissions first
+    if (!canPerformTARA()) {
+      goto('/unauthorized');
+      return;
+    }
+    
+    canManageScenarios = canPerformTARA() && !isReadOnly();
     loadData();
-  }
+  });
   
   // Update pagination when filtered scenarios change
   $: if (filteredScenarios) {
@@ -167,7 +176,7 @@
         </p>
       {/if}
     </div>
-    {#if $selectedProduct && assets.length > 0 && !loading}
+    {#if $selectedProduct && assets.length > 0 && !loading && canManageScenarios}
       <button
         class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2 self-start"
         on:click={() => showAddForm = !showAddForm}

@@ -13,11 +13,6 @@
 		goto('/auth');
 	}
 
-	function clearCacheAndReload() {
-		// Clear all authentication data and reload
-		localStorage.clear();
-		location.reload();
-	}
 </script>
 
 <svelte:head>
@@ -39,9 +34,6 @@
 			<button class="btn-secondary" on:click={goBack}>
 				<ArrowLeft class="w-4 h-4" />
 				Go Back
-			</button>
-			<button class="btn-secondary" on:click={clearCacheAndReload}>
-				Clear Cache & Reload
 			</button>
 			<button class="btn-primary" on:click={logout}>
 				Sign Out

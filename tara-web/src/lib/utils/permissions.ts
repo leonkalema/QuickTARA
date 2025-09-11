@@ -145,7 +145,8 @@ export function canPerformTARA(): boolean {
     UserRole.ORG_ADMIN,
     UserRole.RISK_MANAGER,
     UserRole.SECURITY_ENGINEER,
-    UserRole.TARA_ANALYST
+    UserRole.TARA_ANALYST,
+    UserRole.AUDITOR
   ]);
 }
 

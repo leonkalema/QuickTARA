@@ -1,15 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import DatabaseSettings from '$lib/components/settings/DatabaseSettings.svelte';
-	import { authStore } from '$lib/stores/auth';
+	import { requireSystemSettings } from '$lib/utils/routeGuards';
 
 	onMount(() => {
-		// Check authentication
-		if (!$authStore.isAuthenticated) {
-			goto('/auth');
-			return;
-		}
+		// Check authentication and permissions
+		requireSystemSettings();
 	});
 </script>
 

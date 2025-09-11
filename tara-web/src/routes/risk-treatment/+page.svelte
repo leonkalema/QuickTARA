@@ -1,15 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { selectedProduct } from '$lib/stores/productStore';
   import { riskTreatmentApi } from '$lib/api/riskTreatmentApi';
   import type { RiskTreatmentData } from '$lib/api/riskTreatmentApi';
   import { notifications } from '$lib/stores/notificationStore';
   import { authStore } from '$lib/stores/auth';
+  import { canPerformTARA, canManageRisk, isReadOnly } from '$lib/utils/permissions';
 
   let riskTreatmentData: RiskTreatmentData[] = [];
   let loading = false;
   let expandedCards: Set<string> = new Set();
   let canApprove = false;
+  let canManageTreatment = false;
   
   // Filter states
   let selectedRiskFilter = 'All';
@@ -34,6 +37,14 @@
   };
 
   onMount(async () => {
+    // Check TARA permissions first
+    if (!canPerformTARA()) {
+      goto('/unauthorized');
+      return;
+    }
+    
+    canManageTreatment = canManageRisk() && !isReadOnly();
+    
     if ($selectedProduct?.scope_id) {
       await loadData();
     }
@@ -377,8 +388,8 @@
                   <select 
                     id="treatment-select-{damageScenario.scenario_id}"
                     bind:value={damageScenario.selected_treatment}
-                    disabled={damageScenario.treatment_status === 'approved'}
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent {damageScenario.treatment_status === 'approved' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
+                    disabled={damageScenario.treatment_status === 'approved' || !canManageTreatment}
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent {damageScenario.treatment_status === 'approved' || !canManageTreatment ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
                   >
                     <option value="Reducing" selected={suggestedTreatment === 'Reducing'}>Reducing</option>
                     <option value="Retaining" selected={suggestedTreatment === 'Retaining'}>Retaining</option>
@@ -388,6 +399,8 @@
                   <p class="text-xs text-gray-500 mt-1">
                     {#if damageScenario.treatment_status === 'approved'}
                       🔒 Treatment decision is locked (approved)
+                    {:else if !canManageTreatment}
+                      👁️ View-only mode - treatment modifications restricted
                     {:else}
                       Auto-suggested: <span class="font-medium">{suggestedTreatment}</span> (based on {riskLevel} risk level)
                     {/if}
@@ -402,14 +415,16 @@
                   <textarea 
                     id="treatment-goal-{damageScenario.scenario_id}"
                     bind:value={damageScenario.treatment_goal}
-                    disabled={damageScenario.treatment_status === 'approved'}
+                    disabled={damageScenario.treatment_status === 'approved' || !canManageTreatment}
                     rows="3"
                     placeholder={damageScenario.suggested_goal || goalTemplate}
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent placeholder-italic {damageScenario.treatment_status === 'approved' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent placeholder-italic {damageScenario.treatment_status === 'approved' || !canManageTreatment ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
                   ></textarea>
                   <p class="text-xs text-gray-500 mt-1">
                     {#if damageScenario.treatment_status === 'approved'}
                       🔒 Security goal is locked (approved)
+                    {:else if !canManageTreatment}
+                      👁️ View-only mode - goal modifications restricted
                     {:else}
                       Review and edit the auto-generated goal above. This field is mandatory before approval.
                     {/if}
@@ -425,7 +440,7 @@
                       </svg>
                       Treatment Approved
                     </div>
-                  {:else}
+                  {:else if canManageTreatment}
                     <button 
                       on:click={() => saveTreatment(damageScenario, 'draft')}
                       class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
@@ -440,6 +455,14 @@
                         Approve Treatment
                       </button>
                     {/if}
+                  {:else}
+                    <div class="flex items-center text-sm text-gray-500">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      View-only mode
+                    </div>
                   {/if}
                 </div>
               </div>

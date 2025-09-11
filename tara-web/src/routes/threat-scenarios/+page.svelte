@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { selectedProduct } from '$lib/stores/productStore';
   import { notifications } from '$lib/stores/notificationStore';
   import { damageScenarioApi } from '$lib/api/damageScenarioApi';
   import { threatScenarioApi } from '$lib/api/threatScenarioApi';
+  import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
   import type { DamageScenario } from '$lib/types/damageScenario';
   import type { ThreatScenario } from '$lib/types/threatScenario';
   import ThreatScenarioTable from '../../features/threat-scenarios/components/ThreatScenarioTable.svelte';
@@ -13,6 +15,7 @@
   let threatScenarios: ThreatScenario[] = [];
   let loading = false;
   let showAddForm = false;
+  let canManageScenarios = false;
   
   // Pagination
   let currentPage = 1;
@@ -35,6 +38,14 @@
   );
 
   onMount(async () => {
+    // Check TARA permissions first
+    if (!canPerformTARA()) {
+      goto('/unauthorized');
+      return;
+    }
+    
+    canManageScenarios = canPerformTARA() && !isReadOnly();
+    
     if ($selectedProduct?.scope_id) {
       await loadData();
     }
@@ -123,12 +134,14 @@
       </p>
     </div>
     
-    <button
-      on:click={() => showAddForm = !showAddForm}
-      class="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md"
-    >
-      {showAddForm ? 'Cancel' : 'New Threat Scenario'}
-    </button>
+    {#if canManageScenarios}
+      <button
+        on:click={() => showAddForm = !showAddForm}
+        class="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md"
+      >
+        {showAddForm ? 'Cancel' : 'New Threat Scenario'}
+      </button>
+    {/if}
   </div>
 
   {#if !$selectedProduct}
