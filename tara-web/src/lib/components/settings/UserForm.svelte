@@ -19,7 +19,6 @@
 		last_name: string;
 		password: string;
 		confirm_password: string;
-		role: UserRole;
 		status: string;
 		organization_id: string;
 		organization_role: string;
@@ -32,7 +31,6 @@
 		last_name: user?.last_name || '',
 		password: '',
 		confirm_password: '',
-		role: UserRole.TARA_ANALYST,
 		status: user?.status || 'active',
 		organization_id: '',
 		organization_role: ''
@@ -116,14 +114,14 @@
 					first_name: formData.first_name,
 					last_name: formData.last_name,
 					password: formData.password,
-					role: formData.role,
+					role: formData.organization_role as UserRole, // Use org role as user role
 					status: formData.status
 				});
 
 				// Assign user to organization with role
 				if (formData.organization_id && formData.organization_role) {
 					const auth = get(authStore);
-					await fetch(`${API_BASE_URL}/organizations/${formData.organization_id}/members`, {
+					const response = await fetch(`${API_BASE_URL}/organizations/${formData.organization_id}/members`, {
 						method: 'POST',
 						headers: {
 							'Authorization': `Bearer ${auth.token}`,
@@ -133,12 +131,21 @@
 							user_id: newUser.user_id,
 							role: formData.organization_role
 						})
+					}).then(async (res) => {
+						if (!res.ok) {
+							const err = await res.json();
+							throw new Error(err.detail || 'Failed to assign user to organization');
+						}
 					});
 				}
 			}
 			dispatch('saved');
 		} catch (error) {
-			notifications.show(`Failed to ${user ? 'update' : 'create'} user`, 'error');
+			if (error.message.includes('Failed to assign user to organization')) {
+				notifications.show('Failed to assign user to organization. Please try again.', 'error');
+			} else {
+				notifications.show(`Failed to ${user ? 'update' : 'create'} user`, 'error');
+			}
 		} finally {
 			loading = false;
 		}
@@ -249,23 +256,12 @@
 				</div>
 			{/if}
 
-			<div class="form-row">
-				<div class="form-group">
-					<label for="role">Role</label>
-					<select id="role" bind:value={formData.role}>
-						{#each roles as role}
-							<option value={role}>{getUserRoleLabel(role)}</option>
-						{/each}
-					</select>
-				</div>
-
-				<div class="form-group">
-					<label for="status">Status</label>
-					<select id="status" bind:value={formData.status}>
-						<option value="active">Active</option>
-						<option value="inactive">Inactive</option>
-					</select>
-				</div>
+			<div class="form-group">
+				<label for="status">Status</label>
+				<select id="status" bind:value={formData.status}>
+					<option value="active">Active</option>
+					<option value="inactive">Inactive</option>
+				</select>
 			</div>
 
 			{#if !user}

@@ -114,7 +114,7 @@
         first_name: newUser.first_name,
         last_name: newUser.last_name,
         password: newUser.password,
-        role: newUser.role,
+        role: newUser.organization_role.toLowerCase() as UserRole,
         status: newUser.status
       };
 
@@ -132,7 +132,7 @@
             },
             body: JSON.stringify({
               user_id: response.user_id,
-              role: newUser.organization_role
+              role: newUser.organization_role.toLowerCase()
             })
           });
         } catch (orgError) {
@@ -268,10 +268,9 @@
         <input bind:value={newUser.first_name} placeholder="First Name *" type="text" class="px-3 py-2 border rounded-md" />
         <input bind:value={newUser.last_name} placeholder="Last Name *" type="text" class="px-3 py-2 border rounded-md" />
         <input bind:value={newUser.password} placeholder="Password *" type="password" class="px-3 py-2 border rounded-md" />
-        <select bind:value={newUser.role} class="px-3 py-2 border rounded-md">
-          {#each roles as role}
-            <option value={role}>{getUserRoleLabel(role)}</option>
-          {/each}
+        <select bind:value={newUser.status} class="px-3 py-2 border rounded-md">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
         </select>
       </div>
       
