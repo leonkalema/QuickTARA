@@ -1,6 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import { get } from 'svelte/store';
 import { authStore } from '$lib/stores/auth';
+import { isToolAdmin, isOrgAdmin, hasAnyRole } from '$lib/utils/permissions';
+import { UserRole } from '$lib/types/roles';
 
 export interface RouteGuardOptions {
     requireAuth?: boolean;
@@ -59,51 +61,75 @@ export async function authGuard(options: RouteGuardOptions = {}) {
         }
     })();
 
-    // Check roles (compare against backend snake_case roles). Superuser bypasses.
+    // Check roles using centralized permission system
     if (requiredRoles.length > 0) {
-        const userRole = auth.user?.organizations?.[0]?.role;
-        const hasRequiredRole = isSuperuser || (!!userRole && requiredRoles.includes(userRole));
+        const hasRequiredRole = isSuperuser || requiredRoles.some(role => {
+            // Convert old role constants to UserRole enum values
+            const roleMap: Record<string, UserRole> = {
+                [Role.TOOL_ADMIN]: UserRole.TOOL_ADMIN,
+                [Role.ORG_ADMIN]: UserRole.ORG_ADMIN,
+                [Role.RISK_MANAGER]: UserRole.RISK_MANAGER,
+                [Role.TARA_ANALYST]: UserRole.TARA_ANALYST,
+                [Role.SECURITY_ENGINEER]: UserRole.SECURITY_ENGINEER,
+                [Role.COMPLIANCE_OFFICER]: UserRole.COMPLIANCE_OFFICER,
+                [Role.PRODUCT_OWNER]: UserRole.PRODUCT_OWNER,
+                [Role.AUDITOR]: UserRole.AUDITOR,
+                [Role.VIEWER]: UserRole.VIEWER
+            };
+            const userRoleEnum = roleMap[role];
+            return userRoleEnum ? hasAnyRole([userRoleEnum]) : false;
+        });
+        
         if (!hasRequiredRole) {
             throw redirect(302, '/unauthorized');
         }
     }
 
-    // Check permissions. Superuser bypasses.
+    // Check permissions using centralized system
     if (requiredPermissions.length > 0) {
-        if (!isSuperuser) {
-            const userRole = auth.user?.organizations?.[0]?.role;
-            const hasRequiredPermission = userRole === Role.TOOL_ADMIN;
-            if (!hasRequiredPermission) {
-                throw redirect(302, '/unauthorized');
-            }
+        if (!isSuperuser && !isToolAdmin()) {
+            throw redirect(302, '/unauthorized');
         }
     }
 
     return true;
 }
 
-// Predefined guard functions for common use cases
-export const requireAuth = () => authGuard({ requireAuth: true });
+// Predefined guard functions for common use cases using centralized permissions
+export const requireAuth = () => {
+    const auth = get(authStore);
+    if (!auth.isAuthenticated) {
+        throw redirect(302, '/auth');
+    }
+};
 
-export const requireAdmin = () => authGuard({
-    requireAuth: true,
-    requiredRoles: [Role.TOOL_ADMIN]
-});
+export const requireAdmin = () => {
+    requireAuth();
+    if (!isToolAdmin()) {
+        throw redirect(302, '/unauthorized');
+    }
+};
 
-export const requireOrgAdmin = () => authGuard({
-    requireAuth: true,
-    requiredRoles: [Role.TOOL_ADMIN, Role.ORG_ADMIN]
-});
+export const requireOrgAdmin = () => {
+    requireAuth();
+    if (!isOrgAdmin()) {
+        throw redirect(302, '/unauthorized');
+    }
+};
 
-export const requireRiskManager = () => authGuard({
-    requireAuth: true,
-    requiredRoles: [Role.TOOL_ADMIN, Role.ORG_ADMIN, Role.RISK_MANAGER]
-});
+export const requireRiskManager = () => {
+    requireAuth();
+    if (!hasAnyRole([UserRole.TOOL_ADMIN, UserRole.ORG_ADMIN, UserRole.RISK_MANAGER])) {
+        throw redirect(302, '/unauthorized');
+    }
+};
 
-export const requireAnalyst = () => authGuard({
-    requireAuth: true,
-    requiredRoles: [Role.TOOL_ADMIN, Role.ORG_ADMIN, Role.RISK_MANAGER, Role.TARA_ANALYST, Role.SECURITY_ENGINEER]
-});
+export const requireAnalyst = () => {
+    requireAuth();
+    if (!hasAnyRole([UserRole.TOOL_ADMIN, UserRole.ORG_ADMIN, UserRole.RISK_MANAGER, UserRole.TARA_ANALYST, UserRole.SECURITY_ENGINEER])) {
+        throw redirect(302, '/unauthorized');
+    }
+};
 
 // Permission-based guards
 export const requireCreatePermission = () => authGuard({

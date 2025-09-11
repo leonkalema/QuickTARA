@@ -1,15 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import OrganizationSettings from '$lib/components/settings/OrganizationSettings.svelte';
-	import { authStore } from '$lib/stores/auth';
+	import { requireOrgManagement } from '$lib/utils/routeGuards';
 
 	onMount(() => {
-		// Check authentication
-		if (!$authStore.isAuthenticated) {
-			goto('/auth');
-			return;
-		}
+		// Check authentication and permissions
+		requireOrgManagement();
 	});
 </script>
 

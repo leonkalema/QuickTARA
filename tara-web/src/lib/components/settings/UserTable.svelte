@@ -6,6 +6,8 @@
   import { get } from 'svelte/store';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
   import { API_BASE_URL } from '$lib/config';
+  import { UserRole, OrgRole, getAllUserRoles, getAllOrgRoles, getUserRoleLabel, getOrgRoleLabel } from '$lib/types/roles';
+  import { canCreateUsers, canEditUsers, canDeleteUsers } from '$lib/utils/permissions';
 
   export let users: User[] = [];
   export let isAddingNew: boolean = false;
@@ -19,10 +21,10 @@
     first_name: '',
     last_name: '',
     password: '',
-    role: 'tara_analyst',
+    role: UserRole.TARA_ANALYST,
     status: 'active',
     organization_id: '',
-    organization_role: 'TARA_ANALYST'
+    organization_role: OrgRole.TARA_ANALYST
   };
 
   let organizations: Array<{organization_id: string, name: string}> = [];
@@ -37,20 +39,12 @@
   let editingValue = '';
   let isSaving = false;
 
-  const roles = [
-    'tool_admin',
-    'org_admin', 
-    'risk_manager',
-    'tara_analyst',
-    'auditor'
-  ];
+  const roles = getAllUserRoles();
 
-  const orgRoles = [
-    { value: 'VIEWER', label: 'Viewer' },
-    { value: 'TARA_ANALYST', label: 'TARA Analyst' },
-    { value: 'RISK_MANAGER', label: 'Risk Manager' },
-    { value: 'ORG_ADMIN', label: 'Organization Admin' }
-  ];
+  const orgRoles = getAllOrgRoles().map(role => ({
+    value: role,
+    label: getOrgRoleLabel(role)
+  }));
 
   onMount(() => {
     loadOrganizations();
@@ -84,10 +78,10 @@
       first_name: '',
       last_name: '',
       password: '',
-      role: 'tara_analyst',
+      role: UserRole.TARA_ANALYST,
       status: 'active',
       organization_id: organizations.length > 0 ? organizations[0].organization_id : '',
-      organization_role: 'TARA_ANALYST'
+      organization_role: OrgRole.TARA_ANALYST
     };
     dispatch('cancelAdd');
   }
@@ -100,6 +94,16 @@
 
     if (!newUser.password.trim()) {
       notifications.show('Please enter a password', 'error');
+      return;
+    }
+
+    if (!newUser.organization_id) {
+      notifications.show('Please select an organization', 'error');
+      return;
+    }
+
+    if (!newUser.organization_role) {
+      notifications.show('Please select an organization role', 'error');
       return;
     }
 
@@ -256,7 +260,7 @@
 </script>
 
 <div class="space-y-6">
-  {#if isAddingNew}
+  {#if isAddingNew && canCreateUsers()}
     <form on:submit|preventDefault={addNewUser} class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
       <div class="grid grid-cols-2 gap-4 mb-4">
         <input bind:value={newUser.email} placeholder="Email address *" type="email" class="px-3 py-2 border rounded-md" />
@@ -266,7 +270,7 @@
         <input bind:value={newUser.password} placeholder="Password *" type="password" class="px-3 py-2 border rounded-md" />
         <select bind:value={newUser.role} class="px-3 py-2 border rounded-md">
           {#each roles as role}
-            <option value={role}>{role}</option>
+            <option value={role}>{getUserRoleLabel(role)}</option>
           {/each}
         </select>
       </div>
@@ -274,8 +278,8 @@
       <!-- Organization Assignment -->
       <div class="grid grid-cols-2 gap-4 mb-4 p-4 bg-gray-50 rounded-md">
         <div>
-          <label for="org-select" class="block text-sm font-medium text-gray-700 mb-1">Organization</label>
-          <select id="org-select" bind:value={newUser.organization_id} class="px-3 py-2 border rounded-md w-full">
+          <label for="org-select" class="block text-sm font-medium text-gray-700 mb-1">Organization *</label>
+          <select id="org-select" bind:value={newUser.organization_id} class="px-3 py-2 border rounded-md w-full" required>
             <option value="">Select Organization</option>
             {#each organizations as org}
               <option value={org.organization_id}>{org.name}</option>
@@ -283,8 +287,9 @@
           </select>
         </div>
         <div>
-          <label for="org-role-select" class="block text-sm font-medium text-gray-700 mb-1">Organization Role</label>
-          <select id="org-role-select" bind:value={newUser.organization_role} class="px-3 py-2 border rounded-md w-full">
+          <label for="org-role-select" class="block text-sm font-medium text-gray-700 mb-1">Organization Role *</label>
+          <select id="org-role-select" bind:value={newUser.organization_role} class="px-3 py-2 border rounded-md w-full" required>
+            <option value="">Select Role</option>
             {#each orgRoles as role}
               <option value={role.value}>{role.label}</option>
             {/each}
@@ -341,12 +346,16 @@
                 {formatDate(user.created_at)}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <button
-                  on:click={() => confirmDelete(user)}
-                  class="text-red-600 hover:text-red-900"
-                >
-                  Delete
-                </button>
+                {#if canDeleteUsers()}
+                  <button
+                    on:click={() => confirmDelete(user)}
+                    class="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button>
+                {:else}
+                  <span class="text-gray-400">No access</span>
+                {/if}
               </td>
             </tr>
           {/each}

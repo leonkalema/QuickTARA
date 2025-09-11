@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from ..deps.db import get_db
-from ..models.user import User, UserRole, UserStatus, Organization, RefreshToken
+from ..models.user import User, UserRole, UserStatus, Organization, RefreshToken, user_organizations
 from ..auth.security import security_manager, create_user_token_data
 from ..auth.dependencies import get_current_user, require_tool_admin
 
@@ -118,9 +118,43 @@ async def login_user(
             detail="User account is not active"
         )
     
-    # Get user roles and organizations (simplified for now)
-    user_roles = [UserRole.TOOL_ADMIN] if user.is_superuser else [UserRole.TARA_ANALYST]
-    user_orgs = []  # Would query user_organizations table
+    # Get user roles and organizations from database
+    user_roles = []
+    user_orgs = []
+    
+    # Query user's organization memberships using raw SQL to avoid enum validation
+    from sqlalchemy import text
+    org_memberships = db.execute(
+        text("SELECT user_id, organization_id, role FROM user_organizations WHERE user_id = :user_id"),
+        {"user_id": user.user_id}
+    ).fetchall()
+    
+    for membership in org_memberships:
+        # Get organization details
+        org = db.query(Organization).filter(
+            Organization.organization_id == membership.organization_id
+        ).first()
+        
+        if org:
+            user_orgs.append({
+                "organization_id": org.organization_id,
+                "name": org.name,
+                "role": membership.role,
+                "permissions": []  # Can be expanded later
+            })
+            
+            # Add role to user_roles if not already present
+            if membership.role not in [role.value for role in user_roles]:
+                try:
+                    role_enum = UserRole(membership.role)
+                    user_roles.append(role_enum)
+                except ValueError:
+                    # Handle invalid role values gracefully
+                    pass
+    
+    # If user is superuser, ensure they have TOOL_ADMIN role
+    if user.is_superuser and UserRole.TOOL_ADMIN not in user_roles:
+        user_roles.append(UserRole.TOOL_ADMIN)
     
     # Create token data
     token_data = create_user_token_data(
@@ -213,9 +247,42 @@ async def refresh_access_token(
             detail="Invalid refresh token"
         )
     
-    # Generate new access token
-    user_roles = [UserRole.TOOL_ADMIN] if user.is_superuser else [UserRole.TARA_ANALYST]
+    # Generate new access token with updated user data
+    user_roles = []
     user_orgs = []
+    
+    # Query user's organization memberships using raw SQL to avoid enum validation
+    from sqlalchemy import text
+    org_memberships = db.execute(
+        text("SELECT user_id, organization_id, role FROM user_organizations WHERE user_id = :user_id"),
+        {"user_id": user.user_id}
+    ).fetchall()
+    
+    for membership in org_memberships:
+        # Get organization details
+        org = db.query(Organization).filter(
+            Organization.organization_id == membership.organization_id
+        ).first()
+        
+        if org:
+            user_orgs.append({
+                "organization_id": org.organization_id,
+                "name": org.name,
+                "role": membership.role,
+                "permissions": []
+            })
+            
+            # Add role to user_roles if not already present
+            if membership.role not in [role.value for role in user_roles]:
+                try:
+                    role_enum = UserRole(membership.role)
+                    user_roles.append(role_enum)
+                except ValueError:
+                    pass
+    
+    # If user is superuser, ensure they have TOOL_ADMIN role
+    if user.is_superuser and UserRole.TOOL_ADMIN not in user_roles:
+        user_roles.append(UserRole.TOOL_ADMIN)
     
     token_data = create_user_token_data(
         user_id=user.user_id,
@@ -259,6 +326,27 @@ async def get_current_user_info(
 ):
     """Get current user information"""
     
+    # Get user's organization memberships using raw SQL to avoid enum validation
+    user_orgs = []
+    from sqlalchemy import text
+    org_memberships = db.execute(
+        text("SELECT user_id, organization_id, role FROM user_organizations WHERE user_id = :user_id"),
+        {"user_id": current_user.user_id}
+    ).fetchall()
+    
+    for membership in org_memberships:
+        org = db.query(Organization).filter(
+            Organization.organization_id == membership.organization_id
+        ).first()
+        
+        if org:
+            user_orgs.append({
+                "organization_id": org.organization_id,
+                "name": org.name,
+                "role": membership.role,
+                "permissions": []
+            })
+    
     return UserResponse(
         user_id=current_user.user_id,
         email=current_user.email,
@@ -268,7 +356,7 @@ async def get_current_user_info(
         status=current_user.status,
         is_verified=current_user.is_verified,
         created_at=current_user.created_at,
-        organizations=[]  # Would populate from relationships
+        organizations=user_orgs
     )
 
 @router.post("/activate-user/{user_id}")

@@ -1,34 +1,77 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { X } from '@lucide/svelte';
-	import { authApi } from '$lib/api/auth';
+	import { userApi, type User } from '$lib/api/userApi';
 	import { notifications } from '$lib/stores/notifications';
+	import { UserRole, OrgRole, getAllUserRoles, getAllOrgRoles, getUserRoleLabel, getOrgRoleLabel } from '$lib/types/roles';
+	import { API_BASE_URL } from '$lib/config';
+	import { authStore } from '$lib/stores/auth';
+	import { get } from 'svelte/store';
 
-	export let user = null;
+	export let user: User | null = null;
 
 	const dispatch = createEventDispatcher();
 
-	let formData = {
+	interface FormData {
+		email: string;
+		username: string;
+		first_name: string;
+		last_name: string;
+		password: string;
+		confirm_password: string;
+		role: UserRole;
+		status: string;
+		organization_id: string;
+		organization_role: string;
+	}
+
+	let formData: FormData = {
 		email: user?.email || '',
 		username: user?.username || '',
 		first_name: user?.first_name || '',
 		last_name: user?.last_name || '',
 		password: '',
 		confirm_password: '',
-		role: user?.organizations?.[0]?.role || 'Risk Manager',
-		status: user?.status || 'active'
+		role: UserRole.TARA_ANALYST,
+		status: user?.status || 'active',
+		organization_id: '',
+		organization_role: ''
 	};
 
 	let loading = false;
-	let errors = {};
+	let errors: Record<string, string> = {};
 
-	const roles = [
-		'Tool Admin',
-		'Org Admin', 
-		'Risk Manager',
-		'Risk Analyst',
-		'Viewer'
-	];
+	const roles = getAllUserRoles();
+	const orgRoles = getAllOrgRoles();
+	
+	let organizations: Array<{organization_id: string, name: string}> = [];
+
+	onMount(() => {
+		loadOrganizations();
+	});
+
+	async function loadOrganizations() {
+		try {
+			const auth = get(authStore);
+			const response = await fetch(`${API_BASE_URL}/organizations`, {
+				headers: {
+					'Authorization': `Bearer ${auth.token}`,
+					'Content-Type': 'application/json'
+				}
+			});
+			
+			if (response.ok) {
+				organizations = await response.json();
+				// Set default organization if available and not editing existing user
+				if (!user && organizations.length > 0) {
+					formData.organization_id = organizations[0].organization_id;
+					formData.organization_role = OrgRole.TARA_ANALYST;
+				}
+			}
+		} catch (error) {
+			console.error('Failed to load organizations:', error);
+		}
+	}
 
 	function validateForm() {
 		errors = {};
@@ -37,6 +80,12 @@
 		if (!formData.username) errors.username = 'Username is required';
 		if (!formData.first_name) errors.first_name = 'First name is required';
 		if (!formData.last_name) errors.last_name = 'Last name is required';
+		
+		// Organization assignment is mandatory for new users
+		if (!user) {
+			if (!formData.organization_id) errors.organization_id = 'Organization is required';
+			if (!formData.organization_role) errors.organization_role = 'Organization role is required';
+		}
 
 		if (!user) {
 			if (!formData.password) errors.password = 'Password is required';
@@ -54,22 +103,38 @@
 		loading = true;
 		try {
 			if (user) {
-				await authApi.updateUser(user.user_id, {
+				await userApi.updateUser(user.user_id, {
 					email: formData.email,
-					username: formData.username,
 					first_name: formData.first_name,
 					last_name: formData.last_name,
-					status: formData.status
+					is_active: formData.status === 'active'
 				});
 			} else {
-				await authApi.createUser({
+				const newUser = await userApi.createUser({
 					email: formData.email,
 					username: formData.username,
 					first_name: formData.first_name,
 					last_name: formData.last_name,
 					password: formData.password,
-					role: formData.role
+					role: formData.role,
+					status: formData.status
 				});
+
+				// Assign user to organization with role
+				if (formData.organization_id && formData.organization_role) {
+					const auth = get(authStore);
+					await fetch(`${API_BASE_URL}/organizations/${formData.organization_id}/members`, {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${auth.token}`,
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							user_id: newUser.user_id,
+							role: formData.organization_role
+						})
+					});
+				}
 			}
 			dispatch('saved');
 		} catch (error) {
@@ -189,7 +254,7 @@
 					<label for="role">Role</label>
 					<select id="role" bind:value={formData.role}>
 						{#each roles as role}
-							<option value={role}>{role}</option>
+							<option value={role}>{getUserRoleLabel(role)}</option>
 						{/each}
 					</select>
 				</div>
@@ -202,6 +267,45 @@
 					</select>
 				</div>
 			</div>
+
+			{#if !user}
+				<!-- Organization Assignment (Required for new users) -->
+				<div class="form-row">
+					<div class="form-group">
+						<label for="organization">Organization *</label>
+						<select 
+							id="organization" 
+							bind:value={formData.organization_id}
+							class:error={errors.organization_id}
+						>
+							<option value="">Select Organization</option>
+							{#each organizations as org}
+								<option value={org.organization_id}>{org.name}</option>
+							{/each}
+						</select>
+						{#if errors.organization_id}
+							<span class="error-message">{errors.organization_id}</span>
+						{/if}
+					</div>
+
+					<div class="form-group">
+						<label for="org-role">Organization Role *</label>
+						<select 
+							id="org-role" 
+							bind:value={formData.organization_role}
+							class:error={errors.organization_role}
+						>
+							<option value="">Select Role</option>
+							{#each orgRoles as role}
+								<option value={role}>{getOrgRoleLabel(role)}</option>
+							{/each}
+						</select>
+						{#if errors.organization_role}
+							<span class="error-message">{errors.organization_role}</span>
+						{/if}
+					</div>
+				</div>
+			{/if}
 
 			<div class="form-actions">
 				<button type="button" class="btn-secondary" on:click={handleCancel}>

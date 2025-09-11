@@ -28,7 +28,9 @@ export interface CreateUserRequest {
 
 export interface UpdateUserRequest {
   email?: string;
-  full_name?: string;
+  username?: string;
+  first_name?: string;
+  last_name?: string;
   is_active?: boolean;
   role?: string;
 }

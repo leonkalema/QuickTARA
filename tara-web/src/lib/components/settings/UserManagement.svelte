@@ -3,6 +3,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { userApi, type User } from '$lib/api/userApi';
 	import UserTable from './UserTable.svelte';
+	import { canViewUserManagement, canCreateUsers } from '$lib/utils/permissions';
 
 	let users: User[] = [];
 	let loading = false;
@@ -34,6 +35,7 @@
 	}
 </script>
 
+{#if canViewUserManagement()}
 <div class="space-y-6">
 	<!-- Header -->
 	<div class="flex justify-between items-center">
@@ -41,12 +43,14 @@
 			<h2 class="text-2xl font-bold text-gray-900">User Management</h2>
 			<p class="text-gray-600 mt-1">Manage user accounts and permissions</p>
 		</div>
-		<button
-			on:click={() => showAddForm = !showAddForm}
-			class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-		>
-			{showAddForm ? 'Cancel' : 'Add User'}
-		</button>
+		{#if canCreateUsers()}
+			<button
+				on:click={() => showAddForm = !showAddForm}
+				class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+			>
+				{showAddForm ? 'Cancel' : 'Add User'}
+			</button>
+		{/if}
 	</div>
 
 	<!-- Loading State -->
@@ -65,4 +69,13 @@
 		/>
 	{/if}
 </div>
+{:else}
+<div class="flex flex-col items-center justify-center py-12">
+	<div class="text-center">
+		<h2 class="text-xl font-semibold text-gray-900 mb-2">Access Restricted</h2>
+		<p class="text-gray-600">You don't have permission to view user management.</p>
+		<p class="text-sm text-gray-500 mt-2">Contact your administrator if you need access.</p>
+	</div>
+</div>
+{/if}
 

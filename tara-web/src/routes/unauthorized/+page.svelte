@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth';
+	import { goto } from '$app/navigation';
+	import { getUserRoleDisplay } from '$lib/utils/permissions';
 	import { AlertTriangle, ArrowLeft } from '@lucide/svelte';
 
 	function goBack() {
@@ -10,6 +11,12 @@
 	function logout() {
 		authStore.logout();
 		goto('/auth');
+	}
+
+	function clearCacheAndReload() {
+		// Clear all authentication data and reload
+		localStorage.clear();
+		location.reload();
 	}
 </script>
 
@@ -33,6 +40,9 @@
 				<ArrowLeft class="w-4 h-4" />
 				Go Back
 			</button>
+			<button class="btn-secondary" on:click={clearCacheAndReload}>
+				Clear Cache & Reload
+			</button>
 			<button class="btn-primary" on:click={logout}>
 				Sign Out
 			</button>
@@ -45,7 +55,7 @@
 				</p>
 				<p class="text-sm text-gray-600">
 					Role: <strong>
-						{$authStore.user.organizations?.[0]?.role || 'No role assigned'}
+						{getUserRoleDisplay()}
 					</strong>
 				</p>
 			</div>

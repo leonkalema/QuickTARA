@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { authStore } from '$lib/stores/auth';
+  import { selectedProduct } from '$lib/stores/productStore';
+  import { isToolAdmin } from '$lib/utils/permissions';
   import { page } from '$app/stores';
-  import { selectedProduct } from '../../lib/stores/productStore';
-  import { authStore } from '../../lib/stores/auth';
   import { 
     FileText, 
     Package, 
@@ -83,7 +84,7 @@
 
   function isStepAccessible(step: typeof steps[0] | typeof adminSteps[0]) {
     if ('adminOnly' in step && step.adminOnly) {
-      return $authStore.user?.organizations?.[0]?.role === 'Tool Admin';
+      return isToolAdmin();
     }
     if ('requiresProduct' in step && step.requiresProduct) {
       return $selectedProduct !== null;

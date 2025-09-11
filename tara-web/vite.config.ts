@@ -8,6 +8,7 @@ import { defineConfig } from 'vite';
 		allowedHosts: ['beta.quicktara.com']
 	},
 	test: {
+		globals: true,
 		expect: { requireAssertions: true },
 		projects: [
 			{
@@ -20,7 +21,7 @@ import { defineConfig } from 'vite';
 						provider: 'playwright',
 						instances: [{ browser: 'chromium' }]
 					},
-					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+					include: ['src/**/*.svelte.{test,spec}.{js,ts}', 'src/**/components/**/*.{test,spec}.{js,ts}'],
 					exclude: ['src/lib/server/**'],
 					setupFiles: ['./vitest-setup-client.ts']
 				}
@@ -29,9 +30,10 @@ import { defineConfig } from 'vite';
 				extends: './vite.config.ts',
 				test: {
 					name: 'server',
-					environment: 'node',
+					environment: 'jsdom',
 					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}', 'src/**/components/**/*.{test,spec}.{js,ts}'],
+					setupFiles: ['./vitest-setup-server.ts']
 				}
 			}
 		]
