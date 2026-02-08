@@ -134,19 +134,18 @@ async def run_background_analysis(
     return {"status": "Analysis started in background", "analysis_id": analysis_id}
 
 
-@router.post("/generate-scenarios/{scope_id}")
-async def generate_scenarios(
+@router.post("/generate-damage-scenarios/{scope_id}")
+async def generate_damage_scenarios(
     scope_id: str,
     db: Session = Depends(get_db),
 ):
     """
-    Auto-generate damage scenarios and threat scenarios for all assets
-    in the given product. Uses the threat catalog and CIA properties to
-    create candidate scenarios the analyst can review and accept/reject.
+    Step 1: Auto-generate damage scenarios from assets based on CIA properties.
+    Called from the Damage Scenarios page.
     """
     try:
-        from core.generators.scenario_orchestrator import generate_scenarios_for_product
-        result = generate_scenarios_for_product(db, scope_id)
+        from core.generators.scenario_orchestrator import generate_damage_scenarios_for_product
+        result = generate_damage_scenarios_for_product(db, scope_id)
         if result.get("error"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -156,8 +155,37 @@ async def generate_scenarios(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Scenario generation failed for %s: %s", scope_id, str(e))
+        logger.error("Damage scenario generation failed for %s: %s", scope_id, str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Scenario generation failed: {str(e)}",
+            detail=f"Damage scenario generation failed: {str(e)}",
+        )
+
+
+@router.post("/generate-threat-scenarios/{scope_id}")
+async def generate_threat_scenarios(
+    scope_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Step 2: Auto-generate threat scenarios from existing damage scenarios
+    by matching the MITRE ATT&CK ICS threat catalog. Requires damage
+    scenarios to exist first.
+    """
+    try:
+        from core.generators.scenario_orchestrator import generate_threat_scenarios_for_product
+        result = generate_threat_scenarios_for_product(db, scope_id)
+        if result.get("error"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["error"],
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Threat scenario generation failed for %s: %s", scope_id, str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Threat scenario generation failed: {str(e)}",
         )

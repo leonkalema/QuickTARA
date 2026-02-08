@@ -236,6 +236,24 @@ async def update_threat_scenario(
     return db_threat_scenario
 
 
+@router.patch("/{threat_scenario_id}/accept", response_model=ThreatScenario)
+async def accept_threat_scenario(
+    threat_scenario_id: str,
+    db: Session = Depends(get_db),
+):
+    """Accept a draft threat scenario (move from draft → accepted)."""
+    scenario = db.query(DBThreatScenario).filter(
+        DBThreatScenario.threat_scenario_id == threat_scenario_id,
+        DBThreatScenario.is_deleted == False,
+    ).first()
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Threat scenario not found")
+    scenario.status = "accepted"
+    db.commit()
+    db.refresh(scenario)
+    return scenario
+
+
 @router.delete("/{threat_scenario_id}")
 async def delete_threat_scenario(
     threat_scenario_id: str,

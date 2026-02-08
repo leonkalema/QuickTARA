@@ -128,15 +128,15 @@
     if (!$selectedProduct?.scope_id) return;
     isGenerating = true;
     try {
-      const result = await scenarioGeneratorApi.generateScenarios($selectedProduct.scope_id);
+      const result = await scenarioGeneratorApi.generateThreatScenarios($selectedProduct.scope_id);
       notifications.show(
-        `Generated ${result.damage_scenarios_created} damage + ${result.threat_scenarios_created} threat scenarios from ${result.assets_processed} assets`,
+        `Generated ${result.threat_scenarios_created} threat scenarios from ${result.damage_scenarios_used} damage scenarios`,
         'success',
       );
       await loadData();
     } catch (error: any) {
       console.error('Auto-generation failed:', error);
-      notifications.show(error.message || 'Auto-generation failed', 'error');
+      notifications.show(error.message || 'Auto-generation failed. Do you have damage scenarios?', 'error');
     } finally {
       isGenerating = false;
     }
@@ -250,7 +250,7 @@
       {currentPage}
       totalItems={filteredScenarios.length}
       {itemsPerPage}
-      on:pageChange={(e) => currentPage = e.detail}
+      on:pageChange={(e) => currentPage = e.detail.page}
     />
   {/if}
 </div>

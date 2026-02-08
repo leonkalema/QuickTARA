@@ -318,6 +318,9 @@ class DamageScenario(Base):
     operational_impact = Column(String, default="negligible")
     privacy_impact = Column(String, default="negligible")
     
+    # Review status: draft (auto-generated) or accepted (reviewed by analyst)
+    status = Column(String, default="accepted", nullable=False)
+    
     # Versioning & Traceability
     version = Column(Integer, default=1, nullable=False)
     is_current = Column(Boolean, default=True, nullable=False)

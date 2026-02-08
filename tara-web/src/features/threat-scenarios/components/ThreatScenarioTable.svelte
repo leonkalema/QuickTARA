@@ -156,6 +156,20 @@
     isDeleting = false;
   }
 
+  async function acceptScenario(scenario: ThreatScenario) {
+    try {
+      await threatScenarioApi.acceptScenario(scenario.threat_scenario_id);
+      const index = threatScenarios.findIndex(s => s.threat_scenario_id === scenario.threat_scenario_id);
+      if (index !== -1) {
+        threatScenarios[index] = { ...threatScenarios[index], status: 'accepted' };
+        threatScenarios = [...threatScenarios];
+      }
+      notifications.show('Threat scenario accepted', 'success');
+    } catch (error) {
+      notifications.show('Failed to accept scenario', 'error');
+    }
+  }
+
   // Inline editing functions
   function startEdit(scenario: ThreatScenario, field: string) {
     editingCell = { scenarioId: scenario.threat_scenario_id, field };
@@ -285,9 +299,12 @@
                     disabled={isSaving}
                   />
                 {:else}
-                  <div class="text-sm font-medium text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded break-words" 
+                  <div class="text-sm font-medium text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded break-words flex items-center gap-2" 
                        on:click={() => startEdit(scenario, 'name')}>
                     {scenario.name}
+                    {#if scenario.status === 'draft'}
+                      <span class="px-1.5 py-0.5 text-xs rounded bg-amber-100 text-amber-700 font-normal">Draft</span>
+                    {/if}
                   </div>
                 {/if}
               </td>
@@ -347,14 +364,14 @@
                 {/if}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                {#if canDelete}
-                  <button
-                    on:click={() => confirmDelete(scenario)}
-                    class="text-red-600 hover:text-red-900 ml-4"
-                  >
-                    Delete
-                  </button>
-                {/if}
+                <div class="flex items-center justify-end gap-2">
+                  {#if scenario.status === 'draft'}
+                    <button on:click={() => acceptScenario(scenario)} class="text-green-600 hover:text-green-800 font-medium">Accept</button>
+                  {/if}
+                  {#if canDelete}
+                    <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900">Delete</button>
+                  {/if}
+                </div>
               </td>
             </tr>
           {/each}

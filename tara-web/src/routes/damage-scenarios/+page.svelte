@@ -7,6 +7,7 @@
   import { notifications } from '$lib/stores/notificationStore';
   import { authStore } from '$lib/stores/auth';
   import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
+  import { scenarioGeneratorApi } from '$lib/api/scenarioGeneratorApi';
   import DamageScenarioTableNew from '../../features/damage-scenarios/components/DamageScenarioTableNew.svelte';
   import DamageScenarioFilters from '../../components/DamageScenarioFilters.svelte';
   import Pagination from '../../components/Pagination.svelte';
@@ -19,6 +20,7 @@
   let loading = true;
   let error: string | null = null;
   let canManageScenarios = false;
+  let isGenerating = false;
   
   // Pagination
   let currentPage = 1;
@@ -131,6 +133,24 @@
     applyFilters();
   }
 
+  async function handleAutoGenerate() {
+    if (!$selectedProduct?.scope_id) return;
+    isGenerating = true;
+    try {
+      const result = await scenarioGeneratorApi.generateDamageScenarios($selectedProduct.scope_id);
+      notifications.show(
+        `Generated ${result.damage_scenarios_created} damage scenarios from ${result.assets_processed} assets`,
+        'success',
+      );
+      await loadData();
+    } catch (err: any) {
+      console.error('Auto-generation failed:', err);
+      notifications.show(err.message || 'Auto-generation failed', 'error');
+    } finally {
+      isGenerating = false;
+    }
+  }
+
   function handleFilterChange() {
     applyFilters();
   }
@@ -180,15 +200,29 @@
       {/if}
     </div>
     {#if $selectedProduct && assets.length > 0 && !loading && canManageScenarios}
-      <button
-        class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2 self-start"
-        on:click={() => showAddForm = !showAddForm}
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        <span>{showAddForm ? 'Cancel' : 'New Scenario'}</span>
-      </button>
+      <div class="flex gap-3 self-start">
+        <button
+          on:click={handleAutoGenerate}
+          disabled={isGenerating}
+          class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
+        >
+          {#if isGenerating}
+            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+            <span>Generating...</span>
+          {:else}
+            <span>&#9889; Auto-Generate from Assets</span>
+          {/if}
+        </button>
+        <button
+          class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2"
+          on:click={() => showAddForm = !showAddForm}
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          <span>{showAddForm ? 'Cancel' : 'New Scenario'}</span>
+        </button>
+      </div>
     {/if}
   </div>
 

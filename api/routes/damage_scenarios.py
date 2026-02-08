@@ -149,6 +149,24 @@ async def delete_damage_scenario(
     return None
 
 
+@router.patch("/{scenario_id}/accept", response_model=DamageScenario)
+async def accept_damage_scenario(
+    scenario_id: str,
+    db: Session = Depends(get_db),
+):
+    """Accept a draft damage scenario (move from draft → accepted)."""
+    from db.product_asset_models import DamageScenario as DBDamageScenario
+    scenario = db.query(DBDamageScenario).filter(
+        DBDamageScenario.scenario_id == scenario_id,
+    ).first()
+    if not scenario:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    scenario.status = "accepted"
+    db.commit()
+    db.refresh(scenario)
+    return scenario
+
+
 @router.get("/propagation/suggestions", response_model=PropagationSuggestionResponse)
 async def get_propagation_suggestions(
     component_id: str,

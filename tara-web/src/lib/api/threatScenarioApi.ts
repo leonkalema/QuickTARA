@@ -84,6 +84,13 @@ export const threatScenarioApi = {
     }
   },
 
+  async acceptScenario(threatScenarioId: string): Promise<ThreatScenario> {
+    const response = await fetch(`${API_BASE_URL}/threat-scenarios/${threatScenarioId}/accept`, {
+      method: 'PATCH',
+    });
+    return this.handleResponse<ThreatScenario>(response);
+  },
+
   async getLinkedDamageScenarios(threatScenarioId: string): Promise<string[]> {
     const response = await fetch(`${API_BASE_URL}/threat-scenarios/${threatScenarioId}/damage-scenarios`);
     if (!response.ok) {

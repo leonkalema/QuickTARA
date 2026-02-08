@@ -29,58 +29,133 @@ from core.generators.threat_scenario_generator import (
 logger = logging.getLogger(__name__)
 
 
-def generate_scenarios_for_product(
+def generate_damage_scenarios_for_product(
     db: Session,
     scope_id: str,
 ) -> Dict[str, Any]:
     """
-    Auto-generate damage scenarios and threat scenarios for all assets in a product.
-    Returns a summary of what was generated.
+    Step 1: Generate damage scenarios from assets based on CIA properties.
+    Called from the Damage Scenarios page.
     """
     product = _get_product(db, scope_id)
     if not product:
         return {"error": f"Product '{scope_id}' not found"}
-
     assets = _get_assets(db, scope_id)
     if not assets:
         return {"error": "No assets found for this product", "scope_id": scope_id}
-
     templates = load_templates()
-    product_name = product.name
-    trust_zone = product.trust_zone
-
     all_damage: List[Dict[str, Any]] = []
-    all_threats: List[Dict[str, Any]] = []
-
     for asset in assets:
         asset_dict = _asset_to_dict(asset)
-
-        damage_scenarios = generate_for_asset(asset_dict, product_name, templates)
+        damage_scenarios = generate_for_asset(asset_dict, product.name, templates)
         all_damage.extend(damage_scenarios)
-
-        matched_threats = find_matching_catalog_threats(db, asset_dict, trust_zone)
-        threat_scenarios = generate_threat_scenarios(
-            matched_threats, damage_scenarios, asset_dict, scope_id,
-        )
-        all_threats.extend(threat_scenarios)
-
     damage_saved = _save_damage_scenarios(db, all_damage, scope_id)
-    threat_saved = _save_threat_scenarios(db, all_threats)
-
     logger.info(
-        "Auto-generated %d damage + %d threat scenarios for product '%s'",
-        damage_saved, threat_saved, scope_id,
+        "Auto-generated %d damage scenarios for product '%s'",
+        damage_saved, scope_id,
     )
-
     return {
         "scope_id": scope_id,
-        "product_name": product_name,
+        "product_name": product.name,
         "assets_processed": len(assets),
         "damage_scenarios_created": damage_saved,
-        "threat_scenarios_created": threat_saved,
-        "damage_scenarios": all_damage,
-        "threat_scenarios": all_threats,
     }
+
+
+def generate_threat_scenarios_for_product(
+    db: Session,
+    scope_id: str,
+) -> Dict[str, Any]:
+    """
+    Step 2: Generate threat scenarios from existing damage scenarios
+    by matching the threat catalog. Called from the Threat Scenarios page.
+    """
+    product = _get_product(db, scope_id)
+    if not product:
+        return {"error": f"Product '{scope_id}' not found"}
+    assets = _get_assets(db, scope_id)
+    if not assets:
+        return {"error": "No assets found for this product", "scope_id": scope_id}
+    existing_damage = _get_existing_damage_scenarios(db, scope_id)
+    if not existing_damage:
+        return {"error": "No damage scenarios found. Generate damage scenarios first.", "scope_id": scope_id}
+    all_threats: List[Dict[str, Any]] = []
+    for asset in assets:
+        asset_dict = _asset_to_dict(asset)
+        asset_damage = _filter_damage_for_asset(existing_damage, asset_dict["asset_id"])
+        if not asset_damage:
+            continue
+        matched_threats = find_matching_catalog_threats(db, asset_dict, product.trust_zone)
+        threat_scenarios = generate_threat_scenarios(
+            matched_threats, asset_damage, asset_dict, scope_id,
+        )
+        all_threats.extend(threat_scenarios)
+    threat_saved = _save_threat_scenarios(db, all_threats)
+    logger.info(
+        "Auto-generated %d threat scenarios for product '%s'",
+        threat_saved, scope_id,
+    )
+    return {
+        "scope_id": scope_id,
+        "product_name": product.name,
+        "assets_processed": len(assets),
+        "damage_scenarios_used": len(existing_damage),
+        "threat_scenarios_created": threat_saved,
+    }
+
+
+def generate_scenarios_for_product(
+    db: Session,
+    scope_id: str,
+) -> Dict[str, Any]:
+    """Convenience: run both steps in sequence."""
+    damage_result = generate_damage_scenarios_for_product(db, scope_id)
+    if damage_result.get("error"):
+        return damage_result
+    threat_result = generate_threat_scenarios_for_product(db, scope_id)
+    return {
+        "scope_id": scope_id,
+        "product_name": damage_result.get("product_name", ""),
+        "assets_processed": damage_result.get("assets_processed", 0),
+        "damage_scenarios_created": damage_result.get("damage_scenarios_created", 0),
+        "threat_scenarios_created": threat_result.get("threat_scenarios_created", 0),
+    }
+
+
+def _get_existing_damage_scenarios(
+    db: Session, scope_id: str,
+) -> List[Dict[str, Any]]:
+    """Fetch existing damage scenarios for a product and convert to dicts."""
+    rows = (
+        db.query(DBDamageScenario)
+        .filter(DBDamageScenario.scope_id == scope_id)
+        .all()
+    )
+    result: List[Dict[str, Any]] = []
+    for ds in rows:
+        cia_dimension = "integrity"
+        if ds.confidentiality_impact:
+            cia_dimension = "confidentiality"
+        elif ds.availability_impact:
+            cia_dimension = "availability"
+        result.append({
+            "scenario_id": ds.scenario_id,
+            "name": ds.name,
+            "cia_dimension": cia_dimension,
+            "primary_component_id": ds.primary_component_id,
+        })
+    return result
+
+
+def _filter_damage_for_asset(
+    damage_scenarios: List[Dict[str, Any]],
+    asset_id: str,
+) -> List[Dict[str, Any]]:
+    """Filter damage scenarios linked to a specific asset."""
+    return [
+        ds for ds in damage_scenarios
+        if ds.get("primary_component_id") == asset_id
+    ]
 
 
 def _get_product(db: Session, scope_id: str):
@@ -140,6 +215,7 @@ def _save_damage_scenarios(
             scope_id=scope_id,
             primary_component_id=s.get("primary_component_id"),
             violated_properties=_build_violated_properties(s),
+            status="draft",
             version=1,
             is_current=True,
             created_at=datetime.now(),
@@ -170,6 +246,7 @@ def _save_threat_scenarios(
             scope_id=s["scope_id"],
             scope_version=s.get("scope_version", 1),
             damage_scenario_id=s["damage_scenario_id"],
+            status="draft",
         )
         db.add(db_scenario)
         saved += 1

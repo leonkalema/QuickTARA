@@ -87,6 +87,13 @@ class DamageScenarioApi {
     return this.handleResponse<DamageScenario>(response);
   }
 
+  async acceptScenario(id: string): Promise<DamageScenario> {
+    const response = await fetch(`${API_BASE_URL}/damage-scenarios/${id}/accept`, {
+      method: 'PATCH',
+    });
+    return this.handleResponse<DamageScenario>(response);
+  }
+
   async delete(id: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/damage-scenarios/${id}`, {
       method: 'DELETE',

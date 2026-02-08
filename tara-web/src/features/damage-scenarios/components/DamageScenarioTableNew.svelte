@@ -179,6 +179,20 @@
     isDeleting = false;
   }
 
+  async function acceptScenario(scenario: DamageScenario) {
+    try {
+      const updated = await damageScenarioApi.acceptScenario(scenario.scenario_id);
+      const index = damageScenarios.findIndex(s => s.scenario_id === scenario.scenario_id);
+      if (index !== -1) {
+        damageScenarios[index] = { ...damageScenarios[index], status: 'accepted' };
+        damageScenarios = [...damageScenarios];
+      }
+      notifications.show('Scenario accepted', 'success');
+    } catch (error) {
+      notifications.show('Failed to accept scenario', 'error');
+    }
+  }
+
   // Inline editing functions
   function startEdit(scenario: DamageScenario, field: string) {
     editingCell = { scenarioId: scenario.scenario_id, field };
@@ -322,7 +336,12 @@
                   <input bind:value={editingValue} on:keydown={(e) => handleKeyPress(e, scenario, 'name')} on:blur={() => saveEdit(scenario, 'name')} class="w-full px-2 py-1 border border-blue-300 rounded" disabled={isSaving} autofocus />
                 {:else}
                   <button on:click={() => startEdit(scenario, 'name')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded">
-                    <div class="text-sm font-medium text-gray-900">{scenario.name}</div>
+                    <div class="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      {scenario.name}
+                      {#if scenario.status === 'draft'}
+                        <span class="px-1.5 py-0.5 text-xs rounded bg-amber-100 text-amber-700 font-normal">Draft</span>
+                      {/if}
+                    </div>
                   </button>
                 {/if}
                 {#if editingCell?.scenarioId === scenario.scenario_id && editingCell?.field === 'description'}
@@ -368,9 +387,14 @@
                 <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(getOverallSfopRating(scenario))}">{getOverallSfopRating(scenario)}</span>
               </td>
               <td class="px-4 py-3">
-                {#if canDelete}
-                  <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900 text-sm">Delete</button>
-                {/if}
+                <div class="flex items-center gap-2">
+                  {#if scenario.status === 'draft'}
+                    <button on:click={() => acceptScenario(scenario)} class="text-green-600 hover:text-green-800 text-sm font-medium">Accept</button>
+                  {/if}
+                  {#if canDelete}
+                    <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                  {/if}
+                </div>
               </td>
             </tr>
           {/each}

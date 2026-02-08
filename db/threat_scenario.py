@@ -29,6 +29,9 @@ class ThreatScenario(Base):
     version = Column(Integer, default=1, nullable=False)
     revision_notes = Column(Text, nullable=True)
     
+    # Review status: draft (auto-generated) or accepted (reviewed by analyst)
+    status = Column(String(20), default="accepted", nullable=False)
+    
     # Status and audit
     is_deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

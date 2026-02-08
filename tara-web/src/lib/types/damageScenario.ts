@@ -31,6 +31,7 @@ export interface DamageScenario {
   privacy_impact?: ImpactRatingLevel;
   version: number;
   revision_notes?: string;
+  status: 'draft' | 'accepted';
   is_deleted: boolean;
   created_at: string;
   updated_at: string;

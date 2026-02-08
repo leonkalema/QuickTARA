@@ -170,6 +170,7 @@ class DamageScenario(DamageScenarioBase):
     version: int = Field(..., description="Version number")
     revision_notes: Optional[str] = Field(None, description="Notes about this revision")
     is_deleted: bool = Field(default=False, description="Soft delete flag")
+    status: str = Field(default="accepted", description="Review status: draft or accepted")
     created_at: datetime
     updated_at: datetime
     
