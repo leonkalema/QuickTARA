@@ -132,3 +132,32 @@ async def run_background_analysis(
     # This is a placeholder for future implementation of background tasks
     # Will be useful for very large analyses that take a long time to complete
     return {"status": "Analysis started in background", "analysis_id": analysis_id}
+
+
+@router.post("/generate-scenarios/{scope_id}")
+async def generate_scenarios(
+    scope_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Auto-generate damage scenarios and threat scenarios for all assets
+    in the given product. Uses the threat catalog and CIA properties to
+    create candidate scenarios the analyst can review and accept/reject.
+    """
+    try:
+        from core.generators.scenario_orchestrator import generate_scenarios_for_product
+        result = generate_scenarios_for_product(db, scope_id)
+        if result.get("error"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result["error"],
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Scenario generation failed for %s: %s", scope_id, str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Scenario generation failed: {str(e)}",
+        )

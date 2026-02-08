@@ -7,6 +7,7 @@
   import { threatScenarioApi } from '$lib/api/threatScenarioApi';
   import { authStore } from '$lib/stores/auth';
   import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
+  import { scenarioGeneratorApi } from '$lib/api/scenarioGeneratorApi';
   import type { DamageScenario } from '$lib/types/damageScenario';
   import type { ThreatScenario } from '$lib/types/threatScenario';
   import ThreatScenarioTable from '../../features/threat-scenarios/components/ThreatScenarioTable.svelte';
@@ -17,6 +18,7 @@
   let loading = false;
   let showAddForm = false;
   let canManageScenarios = false;
+  let isGenerating = false;
   
   // Pagination
   let currentPage = 1;
@@ -121,6 +123,24 @@
     const scenario = damageScenarios.find(ds => ds.scenario_id === damageScenarioId);
     return scenario?.name || 'Unknown Damage Scenario';
   }
+
+  async function handleAutoGenerate() {
+    if (!$selectedProduct?.scope_id) return;
+    isGenerating = true;
+    try {
+      const result = await scenarioGeneratorApi.generateScenarios($selectedProduct.scope_id);
+      notifications.show(
+        `Generated ${result.damage_scenarios_created} damage + ${result.threat_scenarios_created} threat scenarios from ${result.assets_processed} assets`,
+        'success',
+      );
+      await loadData();
+    } catch (error: any) {
+      console.error('Auto-generation failed:', error);
+      notifications.show(error.message || 'Auto-generation failed', 'error');
+    } finally {
+      isGenerating = false;
+    }
+  }
 </script>
 
 <div class="container mx-auto px-6 py-8">
@@ -137,12 +157,26 @@
     </div>
     
     {#if canManageScenarios}
-      <button
-        on:click={() => showAddForm = !showAddForm}
-        class="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md"
-      >
-        {showAddForm ? 'Cancel' : 'New Threat Scenario'}
-      </button>
+      <div class="flex gap-3">
+        <button
+          on:click={handleAutoGenerate}
+          disabled={isGenerating}
+          class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md flex items-center gap-2"
+        >
+          {#if isGenerating}
+            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+            Generating...
+          {:else}
+            &#9889; Auto-Generate Scenarios
+          {/if}
+        </button>
+        <button
+          on:click={() => showAddForm = !showAddForm}
+          class="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-md"
+        >
+          {showAddForm ? 'Cancel' : 'New Threat Scenario'}
+        </button>
+      </div>
     {/if}
   </div>
 

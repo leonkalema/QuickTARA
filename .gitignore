@@ -7,9 +7,11 @@ project-info/
 # Do NOT track the local data directory or its contents
 # (analysis results, sample datasets, etc.)
 data/
-# Exception: curated threat catalog data ships with the app
+# Exception: curated data that ships with the app
 !data/threat_catalogs/
 !data/threat_catalogs/**
+!data/templates/
+!data/templates/**
 # But exclude raw STIX bundles (large, dev-only)
 data/threat_catalogs/ics-attack.json
 
