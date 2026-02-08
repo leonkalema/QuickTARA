@@ -123,7 +123,7 @@ describe('UserTable - Organization Assignment', () => {
         const roleSelect = screen.getByLabelText(/Organization Role \*/);
         expect(roleSelect).toContainHTML('Tool Admin');
         expect(roleSelect).toContainHTML('Organization Admin');
-        expect(roleSelect).toContainHTML('TARA Analyst');
+        expect(roleSelect).toContainHTML('Analyst');
         expect(roleSelect).toContainHTML('Viewer');
       });
     });
@@ -279,7 +279,7 @@ describe('UserTable - Organization Assignment', () => {
         target: { value: 'org1' } 
       });
       await fireEvent.change(screen.getByLabelText(/Organization Role \*/), { 
-        target: { value: OrgRole.TARA_ANALYST } 
+        target: { value: OrgRole.ANALYST } 
       });
       
       const submitButton = screen.getByText('Add User');
@@ -292,7 +292,7 @@ describe('UserTable - Organization Assignment', () => {
           first_name: 'Test',
           last_name: 'User',
           password: 'password123',
-          role: UserRole.TARA_ANALYST,
+          role: UserRole.ANALYST,
           status: 'active'
         });
       });
@@ -338,9 +338,9 @@ describe('UserTable - Organization Assignment', () => {
         const orgSelect = screen.getByLabelText(/Organization \*/) as HTMLSelectElement;
         const roleSelect = screen.getByLabelText(/Organization Role \*/) as HTMLSelectElement;
         
-        // Should default to first organization and TARA_ANALYST role
+        // Should default to first organization and ANALYST role
         expect(orgSelect.value).toBe('org1');
-        expect(roleSelect.value).toBe(OrgRole.TARA_ANALYST);
+        expect(roleSelect.value).toBe(OrgRole.ANALYST);
       });
     });
   });

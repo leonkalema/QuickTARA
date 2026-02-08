@@ -5,6 +5,7 @@
   import { notifications } from '$lib/stores/notificationStore';
   import { damageScenarioApi } from '$lib/api/damageScenarioApi';
   import { threatScenarioApi } from '$lib/api/threatScenarioApi';
+  import { authStore } from '$lib/stores/auth';
   import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
   import type { DamageScenario } from '$lib/types/damageScenario';
   import type { ThreatScenario } from '$lib/types/threatScenario';
@@ -37,15 +38,16 @@
     currentPage * itemsPerPage
   );
 
-  onMount(async () => {
-    // Check TARA permissions first
-    if (!canPerformTARA()) {
-      goto('/unauthorized');
-      return;
-    }
-    
+  // Reactive permission checks - wait for auth to be initialized
+  $: if ($authStore.isInitialized) {
     canManageScenarios = canPerformTARA() && !isReadOnly();
     
+    if ($authStore.isAuthenticated && !canPerformTARA()) {
+      goto('/unauthorized');
+    }
+  }
+
+  onMount(async () => {
     if ($selectedProduct?.scope_id) {
       await loadData();
     }

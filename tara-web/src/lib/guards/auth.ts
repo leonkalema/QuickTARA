@@ -11,15 +11,12 @@ export interface RouteGuardOptions {
     redirectTo?: string;
 }
 
-// Backend role values (snake_case)
+// Backend role values (snake_case) - simplified 6 roles
 export const Role = {
     TOOL_ADMIN: 'tool_admin',
     ORG_ADMIN: 'org_admin',
+    ANALYST: 'analyst',
     RISK_MANAGER: 'risk_manager',
-    TARA_ANALYST: 'tara_analyst',
-    SECURITY_ENGINEER: 'security_engineer',
-    COMPLIANCE_OFFICER: 'compliance_officer',
-    PRODUCT_OWNER: 'product_owner',
     AUDITOR: 'auditor',
     VIEWER: 'viewer'
 } as const;
@@ -64,15 +61,12 @@ export async function authGuard(options: RouteGuardOptions = {}) {
     // Check roles using centralized permission system
     if (requiredRoles.length > 0) {
         const hasRequiredRole = isSuperuser || requiredRoles.some(role => {
-            // Convert old role constants to UserRole enum values
+            // Convert role constants to UserRole enum values
             const roleMap: Record<string, UserRole> = {
                 [Role.TOOL_ADMIN]: UserRole.TOOL_ADMIN,
                 [Role.ORG_ADMIN]: UserRole.ORG_ADMIN,
+                [Role.ANALYST]: UserRole.ANALYST,
                 [Role.RISK_MANAGER]: UserRole.RISK_MANAGER,
-                [Role.TARA_ANALYST]: UserRole.TARA_ANALYST,
-                [Role.SECURITY_ENGINEER]: UserRole.SECURITY_ENGINEER,
-                [Role.COMPLIANCE_OFFICER]: UserRole.COMPLIANCE_OFFICER,
-                [Role.PRODUCT_OWNER]: UserRole.PRODUCT_OWNER,
                 [Role.AUDITOR]: UserRole.AUDITOR,
                 [Role.VIEWER]: UserRole.VIEWER
             };
@@ -126,7 +120,7 @@ export const requireRiskManager = () => {
 
 export const requireAnalyst = () => {
     requireAuth();
-    if (!hasAnyRole([UserRole.TOOL_ADMIN, UserRole.ORG_ADMIN, UserRole.RISK_MANAGER, UserRole.TARA_ANALYST, UserRole.SECURITY_ENGINEER])) {
+    if (!hasAnyRole([UserRole.ORG_ADMIN, UserRole.ANALYST, UserRole.RISK_MANAGER])) {
         throw redirect(302, '/unauthorized');
     }
 };

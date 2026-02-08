@@ -47,7 +47,7 @@ describe('Permission Utils', () => {
         isAuthenticated: false
       });
 
-      expect(hasRole(UserRole.TARA_ANALYST)).toBe(false);
+      expect(hasRole(UserRole.ANALYST)).toBe(false);
     });
 
     it('should return false for superuser without matching role', () => {
@@ -56,7 +56,7 @@ describe('Permission Utils', () => {
         isAuthenticated: true
       });
 
-      expect(hasRole(UserRole.TARA_ANALYST)).toBe(false);
+      expect(hasRole(UserRole.ANALYST)).toBe(false);
       expect(hasRole(UserRole.VIEWER)).toBe(false);
     });
 
@@ -78,14 +78,14 @@ describe('Permission Utils', () => {
         user: {
           is_superuser: false,
           organizations: [
-            { role: 'tara_analyst' }, // Backend uses lowercase
+            { role: 'analyst' }, // Backend uses lowercase
             { role: 'viewer' }
           ]
         },
         isAuthenticated: true
       });
 
-      expect(hasRole(UserRole.TARA_ANALYST)).toBe(true);
+      expect(hasRole(UserRole.ANALYST)).toBe(true);
       expect(hasRole(UserRole.VIEWER)).toBe(true);
       expect(hasRole(UserRole.ORG_ADMIN)).toBe(false);
     });
@@ -109,15 +109,15 @@ describe('Permission Utils', () => {
         user: {
           is_superuser: false,
           organizations: [
-            { role: 'tara_analyst' },
+            { role: 'analyst' },
             { role: 'viewer' }
           ]
         },
         isAuthenticated: true
       });
 
-      expect(hasAnyRole([UserRole.TARA_ANALYST, UserRole.ORG_ADMIN])).toBe(true);
-      expect(hasAnyRole([UserRole.RISK_MANAGER, UserRole.COMPLIANCE_OFFICER])).toBe(false);
+      expect(hasAnyRole([UserRole.ANALYST, UserRole.ORG_ADMIN])).toBe(true);
+      expect(hasAnyRole([UserRole.RISK_MANAGER, UserRole.AUDITOR])).toBe(false);
     });
   });
 
@@ -176,7 +176,7 @@ describe('Permission Utils', () => {
       mockGet.mockReturnValue({
         user: {
           is_superuser: false,
-          organizations: [{ role: UserRole.TARA_ANALYST }]
+          organizations: [{ role: UserRole.ANALYST }]
         },
         isAuthenticated: true
       });
@@ -211,7 +211,7 @@ describe('Permission Utils', () => {
       mockGet.mockReturnValue({
         user: {
           is_superuser: false,
-          organizations: [{ role: UserRole.TARA_ANALYST }]
+          organizations: [{ role: UserRole.ANALYST }]
         },
         isAuthenticated: true
       });
@@ -263,11 +263,9 @@ describe('Permission Utils', () => {
   describe('canPerformTARA', () => {
     it('should return true for TARA-related roles', () => {
       const taraRoles = [
-        UserRole.TOOL_ADMIN,
         UserRole.ORG_ADMIN,
-        UserRole.RISK_MANAGER,
-        UserRole.SECURITY_ENGINEER,
-        UserRole.TARA_ANALYST
+        UserRole.ANALYST,
+        UserRole.RISK_MANAGER
       ];
 
       taraRoles.forEach(role => {
@@ -313,7 +311,7 @@ describe('Permission Utils', () => {
       mockGet.mockReturnValue({
         user: {
           is_superuser: false,
-          organizations: [{ role: UserRole.TARA_ANALYST }]
+          organizations: [{ role: UserRole.ANALYST }]
         },
         isAuthenticated: true
       });

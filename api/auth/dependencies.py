@@ -31,8 +31,9 @@ async def get_current_user(
             detail="User not found"
         )
     
-    # Check if user is active
-    if user.status != "active":
+    # Check if user is active (case-insensitive)
+    user_status = (user.status.value if hasattr(user.status, 'value') else str(user.status)).lower()
+    if user_status != "active":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account is not active"
@@ -42,7 +43,8 @@ async def get_current_user(
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """Get current active user (additional validation)"""
-    if current_user.status != "active":
+    user_status = (current_user.status.value if hasattr(current_user.status, 'value') else str(current_user.status)).lower()
+    if user_status != "active":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"

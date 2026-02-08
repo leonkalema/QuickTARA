@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-	<title>Organizations - QuickTARA</title>
+	<title>Departments - QuickTARA</title>
 </svelte:head>
 
 <OrganizationSettings />

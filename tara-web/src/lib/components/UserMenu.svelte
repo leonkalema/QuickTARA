@@ -33,23 +33,23 @@
 			});
 			unsubscribe();
 
-			// Call logout API if we have a refresh token
+			// Call logout API if we have a refresh token (don't await - fire and forget)
 			if (refreshToken) {
-				await authApi.logout(refreshToken);
+				authApi.logout(refreshToken).catch(() => {});
 			}
 		} catch (error) {
-			console.warn('Logout API call failed:', error);
-			// Continue with local logout even if API fails
+			// Ignore API errors
 		}
 
-		// Clear auth store
+		// Clear auth store immediately
 		authStore.logout();
 		
-		// Dispatch logout event
-		dispatch('logout');
-		
+		// Close dropdown and reset state
 		isLoggingOut = false;
 		closeDropdown();
+		
+		// Dispatch logout event and redirect
+		dispatch('logout');
 	}
 
 	// Close dropdown when clicking outside

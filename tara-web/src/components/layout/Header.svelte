@@ -5,10 +5,15 @@
   import { authStore } from '$lib/stores/auth';
   import { get } from 'svelte/store';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
 
   function handleLogout() {
     goto('/auth');
   }
+
+  // Hide product selector on settings pages
+  let isSettingsPage = false;
+  $: isSettingsPage = $page.url.pathname.startsWith('/settings');
 
   // Only admins should see Settings (superuser, tool_admin, org_admin, or admin email)
   let canSeeSettings = false;
@@ -24,7 +29,7 @@
   <div class="flex items-center justify-between">
     <!-- Logo and Brand -->
     <div class="flex items-center space-x-6">
-      <a href="/products" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+      <a href="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
         <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
           <span class="text-white font-bold text-sm">QT</span>
         </div>
@@ -33,8 +38,10 @@
         </div>
       </a>
       
-      <!-- Product Selector -->
-      <ProductSelector />
+      <!-- Product Selector - hide on settings pages -->
+      {#if !isSettingsPage}
+        <ProductSelector />
+      {/if}
     </div>
 
     <!-- User Menu -->

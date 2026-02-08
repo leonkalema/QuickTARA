@@ -5,7 +5,8 @@
   import { notifications } from '$lib/stores/notificationStore';
   import { threatScenarioApi } from '$lib/api/threatScenarioApi';
   import { attackPathApi } from '$lib/api/attackPathApi';
-  import { canPerformTARA, isReadOnly, isProductOwner } from '$lib/utils/permissions';
+  import { canPerformTARA, isReadOnly, isAnalyst } from '$lib/utils/permissions';
+  import { authStore } from '$lib/stores/auth';
   import type { ThreatScenario } from '$lib/types/threatScenario';
   import type { AttackPath, CreateAttackPathRequest, FeasibilityRating } from '$lib/types/attackPath';
   import FeasibilityRatingSelector from '../../components/FeasibilityRatingSelector.svelte';
@@ -72,23 +73,16 @@
     return 'bg-blue-100 text-blue-800';                    // Very High
   }
 
-  onMount(async () => {
-    // Check TARA permissions first
-    if (!canPerformTARA()) {
-      goto('/unauthorized');
-      return;
-    }
-    
-    // Debug logging for PRODUCT_OWNER permissions
-    console.log('Permission Debug:', {
-      canPerformTARA: canPerformTARA(),
-      isReadOnly: isReadOnly(),
-      isProductOwner: isProductOwner(),
-      canManageRisk: canPerformTARA() && !isReadOnly()
-    });
-    
+  // Reactive permission checks - wait for auth to be initialized
+  $: if ($authStore.isInitialized) {
     canManageRisk = canPerformTARA() && !isReadOnly();
     
+    if ($authStore.isAuthenticated && !canPerformTARA()) {
+      goto('/unauthorized');
+    }
+  }
+
+  onMount(async () => {
     if ($selectedProduct?.scope_id) {
       await loadData();
     }

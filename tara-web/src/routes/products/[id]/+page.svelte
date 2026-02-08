@@ -4,6 +4,8 @@
   import { goto } from '$app/navigation';
   import { selectedProduct } from '../../../lib/stores/productStore';
   import { notifications } from '../../../lib/stores/notificationStore';
+  import { productPermissions } from '../../../lib/stores/productPermissions';
+  import type { CreateProductRequest, Product, ProductPermissions } from '../../../lib/types/product';
   import { 
     ArrowLeft, 
     Edit, 
@@ -13,22 +15,76 @@
     MapPin, 
     Calendar,
     User,
-    FileText
+    Lock
   } from '@lucide/svelte';
   import { productApi } from '../../../lib/api/productApi';
+  import { authStore } from '$lib/stores/auth';
+  import { API_BASE_URL } from '$lib/config';
+  import { get } from 'svelte/store';
+  import ProductQuickActions from '../../../features/products/components/ProductQuickActions.svelte';
+  import ProductDetailsGrid from '../../../features/products/components/ProductDetailsGrid.svelte';
+  import { notifyProductsChanged } from '$lib/stores/productEvents';
 
-  let product: any = null;
+  type OrganizationOption = {
+    organizationId: string;
+    name: string;
+  };
+
+  let product: Product | null = null;
   let loading = true;
   let error = '';
   let isEditing = false;
-  let editedProduct: any = {};
+  let editedProduct: Partial<CreateProductRequest> = {};
   let isSaving = false;
+  let permissions: ProductPermissions | null = null;
+
+  let organizations: OrganizationOption[] = [];
+  let selectedOrganizationId = '';
+  let isLoadingOrganizations = false;
 
   $: productId = $page.params.id;
 
   onMount(async () => {
     await loadProduct();
   });
+
+  const getAuthToken = (): string | null => {
+    const auth = get(authStore);
+    const tokenFromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    return auth.token ?? tokenFromStorage;
+  };
+
+  const loadOrganizations = async (): Promise<void> => {
+    isLoadingOrganizations = true;
+    try {
+      const auth = get(authStore);
+      const isSuperuser = (auth.user as { is_superuser?: boolean } | null)?.is_superuser === true;
+      const isToolAdmin = isSuperuser || authStore.hasRole('tool_admin');
+      const orgsFromUser = auth.user?.organizations ?? [];
+      if (!isToolAdmin) {
+        organizations = orgsFromUser.map((o) => ({ organizationId: o.organization_id, name: o.name }));
+      } else {
+        const token = getAuthToken();
+        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE_URL}/organizations`, { headers });
+        if (response.ok) {
+          const data = (await response.json()) as { organizations?: Array<{ organization_id: string; name: string }> };
+          const orgList = data.organizations ?? [];
+          organizations = orgList.map((o) => ({ organizationId: o.organization_id, name: o.name }));
+        } else {
+          organizations = [];
+        }
+      }
+      if (!selectedOrganizationId && organizations.length === 1) {
+        selectedOrganizationId = organizations[0]?.organizationId ?? '';
+      }
+    } catch {
+      organizations = [];
+    } finally {
+      isLoadingOrganizations = false;
+    }
+  };
 
   async function loadProduct() {
     if (!productId) return;
@@ -40,6 +96,9 @@
       product = await productApi.getById(productId);
       // Auto-select this product when viewing details
       selectedProduct.set(product);
+      // Fetch permissions for this product
+      permissions = await productPermissions.fetchPermissions(productId);
+      selectedOrganizationId = product.organization_id ?? '';
     } catch (err) {
       error = 'Failed to load product details';
       console.error('Error loading product:', err);
@@ -55,25 +114,36 @@
     } else {
       // Enter edit mode
       isEditing = true;
-      editedProduct = { ...product };
+      editedProduct = { ...(product ?? {}) };
+      loadOrganizations();
     }
   }
 
   function cancelEdit() {
     isEditing = false;
     editedProduct = {};
+    selectedOrganizationId = product?.organization_id ?? '';
   }
 
   async function saveProduct() {
     if (!productId) return;
-    
+    if (!selectedOrganizationId) {
+      notifications.show('Department is required', 'error');
+      return;
+    }
     isSaving = true;
     try {
-      const updatedProduct = await productApi.update(productId, editedProduct);
+      const payload: Partial<CreateProductRequest> = {
+        ...editedProduct,
+        organization_id: selectedOrganizationId
+      };
+      const updatedProduct = await productApi.update(productId, payload);
       product = updatedProduct;
       selectedProduct.set(updatedProduct);
+      notifyProductsChanged();
       isEditing = false;
       editedProduct = {};
+      selectedOrganizationId = updatedProduct.organization_id ?? '';
       notifications.show('Product updated successfully!', 'success');
     } catch (err) {
       notifications.show('Failed to update product', 'error');
@@ -96,6 +166,19 @@
       default: return 'bg-gray-100 text-gray-800';
     }
   }
+
+  const formatCreatedAt = (createdAt: string | undefined): string => {
+    if (!createdAt) return 'Unknown';
+    return new Date(createdAt).toLocaleDateString();
+  };
+
+  const getOrganizationName = (organizationId: string | undefined): string => {
+    if (!organizationId) return 'Unassigned';
+    const auth = get(authStore);
+    const orgs = auth.user?.organizations ?? [];
+    const match = orgs.find((o) => o.organization_id === organizationId);
+    return match?.name ?? 'Unassigned';
+  };
 </script>
 
 <svelte:head>
@@ -148,6 +231,11 @@
             <span class="px-2 py-1 text-xs font-medium rounded-full {getStatusColor('production')}">
               {product.product_type}
             </span>
+            {#if !isEditing}
+              <span class="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+                {getOrganizationName(product.organization_id)}
+              </span>
+            {/if}
           </div>
           
           {#if isEditing}
@@ -157,6 +245,23 @@
               placeholder="Product description"
               rows="3"
             ></textarea>
+            <div class="mb-4">
+              <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
+                Department *
+              </label>
+              <select
+                id="department"
+                bind:value={selectedOrganizationId}
+                required
+                disabled={isLoadingOrganizations}
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">{isLoadingOrganizations ? 'Loading departments...' : 'Select department'}</option>
+                {#each organizations as org (org.organizationId)}
+                  <option value={org.organizationId}>{org.name}</option>
+                {/each}
+              </select>
+            </div>
           {:else if product.description}
             <p class="text-gray-600 mb-4">{product.description}</p>
           {/if}
@@ -171,10 +276,10 @@
                   class="ml-1 bg-transparent border border-gray-300 rounded px-2 py-1 focus:border-blue-500 outline-none"
                 >
                   <option value="QM">QM</option>
-                  <option value="ASIL-A">ASIL-A</option>
-                  <option value="ASIL-B">ASIL-B</option>
-                  <option value="ASIL-C">ASIL-C</option>
-                  <option value="ASIL-D">ASIL-D</option>
+                  <option value="ASIL A">ASIL A</option>
+                  <option value="ASIL B">ASIL B</option>
+                  <option value="ASIL C">ASIL C</option>
+                  <option value="ASIL D">ASIL D</option>
                 </select>
               {:else}
                 {product.safety_level}
@@ -195,13 +300,19 @@
             </div>
             <div class="flex items-center">
               <Calendar class="w-4 h-4 mr-1" />
-              Created: {new Date(product.created_at).toLocaleDateString()}
+              Created: {formatCreatedAt(product.created_at)}
             </div>
           </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="flex items-center space-x-2">
+          {#if permissions?.role}
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+              Your role: {permissions.role}
+            </span>
+          {/if}
+          
           {#if isEditing}
             <button
               on:click={cancelEdit}
@@ -221,7 +332,7 @@
                 Save
               {/if}
             </button>
-          {:else}
+          {:else if permissions?.can_edit}
             <button
               on:click={handleEdit}
               class="flex items-center px-3 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
@@ -229,164 +340,29 @@
               <Edit class="w-4 h-4 mr-2" />
               Edit
             </button>
+          {:else}
+            <div class="flex items-center px-3 py-2 text-gray-400 bg-gray-50 rounded-lg">
+              <Lock class="w-4 h-4 mr-2" />
+              View Only
+            </div>
+          {/if}
+          
+          {#if permissions?.can_delete}
+            <button
+              on:click={() => { /* TODO: implement delete */ }}
+              class="flex items-center px-3 py-2 text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+            >
+              <Trash2 class="w-4 h-4 mr-2" />
+              Delete
+            </button>
           {/if}
         </div>
       </div>
     </div>
 
-    <!-- Product Details Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Technical Details -->
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Technical Details</h2>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Product ID</label>
-            <p class="text-sm text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded">{product.scope_id}</p>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Trust Zone</label>
-            <p class="text-sm text-gray-900">{product.trust_zone || 'Standard'}</p>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Version</label>
-            <p class="text-sm text-gray-900">{product.version || 1}</p>
-          </div>
-        </div>
-      </div>
+    <ProductDetailsGrid {product} />
 
-      <!-- Configuration -->
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Configuration</h2>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Interfaces</label>
-            {#if product.interfaces && product.interfaces.length > 0}
-              <div class="flex flex-wrap gap-2">
-                {#each product.interfaces as productInterface}
-                  <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">{productInterface}</span>
-                {/each}
-              </div>
-            {:else}
-              <p class="text-sm text-gray-500">No interfaces defined</p>
-            {/if}
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Access Points</label>
-            {#if product.access_points && product.access_points.length > 0}
-              <div class="flex flex-wrap gap-2">
-                {#each product.access_points as point}
-                  <span class="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">{point}</span>
-                {/each}
-              </div>
-            {:else}
-              <p class="text-sm text-gray-500">No access points defined</p>
-            {/if}
-          </div>
-        </div>
-      </div>
-
-      <!-- Analysis Scope -->
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Analysis Scope</h2>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Boundaries</label>
-            {#if product.boundaries && product.boundaries.length > 0}
-              <ul class="text-sm text-gray-900 space-y-1">
-                {#each product.boundaries as boundary}
-                  <li class="flex items-start">
-                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                    {boundary}
-                  </li>
-                {/each}
-              </ul>
-            {:else}
-              <p class="text-sm text-gray-500">No boundaries defined</p>
-            {/if}
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Objectives</label>
-            {#if product.objectives && product.objectives.length > 0}
-              <ul class="text-sm text-gray-900 space-y-1">
-                {#each product.objectives as objective}
-                  <li class="flex items-start">
-                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                    {objective}
-                  </li>
-                {/each}
-              </ul>
-            {:else}
-              <p class="text-sm text-gray-500">No objectives defined</p>
-            {/if}
-          </div>
-        </div>
-      </div>
-
-      <!-- Stakeholders -->
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Stakeholders</h2>
-        
-        {#if product.stakeholders && product.stakeholders.length > 0}
-          <div class="space-y-2">
-            {#each product.stakeholders as stakeholder}
-              <div class="flex items-center">
-                <User class="w-4 h-4 text-gray-400 mr-2" />
-                <span class="text-sm text-gray-900">{stakeholder}</span>
-              </div>
-            {/each}
-          </div>
-        {:else}
-          <p class="text-sm text-gray-500">No stakeholders defined</p>
-        {/if}
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-      <h3 class="text-lg font-semibold text-blue-900 mb-4">Next Steps</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <a
-          href="/assets"
-          class="flex items-center p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-300 transition-colors"
-        >
-          <Package class="w-5 h-5 text-blue-600 mr-3" />
-          <div>
-            <div class="font-medium text-blue-900">Manage Assets</div>
-            <div class="text-sm text-blue-700">Add system components</div>
-          </div>
-        </a>
-        
-        <a
-          href="/damage-scenarios"
-          class="flex items-center p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-300 transition-colors"
-        >
-          <Shield class="w-5 h-5 text-blue-600 mr-3" />
-          <div>
-            <div class="font-medium text-blue-900">Damage Scenarios</div>
-            <div class="text-sm text-blue-700">Define potential damages</div>
-          </div>
-        </a>
-        
-        <a
-          href="/reports"
-          class="flex items-center p-4 bg-white rounded-lg border border-blue-200 hover:border-blue-300 transition-colors"
-        >
-          <FileText class="w-5 h-5 text-blue-600 mr-3" />
-          <div>
-            <div class="font-medium text-blue-900">Generate Report</div>
-            <div class="text-sm text-blue-700">Export analysis results</div>
-          </div>
-        </a>
-      </div>
-    </div>
+    <ProductQuickActions />
   {:else}
     <div class="text-center py-12">
       <p class="text-gray-500">Product not found</p>

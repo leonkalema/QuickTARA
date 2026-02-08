@@ -8,15 +8,12 @@ import uuid
 Base = declarative_base()
 
 class UserRole(str, enum.Enum):
-    TOOL_ADMIN = "tool_admin"
-    ORG_ADMIN = "org_admin"
-    RISK_MANAGER = "risk_manager"
-    COMPLIANCE_OFFICER = "compliance_officer"
-    PRODUCT_OWNER = "product_owner"
-    SECURITY_ENGINEER = "security_engineer"
-    TARA_ANALYST = "tara_analyst"
-    AUDITOR = "auditor"
-    VIEWER = "viewer"
+    TOOL_ADMIN = "tool_admin"      # System administration only
+    ORG_ADMIN = "org_admin"        # Full access within organization (includes product management)
+    ANALYST = "analyst"            # TARA analysis work: assets, damage/threat scenarios, attack paths
+    RISK_MANAGER = "risk_manager"  # Risk approvals and treatments
+    AUDITOR = "auditor"            # Read-only access + compliance review
+    VIEWER = "viewer"              # Read-only access to assigned products
 
 class UserStatus(str, enum.Enum):
     ACTIVE = "active"
@@ -134,48 +131,57 @@ ROLE_PERMISSIONS = {
         "users:create", "users:read", "users:update", "users:delete",
         "organizations:create", "organizations:read", "organizations:update", "organizations:delete",
         "system:configure", "system:backup", "system:monitor",
-        "*:*"  # Full system access
+        "audit_trail:read", "templates:*"
     ],
     UserRole.ORG_ADMIN: [
-        "users:create", "users:read", "users:update", "users:delete",  # Within org only
+        # User management within org
+        "users:create", "users:read", "users:update", "users:delete",
+        # Full product/asset management (includes Product Owner capabilities)
         "products:create", "products:read", "products:update", "products:delete",
+        "assets:create", "assets:read", "assets:update", "assets:delete",
+        # Full analysis capabilities
+        "damage_scenarios:create", "damage_scenarios:read", "damage_scenarios:update", "damage_scenarios:delete",
+        "threat_scenarios:create", "threat_scenarios:read", "threat_scenarios:update", "threat_scenarios:delete",
+        "attack_paths:create", "attack_paths:read", "attack_paths:update", "attack_paths:delete",
+        "risk_treatments:create", "risk_treatments:read", "risk_treatments:update", "risk_treatments:delete",
+        # Reports and settings
         "reports:generate", "reports:read",
         "org_settings:update"
     ],
-    UserRole.RISK_MANAGER: [
-        "risk_treatments:approve", "risk_treatments:read", "risk_treatments:update",
-        "damage_scenarios:read", "threat_scenarios:read",
-        "reports:read", "reports:generate",
-        "risk_acceptance:approve"
-    ],
-    UserRole.COMPLIANCE_OFFICER: [
-        "reports:generate", "reports:read", "reports:approve",
-        "compliance:review", "compliance:audit",
-        "damage_scenarios:read", "threat_scenarios:read", "risk_treatments:read",
-        "audit_trail:read"
-    ],
-    UserRole.PRODUCT_OWNER: [
-        "products:create", "products:read", "products:update",
-        "assets:create", "assets:read", "assets:update",
-        "damage_scenarios:read", "risk_treatments:read",
-        "reports:read"
-    ],
-    UserRole.SECURITY_ENGINEER: [
-        "threat_scenarios:create", "threat_scenarios:read", "threat_scenarios:update",
-        "attack_paths:create", "attack_paths:read", "attack_paths:update",
-        "damage_scenarios:read", "damage_scenarios:update",
-        "risk_treatments:create", "risk_treatments:read", "risk_treatments:update"
-    ],
-    UserRole.TARA_ANALYST: [
-        "damage_scenarios:create", "damage_scenarios:read", "damage_scenarios:update",
-        "threat_scenarios:create", "threat_scenarios:read", "threat_scenarios:update",
-        "attack_paths:create", "attack_paths:read", "attack_paths:update",
+    UserRole.ANALYST: [
+        # Asset management
+        "assets:create", "assets:read", "assets:update", "assets:delete",
+        # Full TARA analysis work
+        "damage_scenarios:create", "damage_scenarios:read", "damage_scenarios:update", "damage_scenarios:delete",
+        "threat_scenarios:create", "threat_scenarios:read", "threat_scenarios:update", "threat_scenarios:delete",
+        "attack_paths:create", "attack_paths:read", "attack_paths:update", "attack_paths:delete",
         "risk_treatments:create", "risk_treatments:read", "risk_treatments:update",
-        "assets:read", "products:read"
+        # Read access to products
+        "products:read",
+        # Reports access
+        "reports:read", "reports:generate"
+    ],
+    UserRole.RISK_MANAGER: [
+        # Risk approvals
+        "risk_treatments:approve", "risk_treatments:read", "risk_treatments:update",
+        "risk_acceptance:approve",
+        # Read access to analysis data
+        "damage_scenarios:read", "threat_scenarios:read", "attack_paths:read",
+        "products:read", "assets:read",
+        # Reports
+        "reports:generate", "reports:read"
     ],
     UserRole.AUDITOR: [
+        # Read-only access to everything + compliance
+        "products:read", "assets:read",
         "damage_scenarios:read", "threat_scenarios:read", "attack_paths:read",
         "risk_treatments:read", "reports:read", "audit_trail:read",
-        "products:read", "assets:read"
+        "compliance:review", "compliance:audit"
+    ],
+    UserRole.VIEWER: [
+        # Read-only access to assigned products
+        "products:read", "assets:read",
+        "damage_scenarios:read", "threat_scenarios:read",
+        "reports:read"
     ]
 }

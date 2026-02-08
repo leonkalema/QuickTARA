@@ -63,7 +63,7 @@
 				// Set default organization if available and not editing existing user
 				if (!user && organizations.length > 0) {
 					formData.organization_id = organizations[0].organization_id;
-					formData.organization_role = OrgRole.TARA_ANALYST;
+					formData.organization_role = OrgRole.ANALYST;
 				}
 			}
 		} catch (error) {
@@ -129,7 +129,7 @@
 						},
 						body: JSON.stringify({
 							user_id: newUser.user_id,
-							role: formData.organization_role
+							role: formData.organization_role.toLowerCase()
 						})
 					}).then(async (res) => {
 						if (!res.ok) {

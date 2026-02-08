@@ -5,6 +5,7 @@
   import { damageScenarioApi } from '$lib/api/damageScenarioApi';
   import { assetApi } from '$lib/api/assetApi';
   import { notifications } from '$lib/stores/notificationStore';
+  import { authStore } from '$lib/stores/auth';
   import { canPerformTARA, isReadOnly } from '$lib/utils/permissions';
   import DamageScenarioTableNew from '../../features/damage-scenarios/components/DamageScenarioTableNew.svelte';
   import DamageScenarioFilters from '../../components/DamageScenarioFilters.svelte';
@@ -134,15 +135,17 @@
     applyFilters();
   }
 
+  // Reactive permission checks - wait for auth to be initialized
+  $: if ($authStore.isInitialized) {
+    canManageScenarios = canPerformTARA() && !isReadOnly();
+    
+    if ($authStore.isAuthenticated && !canPerformTARA()) {
+      goto('/unauthorized');
+    }
+  }
+
   // Load data when component mounts or when selected product changes
   onMount(() => {
-    // Check TARA permissions first
-    if (!canPerformTARA()) {
-      goto('/unauthorized');
-      return;
-    }
-    
-    canManageScenarios = canPerformTARA() && !isReadOnly();
     loadData();
   });
   

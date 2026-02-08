@@ -56,9 +56,9 @@ export function getPrimaryRole(): UserRole | null {
     return null;
   }
 
-  // Convert backend role format (lowercase) to frontend format (uppercase)
+  // Normalize backend role to lowercase to match UserRole enum values
   const backendRole = auth.user.organizations[0]?.role;
-  return backendRole ? backendRole.toUpperCase() as UserRole : null;
+  return backendRole ? backendRole.toLowerCase() as UserRole : null;
 }
 
 /**
@@ -77,9 +77,16 @@ export function canManageUsers(): boolean {
 }
 
 /**
- * Check if current user can manage organizations (Tool Admin only)
+ * Check if current user can manage organizations (Tool Admin or Org Admin)
  */
 export function canManageOrganizations(): boolean {
+  return isToolAdmin() || isOrgAdmin();
+}
+
+/**
+ * Check if current user can manage system settings (Tool Admin only)
+ */
+export function canManageSystemSettings(): boolean {
   return isToolAdmin();
 }
 
@@ -112,13 +119,6 @@ export function canDeleteUsers(): boolean {
 }
 
 /**
- * Check if current user can manage system settings
- */
-export function canManageSystemSettings(): boolean {
-  return isToolAdmin();
-}
-
-/**
  * Check if current user can manage organization settings
  */
 export function canManageOrgSettings(): boolean {
@@ -137,17 +137,13 @@ export function canManageRisk(): boolean {
 }
 
 /**
- * Check if current user can perform TARA analysis
+ * Check if current user can perform TARA analysis (Analyst role)
  */
 export function canPerformTARA(): boolean {
   return hasAnyRole([
-    UserRole.TOOL_ADMIN,
     UserRole.ORG_ADMIN,
-    UserRole.RISK_MANAGER,
-    UserRole.PRODUCT_OWNER,
-    UserRole.SECURITY_ENGINEER,
-    UserRole.TARA_ANALYST,
-    UserRole.AUDITOR
+    UserRole.ANALYST,
+    UserRole.RISK_MANAGER
   ]);
 }
 
@@ -158,7 +154,6 @@ export function canViewAuditLogs(): boolean {
   return hasAnyRole([
     UserRole.TOOL_ADMIN,
     UserRole.ORG_ADMIN,
-    UserRole.COMPLIANCE_OFFICER,
     UserRole.AUDITOR
   ]);
 }
@@ -177,38 +172,26 @@ export function isAuditor(): boolean {
   return hasRole(UserRole.AUDITOR) && !hasAnyRole([
     UserRole.TOOL_ADMIN,
     UserRole.ORG_ADMIN,
-    UserRole.RISK_MANAGER,
-    UserRole.COMPLIANCE_OFFICER,
-    UserRole.PRODUCT_OWNER,
-    UserRole.SECURITY_ENGINEER,
-    UserRole.TARA_ANALYST
+    UserRole.ANALYST,
+    UserRole.RISK_MANAGER
   ]);
 }
 
 /**
- * Check if current user is a product owner (read-only access to TARA workflows)
+ * Check if current user is an analyst
  */
-export function isProductOwner(): boolean {
-  return hasRole(UserRole.PRODUCT_OWNER) && !hasAnyRole([
-    UserRole.TOOL_ADMIN,
-    UserRole.ORG_ADMIN,
-    UserRole.RISK_MANAGER,
-    UserRole.COMPLIANCE_OFFICER,
-    UserRole.SECURITY_ENGINEER,
-    UserRole.TARA_ANALYST
-  ]);
+export function isAnalyst(): boolean {
+  return hasRole(UserRole.ANALYST);
 }
 
 /**
  * Check if current user has read-only access
  */
 export function isReadOnly(): boolean {
-  return (hasRole(UserRole.VIEWER) || isAuditor() || isProductOwner()) && !hasAnyRole([
+  return (hasRole(UserRole.VIEWER) || isAuditor()) && !hasAnyRole([
     UserRole.TOOL_ADMIN,
     UserRole.ORG_ADMIN,
-    UserRole.RISK_MANAGER,
-    UserRole.COMPLIANCE_OFFICER,
-    UserRole.SECURITY_ENGINEER,
-    UserRole.TARA_ANALYST
+    UserRole.ANALYST,
+    UserRole.RISK_MANAGER
   ]);
 }

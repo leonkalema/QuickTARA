@@ -31,17 +31,18 @@
   // Filters
   let searchQuery = '';
 
-  onMount(() => {
-    // Check TARA permissions first
+  // Reactive permission checks - wait for auth to be initialized
+  $: if ($authStore.isInitialized) {
     canViewTARA = canPerformTARA();
-    if (!canViewTARA) {
-      goto('/unauthorized');
-      return;
-    }
-    
-    loadProducts();
-    // Use centralized permission system
     canManageProducts = canPerformTARA() && !isReadOnly();
+    
+    if ($authStore.isAuthenticated && !canViewTARA) {
+      goto('/unauthorized');
+    }
+  }
+
+  onMount(() => {
+    loadProducts();
   });
 
   async function loadProducts() {
@@ -49,7 +50,19 @@
     error = '';
     
     try {
-      const response = await fetch(`${API_BASE_URL}/products?skip=0&limit=100`);
+      const auth = get(authStore);
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      const tokenFromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const token = auth.token ?? tokenFromStorage;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/products?skip=0&limit=100`, {
+        headers
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -110,8 +123,19 @@
 
     isDeleting = true;
     try {
+      const auth = get(authStore);
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      const tokenFromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const token = auth.token ?? tokenFromStorage;
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE_URL}/products/${productToDelete.scope_id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers
       });
 
       if (!response.ok) {

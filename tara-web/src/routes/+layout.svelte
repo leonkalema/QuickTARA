@@ -16,21 +16,22 @@
 	let isAuthPage = $derived($page.url.pathname === '/auth');
 	let isSettingsPage = $derived($page.url.pathname.startsWith('/settings'));
 	
-	// Initialize auth store without immediate redirects
+	// Initialize auth store on mount
 	onMount(() => {
 		authStore.init();
 	});
 
 	// Redirect unauthenticated users to /auth when visiting protected routes
+	// Only redirect AFTER auth store has initialized
 	$effect(() => {
-		if (!isAuthPage && !$authStore.isAuthenticated) {
+		if ($authStore.isInitialized && !isAuthPage && !$authStore.isAuthenticated) {
 			goto('/auth');
 		}
 	});
 
 	// If already authenticated and on /auth, send to default page
 	$effect(() => {
-		if (isAuthPage && $authStore.isAuthenticated) {
+		if ($authStore.isInitialized && isAuthPage && $authStore.isAuthenticated) {
 			goto('/products');
 		}
 	});
@@ -41,50 +42,40 @@
 	<meta name="description" content="Comprehensive threat analysis and risk assessment platform" />
 </svelte:head>
 
-{#if isAuthPage}
+{#if !$authStore.isInitialized}
+	<!-- Show loading while auth initializes -->
+	<div class="min-h-screen flex items-center justify-center bg-slate-900">
+		<div class="text-center">
+			<div class="animate-spin rounded-full h-10 w-10 border-2 border-blue-500 border-t-transparent mx-auto"></div>
+		</div>
+	</div>
+{:else if isAuthPage}
 	<!-- Auth page layout - no navigation -->
-	<div class="min-h-screen bg-gray-50">
+	<div class="min-h-screen">
 		{@render children?.()}
 	</div>
-{:else}
-	<!-- Main app layout - only show if authenticated -->
-	{#if $authStore.isAuthenticated}
-		<div class="min-h-screen flex flex-col bg-gray-50">
-			<!-- Header -->
-			<Header />
+{:else if $authStore.isAuthenticated}
+	<!-- Main app layout -->
+	<div class="min-h-screen flex flex-col bg-gray-50">
+		<Header />
+		
+		<div class="flex flex-1">
+			{#if !isSettingsPage}
+				<Sidebar />
+			{/if}
 			
-			<!-- Main Layout with Sidebar -->
-			<div class="flex flex-1">
-				<!-- Left Sidebar - only show for non-settings pages -->
-				{#if !isSettingsPage}
-					<Sidebar />
-				{/if}
-				
-				<!-- Main Content -->
-				<main class="flex-1 overflow-auto">
-					{#if isSettingsPage}
+			<main class="flex-1 overflow-auto">
+				{#if isSettingsPage}
+					{@render children?.()}
+				{:else}
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 						{@render children?.()}
-					{:else}
-						<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-							{@render children?.()}
-						</div>
-					{/if}
-				</main>
-			</div>
-			
-			<!-- Footer -->
-			<Footer />
-			
-			<!-- Global Notifications -->
-			<NotificationContainer />
+					</div>
+				{/if}
+			</main>
 		</div>
-	{:else}
-		<!-- Show loading while auth initializes -->
-		<div class="min-h-screen flex items-center justify-center bg-gray-50">
-			<div class="text-center">
-				<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-				<p class="mt-4 text-gray-600">Loading...</p>
-			</div>
-		</div>
-	{/if}
+		
+		<Footer />
+		<NotificationContainer />
+	</div>
 {/if}

@@ -35,7 +35,12 @@ async def get_organization_members(
     current_user = Depends(get_current_user)
 ):
     """Get all members of an organization"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
+        logger.info(f"Getting members for org {organization_id}, user: {current_user.user_id}")
+        
         # Verify organization exists
         org = db.query(Organization).filter(Organization.organization_id == organization_id).first()
         if not org:
@@ -44,8 +49,8 @@ async def get_organization_members(
                 detail="Organization not found"
             )
 
-        # Check permissions
-        if not user_can_view_organization(db, current_user, organization_id):
+        # Check permissions - Tool admins can always view
+        if not current_user.is_superuser and not user_can_view_organization(db, current_user, organization_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to view organization members"
@@ -238,17 +243,19 @@ async def remove_organization_member(
                 detail="User is not a member of this organization"
             )
 
-        # Check if this is the last ORG_ADMIN
+        # Check if this is the last ORG_ADMIN (case-insensitive)
+        from sqlalchemy import func
         admin_count = db.execute(
             user_organizations.select().where(
                 and_(
                     user_organizations.c.organization_id == organization_id,
-                    user_organizations.c.role == UserRole.ORG_ADMIN
+                    func.lower(user_organizations.c.role) == 'org_admin'
                 )
             )
         ).fetchall()
         
-        if len(admin_count) == 1 and existing.role == UserRole.ORG_ADMIN:
+        existing_role_lower = (existing.role or '').lower()
+        if len(admin_count) == 1 and existing_role_lower == 'org_admin':
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot remove the last organization admin"

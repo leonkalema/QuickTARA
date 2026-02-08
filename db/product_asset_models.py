@@ -90,6 +90,9 @@ class ProductScope(Base):
     # Primary Key
     scope_id = Column(String, primary_key=True, index=True)
     
+    # Organization/Department ownership
+    organization_id = Column(String, nullable=True, index=True)
+    
     # Basic Information
     name = Column(String, nullable=False)
     product_type = Column(String, nullable=False)

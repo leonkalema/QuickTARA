@@ -11,47 +11,41 @@ describe('Organization Assignment Integration', () => {
   });
 
   describe('Role Enums and Labels', () => {
-    it('should have all required user roles', () => {
+    it('should have all required user roles (6 simplified roles)', () => {
       const roles = getAllUserRoles();
       
       expect(roles).toContain(UserRole.TOOL_ADMIN);
       expect(roles).toContain(UserRole.ORG_ADMIN);
-      expect(roles).toContain(UserRole.TARA_ANALYST);
-      expect(roles).toContain(UserRole.VIEWER);
+      expect(roles).toContain(UserRole.ANALYST);
       expect(roles).toContain(UserRole.RISK_MANAGER);
-      expect(roles).toContain(UserRole.COMPLIANCE_OFFICER);
-      expect(roles).toContain(UserRole.PRODUCT_OWNER);
-      expect(roles).toContain(UserRole.SECURITY_ENGINEER);
       expect(roles).toContain(UserRole.AUDITOR);
-      expect(roles.length).toBe(9);
+      expect(roles).toContain(UserRole.VIEWER);
+      expect(roles.length).toBe(6);
     });
 
-    it('should have all required organization roles', () => {
+    it('should have all required organization roles (6 simplified roles)', () => {
       const roles = getAllOrgRoles();
       
       expect(roles).toContain(OrgRole.TOOL_ADMIN);
       expect(roles).toContain(OrgRole.ORG_ADMIN);
-      expect(roles).toContain(OrgRole.TARA_ANALYST);
-      expect(roles).toContain(OrgRole.VIEWER);
+      expect(roles).toContain(OrgRole.ANALYST);
       expect(roles).toContain(OrgRole.RISK_MANAGER);
-      expect(roles).toContain(OrgRole.COMPLIANCE_OFFICER);
-      expect(roles).toContain(OrgRole.PRODUCT_OWNER);
-      expect(roles).toContain(OrgRole.SECURITY_ENGINEER);
       expect(roles).toContain(OrgRole.AUDITOR);
-      expect(roles.length).toBe(9);
+      expect(roles).toContain(OrgRole.VIEWER);
+      expect(roles.length).toBe(6);
     });
 
     it('should provide correct user role labels', () => {
       expect(getUserRoleLabel(UserRole.TOOL_ADMIN)).toBe('Tool Admin');
       expect(getUserRoleLabel(UserRole.ORG_ADMIN)).toBe('Organization Admin');
-      expect(getUserRoleLabel(UserRole.TARA_ANALYST)).toBe('TARA Analyst');
+      expect(getUserRoleLabel(UserRole.ANALYST)).toBe('Analyst');
       expect(getUserRoleLabel(UserRole.VIEWER)).toBe('Viewer');
     });
 
     it('should provide correct organization role labels', () => {
       expect(getOrgRoleLabel(OrgRole.TOOL_ADMIN)).toBe('Tool Admin');
       expect(getOrgRoleLabel(OrgRole.ORG_ADMIN)).toBe('Organization Admin');
-      expect(getOrgRoleLabel(OrgRole.TARA_ANALYST)).toBe('TARA Analyst');
+      expect(getOrgRoleLabel(OrgRole.ANALYST)).toBe('Analyst');
       expect(getOrgRoleLabel(OrgRole.VIEWER)).toBe('Viewer');
     });
   });
@@ -64,7 +58,7 @@ describe('Organization Assignment Integration', () => {
         first_name: 'Test',
         last_name: 'User',
         password: 'password123',
-        role: UserRole.TARA_ANALYST,
+        role: UserRole.ANALYST,
         status: 'active'
       };
 
@@ -85,7 +79,7 @@ describe('Organization Assignment Integration', () => {
       const isValidComplete = validateUserCreationData({
         ...userData,
         organization_id: 'org1',
-        organization_role: OrgRole.TARA_ANALYST
+        organization_role: OrgRole.ANALYST
       });
       expect(isValidComplete.isValid).toBe(true);
       expect(isValidComplete.errors).toHaveLength(0);
@@ -110,10 +104,10 @@ describe('Organization Assignment Integration', () => {
         first_name: 'Test',
         last_name: 'User',
         password: 'password123',
-        role: UserRole.TARA_ANALYST,
+        role: UserRole.ANALYST,
         status: 'active',
         organization_id: 'org1',
-        organization_role: OrgRole.TARA_ANALYST
+        organization_role: OrgRole.ANALYST
       };
 
       const result = await createUserWithOrganization(userData, 'mock-token');
@@ -153,7 +147,7 @@ describe('Organization Assignment Integration', () => {
           }),
           body: JSON.stringify({
             user_id: 'new-user-123',
-            role: OrgRole.TARA_ANALYST
+            role: OrgRole.ANALYST
           })
         })
       );
@@ -179,10 +173,10 @@ describe('Organization Assignment Integration', () => {
         first_name: 'Test',
         last_name: 'User',
         password: 'password123',
-        role: UserRole.TARA_ANALYST,
+        role: UserRole.ANALYST,
         status: 'active',
         organization_id: 'org1',
-        organization_role: OrgRole.TARA_ANALYST
+        organization_role: OrgRole.ANALYST
       };
 
       const result = await createUserWithOrganization(userData, 'mock-token');

@@ -101,3 +101,6 @@ def create_app(settings=None):
         return {"status": "ok"}
     
     return app
+
+# Create the app instance for uvicorn
+app = create_app()

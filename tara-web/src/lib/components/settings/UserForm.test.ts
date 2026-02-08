@@ -93,7 +93,7 @@ describe('UserForm - Organization Assignment', () => {
         const roleSelect = screen.getByLabelText(/Organization Role \*/);
         expect(roleSelect).toContainHTML('Tool Admin');
         expect(roleSelect).toContainHTML('Organization Admin');
-        expect(roleSelect).toContainHTML('TARA Analyst');
+        expect(roleSelect).toContainHTML('Analyst');
         expect(roleSelect).toContainHTML('Viewer');
       });
     });
@@ -106,7 +106,7 @@ describe('UserForm - Organization Assignment', () => {
         const roleSelect = screen.getByLabelText(/Organization Role \*/) as HTMLSelectElement;
         
         expect(orgSelect.value).toBe('org1'); // First organization
-        expect(roleSelect.value).toBe(OrgRole.TARA_ANALYST);
+        expect(roleSelect.value).toBe(OrgRole.ANALYST);
       });
     });
   });
@@ -216,7 +216,7 @@ describe('UserForm - Organization Assignment', () => {
       
       // Set organization and role
       await fireEvent.change(screen.getByLabelText(/Organization \*/), { target: { value: 'org1' } });
-      await fireEvent.change(screen.getByLabelText(/Organization Role \*/), { target: { value: OrgRole.TARA_ANALYST } });
+      await fireEvent.change(screen.getByLabelText(/Organization Role \*/), { target: { value: OrgRole.ANALYST } });
       
       // Submit form
       const submitButton = screen.getByRole('button', { name: /Create User/ });
@@ -230,7 +230,7 @@ describe('UserForm - Organization Assignment', () => {
           first_name: 'Test',
           last_name: 'User',
           password: 'password123',
-          role: UserRole.TARA_ANALYST,
+          role: UserRole.ANALYST,
           status: 'active'
         });
         
@@ -245,7 +245,7 @@ describe('UserForm - Organization Assignment', () => {
             }),
             body: JSON.stringify({
               user_id: 'new-user-123',
-              role: OrgRole.TARA_ANALYST
+              role: OrgRole.ANALYST
             })
           })
         );

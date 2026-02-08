@@ -45,6 +45,7 @@ export interface AuthState {
 	refreshToken: string | null;
 	isAuthenticated: boolean;
 	isLoading: boolean;
+	isInitialized: boolean;
 	tokenExpiry: number | null;
 }
 
@@ -54,6 +55,7 @@ const initialState: AuthState = {
 	refreshToken: null,
 	isAuthenticated: false,
 	isLoading: false,
+	isInitialized: false,
 	tokenExpiry: null
 };
 
@@ -80,6 +82,7 @@ function createAuthStore() {
 				refreshToken,
 				isAuthenticated: true,
 				isLoading: false,
+				isInitialized: true,
 				tokenExpiry
 			};
 			
@@ -95,7 +98,10 @@ function createAuthStore() {
 
 		// Logout
 		logout: () => {
-			set(initialState);
+			set({
+				...initialState,
+				isInitialized: true
+			});
 			
 			// Clear localStorage if in browser
 			if (browser) {
@@ -116,7 +122,10 @@ function createAuthStore() {
 
 		// Initialize from localStorage
 		init: () => {
-			if (!browser) return;
+			if (!browser) {
+				update(state => ({ ...state, isInitialized: true }));
+				return;
+			}
 			
 			const token = localStorage.getItem('auth_token');
 			const refreshToken = localStorage.getItem('refresh_token');
@@ -132,15 +141,18 @@ function createAuthStore() {
 						refreshToken,
 						isAuthenticated: true,
 						isLoading: false,
+						isInitialized: true,
 						tokenExpiry
 					});
 				} catch (error) {
 					console.error('Error parsing stored user data:', error);
-					// Clear invalid data
 					localStorage.removeItem('auth_token');
 					localStorage.removeItem('refresh_token');
 					localStorage.removeItem('user');
+					update(state => ({ ...state, isInitialized: true }));
 				}
+			} else {
+				update(state => ({ ...state, isInitialized: true }));
 			}
 		},
 
@@ -193,12 +205,15 @@ function createAuthStore() {
 			return permissions.includes(permission);
 		},
 
-		// Check if user has specific role
+		// Check if user has specific role (case-insensitive comparison)
 		hasRole: (role: string): boolean => {
 			const state = get(authStore);
 			if (!state.user?.organizations) return false;
 			
-			return state.user.organizations.some((org: any) => org.role === role);
+			const normalizedRole = role?.toLowerCase() ?? '';
+			return state.user.organizations.some((org: any) => 
+				(org.role?.toLowerCase() ?? '') === normalizedRole
+			);
 		}
 	};
 }
@@ -207,8 +222,5 @@ export const authStore = createAuthStore();
 
 // Initialize auth store when module loads (but don't auto-redirect)
 if (browser) {
-	// Use setTimeout to avoid immediate redirects during SSR/hydration
-	setTimeout(() => {
-		authStore.init();
-	}, 100);
+	authStore.init();
 }

@@ -3,6 +3,9 @@
   import Modal from '../../../components/ui/Modal.svelte';
   import type { Product } from '../../../lib/types/product';
   import { API_BASE_URL } from '$lib/config';
+  import { authStore } from '$lib/stores/auth';
+  import { get } from 'svelte/store';
+  import { notifyProductsChanged } from '$lib/stores/productEvents';
 
   export let isOpen = false;
 
@@ -13,6 +16,15 @@
 
   let isLoading = false;
   let error = '';
+
+  type OrganizationOption = {
+    organizationId: string;
+    name: string;
+  };
+
+  let organizations: OrganizationOption[] = [];
+  let selectedOrganizationId = '';
+  let isLoadingOrganizations = false;
 
   let formData = {
     name: '',
@@ -64,9 +76,52 @@
     }
   }
 
+  const getAuthToken = (): string | null => {
+    const auth = get(authStore);
+    const tokenFromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    return auth.token ?? tokenFromStorage;
+  };
+
+  const loadOrganizations = async (): Promise<void> => {
+    isLoadingOrganizations = true;
+    try {
+      const auth = get(authStore);
+      const isSuperuser = (auth.user as any)?.is_superuser === true;
+      const isToolAdmin = isSuperuser || authStore.hasRole('tool_admin');
+      const orgsFromUser = auth.user?.organizations ?? [];
+      if (!isToolAdmin) {
+        organizations = orgsFromUser.map((o) => ({ organizationId: o.organization_id, name: o.name }));
+      } else {
+        const token = getAuthToken();
+        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE_URL}/organizations`, { headers });
+        if (response.ok) {
+          const data = await response.json();
+          const orgList = (data.organizations ?? []) as Array<{ organization_id: string; name: string }>;
+          organizations = orgList.map((o) => ({ organizationId: o.organization_id, name: o.name }));
+        } else {
+          organizations = [];
+        }
+      }
+      if (organizations.length === 1) {
+        selectedOrganizationId = organizations[0]?.organizationId ?? '';
+      }
+    } catch {
+      organizations = [];
+    } finally {
+      isLoadingOrganizations = false;
+    }
+  };
+
   async function handleSubmit() {
     if (!formData.name.trim()) {
       error = 'Product name is required';
+      return;
+    }
+
+    if (!selectedOrganizationId) {
+      error = 'Department is required';
       return;
     }
 
@@ -74,15 +129,22 @@
     error = '';
 
     try {
+      const auth = get(authStore);
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      const token = getAuthToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const response = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           name: formData.name.trim(),
           product_type: formData.product_type,
           description: formData.description.trim() || null,
+          organization_id: selectedOrganizationId,
           safety_level: 'QM',
           interfaces: [],
           access_points: [],
@@ -102,6 +164,7 @@
 
       const newProduct = await response.json();
       dispatch('create', newProduct);
+      notifyProductsChanged();
       
       // Show success notification
       const { notifications } = await import('../../../lib/stores/notificationStore');
@@ -128,6 +191,7 @@
       compliance_standards: []
     };
     complianceInput = '';
+    selectedOrganizationId = '';
     error = '';
   }
 
@@ -135,6 +199,12 @@
     resetForm();
     isOpen = false;
     dispatch('close');
+  }
+
+  $: {
+    if (isOpen) {
+      loadOrganizations();
+    }
   }
 </script>
 
@@ -159,6 +229,24 @@
       <!-- Basic Information -->
       <div class="space-y-4">
         <h3 class="text-lg font-medium text-gray-900">Basic Information</h3>
+
+        <div>
+          <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
+            Department *
+          </label>
+          <select
+            id="department"
+            bind:value={selectedOrganizationId}
+            required
+            disabled={isLoadingOrganizations}
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="">{isLoadingOrganizations ? 'Loading departments...' : 'Select department'}</option>
+            {#each organizations as org (org.organizationId)}
+              <option value={org.organizationId}>{org.name}</option>
+            {/each}
+          </select>
+        </div>
         
         <!-- Product Name -->
         <div>

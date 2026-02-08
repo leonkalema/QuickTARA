@@ -36,15 +36,16 @@
     "Avoiding": "Ensure {asset} {property} by avoiding the risk of {threat_description}."
   };
 
-  onMount(async () => {
-    // Check TARA permissions first
-    if (!canPerformTARA()) {
-      goto('/unauthorized');
-      return;
-    }
-    
+  // Reactive permission checks - wait for auth to be initialized
+  $: if ($authStore.isInitialized) {
     canManageTreatment = canManageRisk() && !isReadOnly();
     
+    if ($authStore.isAuthenticated && !canPerformTARA()) {
+      goto('/unauthorized');
+    }
+  }
+
+  onMount(async () => {
     if ($selectedProduct?.scope_id) {
       await loadData();
     }

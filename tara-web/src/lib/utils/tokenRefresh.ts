@@ -9,7 +9,13 @@ export function startTokenRefreshTimer() {
 	
 	// Check every 5 minutes
 	refreshInterval = setInterval(async () => {
-		await authStore.checkAndRefreshToken();
+		const ok = await authStore.checkAndRefreshToken();
+		if (!ok) {
+			stopTokenRefreshTimer();
+			if (typeof window !== 'undefined') {
+				window.location.assign('/auth');
+			}
+		}
 	}, 5 * 60 * 1000);
 }
 

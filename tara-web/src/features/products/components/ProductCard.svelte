@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { MoreVertical, Edit, Trash2 } from '@lucide/svelte';
-  import type { Product } from '../../../lib/types/product';
+  import type { Product, ProductPermissions } from '../../../lib/types/product';
+  import { productPermissions } from '../../../lib/stores/productPermissions';
 
   export let product: Product;
   export let isSelected: boolean = false;
@@ -11,6 +12,11 @@
 
   let showMenu = false;
   let isDeleting = false;
+  let permissions: ProductPermissions | null = null;
+
+  onMount(async () => {
+    permissions = await productPermissions.fetchPermissions(product.scope_id);
+  });
 
   function handleSelect() {
     dispatch('select');
@@ -77,11 +83,46 @@
         </div>
       </div>
 
-      <!-- Status Badge -->
-      <div class="flex items-center">
+      <!-- Status Badge & Actions -->
+      <div class="flex items-center space-x-2">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getStatusColor(product.status)}">
           {product.status}
         </span>
+        
+        {#if permissions?.can_edit || permissions?.can_delete}
+          <div class="relative">
+            <button
+              class="p-1 rounded hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
+              on:click|stopPropagation={() => showMenu = !showMenu}
+              aria-label="Product actions"
+            >
+              <MoreVertical class="w-4 h-4 text-gray-500" />
+            </button>
+            
+            {#if showMenu}
+              <div class="absolute right-0 mt-1 w-36 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                {#if permissions?.can_edit}
+                  <button
+                    class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    on:click|stopPropagation={handleEdit}
+                  >
+                    <Edit class="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                {/if}
+                {#if permissions?.can_delete}
+                  <button
+                    class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                    on:click|stopPropagation={handleDelete}
+                  >
+                    <Trash2 class="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {/if}
       </div>
     </div>
   </div>
@@ -136,10 +177,9 @@
 
 <!-- Click outside to close menu -->
 {#if showMenu}
-  <div 
-    class="fixed inset-0 z-0" 
+  <button 
+    class="fixed inset-0 z-0 cursor-default" 
     on:click={() => showMenu = false}
-    role="button"
-    tabindex="-1"
-  ></div>
+    aria-label="Close menu"
+  ></button>
 {/if}

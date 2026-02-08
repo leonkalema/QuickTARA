@@ -1,7 +1,8 @@
 <script lang="ts">
   import { authStore } from '$lib/stores/auth';
   import { selectedProduct } from '$lib/stores/productStore';
-  import { isToolAdmin } from '$lib/utils/permissions';
+  import { isToolAdmin, isOrgAdmin, canPerformTARA, canManageRisk, hasRole } from '$lib/utils/permissions';
+  import { UserRole } from '$lib/types/roles';
   import { page } from '$app/stores';
   import { 
     FileText, 
@@ -13,13 +14,35 @@
     Settings
   } from '@lucide/svelte';
 
-  const steps = [
+  type StepPermission = 'tara' | 'risk' | 'reports' | 'all';
+
+  interface WorkflowStep {
+    id: string;
+    title: string;
+    icon: any;
+    path: string;
+    description: string;
+    requiresProduct?: boolean;
+    permission?: StepPermission;
+  }
+
+  interface AdminStep {
+    id: string;
+    title: string;
+    icon: any;
+    path: string;
+    description: string;
+    adminOnly: boolean;
+  }
+
+  const steps: WorkflowStep[] = [
     {
       id: 'products',
       title: 'Product Scope',
       icon: FileText,
       path: '/products',
-      description: 'Select and manage products'
+      description: 'Select and manage products',
+      permission: 'tara'
     },
     {
       id: 'assets',
@@ -27,7 +50,8 @@
       icon: Package,
       path: '/assets',
       description: 'Define system components',
-      requiresProduct: true
+      requiresProduct: true,
+      permission: 'tara'
     },
     {
       id: 'damage-scenarios',
@@ -35,7 +59,8 @@
       icon: Zap,
       path: '/damage-scenarios',
       description: 'What could go wrong?',
-      requiresProduct: true
+      requiresProduct: true,
+      permission: 'tara'
     },
     {
       id: 'threat-scenarios',
@@ -43,7 +68,8 @@
       icon: AlertTriangle,
       path: '/threat-scenarios',
       description: 'How could it happen?',
-      requiresProduct: true
+      requiresProduct: true,
+      permission: 'tara'
     },
     {
       id: 'risk-assessment',
@@ -51,7 +77,8 @@
       icon: Shield,
       path: '/risk-assessment',
       description: 'Analyze and rate risks',
-      requiresProduct: true
+      requiresProduct: true,
+      permission: 'tara'
     },
     {
       id: 'risk-treatment',
@@ -59,7 +86,8 @@
       icon: Shield,
       path: '/risk-treatment',
       description: 'Treat and mitigate risks',
-      requiresProduct: true
+      requiresProduct: true,
+      permission: 'tara'
     },
     {
       id: 'reports',
@@ -67,11 +95,12 @@
       icon: BarChart3,
       path: '/reports',
       description: 'Generate documentation',
-      requiresProduct: true
+      requiresProduct: true,
+      permission: 'reports'
     }
   ];
 
-  const adminSteps = [
+  const adminSteps: AdminStep[] = [
     {
       id: 'settings',
       title: 'Settings',
@@ -82,9 +111,30 @@
     }
   ];
 
-  function isStepAccessible(step: typeof steps[0] | typeof adminSteps[0]) {
+  function hasPermissionForStep(permission?: StepPermission): boolean {
+    if (!permission) return true;
+    
+    switch (permission) {
+      case 'tara':
+        return canPerformTARA();
+      case 'risk':
+        return canManageRisk();
+      case 'reports':
+        return canPerformTARA() || canManageRisk() || hasRole(UserRole.AUDITOR) || hasRole(UserRole.VIEWER);
+      case 'all':
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  function shouldShowStep(step: WorkflowStep): boolean {
+    return hasPermissionForStep(step.permission);
+  }
+
+  function isStepAccessible(step: WorkflowStep | AdminStep): boolean {
     if ('adminOnly' in step && step.adminOnly) {
-      return isToolAdmin();
+      return isToolAdmin() || isOrgAdmin();
     }
     if ('requiresProduct' in step && step.requiresProduct) {
       return $selectedProduct !== null;
@@ -92,9 +142,11 @@
     return true;
   }
 
-  function isCurrentStep(step: typeof steps[0] | typeof adminSteps[0]) {
+  function isCurrentStep(step: WorkflowStep | AdminStep): boolean {
     return $page.url.pathname.startsWith(step.path);
   }
+
+  $: visibleSteps = steps.filter(shouldShowStep);
 </script>
 
 <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
@@ -112,7 +164,7 @@
 
   <!-- Navigation Steps -->
   <nav class="flex-1 p-4 space-y-2">
-    {#each steps as step, index}
+    {#each visibleSteps as step, index}
       {@const isAccessible = isStepAccessible(step)}
       {@const isCurrent = isCurrentStep(step)}
       

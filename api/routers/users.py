@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 
 from ..deps.db import get_db
-from ..auth.dependencies import get_current_user, require_tool_admin
+from ..auth.dependencies import get_current_user, get_current_active_user, require_tool_admin
 from ..auth.security import security_manager
 from ..models.user import User, UserRole, UserStatus
 
@@ -18,7 +18,7 @@ class UserBase(BaseModel):
     username: str
     first_name: str
     last_name: str
-    role: UserRole = UserRole.TARA_ANALYST
+    role: UserRole = UserRole.ANALYST
     status: UserStatus = UserStatus.ACTIVE
 
 class UserCreate(UserBase):
@@ -49,10 +49,62 @@ async def get_users(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_tool_admin)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Get all users (admin only)"""
-    users = db.query(User).offset(skip).limit(limit).all()
+    """Get users - Tool Admin sees all, Org Admin/Risk Manager sees only their department members"""
+    from ..models.user import user_organizations
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Tool Admin sees all users
+    if current_user.is_superuser:
+        users = db.query(User).offset(skip).limit(limit).all()
+        return users
+    
+    # Get current user's organizations where they have management roles
+    user_org_memberships = db.execute(
+        user_organizations.select().where(user_organizations.c.user_id == current_user.user_id)
+    ).fetchall()
+    
+    logger.info(f"User {current_user.user_id} memberships: {[(m.organization_id, m.role) for m in user_org_memberships]}")
+    
+    # Check if user has a management role (ORG_ADMIN or RISK_MANAGER) in any organization
+    management_roles = ['org_admin', 'risk_manager']
+    is_org_manager = any((m.role or '').lower() in management_roles for m in user_org_memberships)
+
+    # Org managers are allowed to view all non-superuser users so they can add them to their department
+    if is_org_manager:
+        users = db.query(User).filter(
+            User.is_superuser == False
+        ).offset(skip).limit(limit).all()
+        return users
+
+    admin_org_ids = [m.organization_id for m in user_org_memberships if (m.role or '').lower() in management_roles]
+    
+    # If no management role, check if they have ANY org membership - let them see their own org's users
+    if not admin_org_ids:
+        # Fall back to any org membership
+        admin_org_ids = [m.organization_id for m in user_org_memberships]
+        logger.info(f"User has no management role, falling back to all org memberships: {admin_org_ids}")
+    
+    if not admin_org_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to view users. You must be a member of at least one department."
+        )
+    
+    # Get all users who are members of the organizations where current user is a member
+    member_user_ids = db.execute(
+        user_organizations.select().where(user_organizations.c.organization_id.in_(admin_org_ids))
+    ).fetchall()
+    
+    user_ids = list(set([m.user_id for m in member_user_ids]))
+    
+    # Filter out superusers (Tool Admins) - non-admins should not see them
+    users = db.query(User).filter(
+        User.user_id.in_(user_ids),
+        User.is_superuser == False  # Exclude Tool Admins
+    ).offset(skip).limit(limit).all()
     return users
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -166,6 +218,32 @@ async def delete_user(
     db.commit()
     
     return {"message": "User deleted successfully"}
+
+class PasswordReset(BaseModel):
+    new_password: str
+
+@router.post("/{user_id}/reset-password")
+async def reset_user_password(
+    user_id: str,
+    password_data: PasswordReset,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_tool_admin)
+):
+    """Reset user password (admin only)"""
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    user.hashed_password = security_manager.get_password_hash(password_data.new_password)
+    user.password_changed_at = datetime.utcnow()
+    user.updated_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return {"message": "Password reset successfully"}
 
 @router.patch("/{user_id}/toggle-status")
 async def toggle_user_status(

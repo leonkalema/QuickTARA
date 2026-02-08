@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { authApi, type LoginRequest, AuthApiError } from '$lib/api/auth';
 	import { authStore } from '$lib/stores/auth';
+	import { Eye, EyeOff, Mail, Lock, AlertCircle } from '@lucide/svelte';
 
 	const dispatch = createEventDispatcher<{
 		success: { user: any; token: string; refreshToken: string };
@@ -69,27 +70,36 @@
 
 <div class="login-form">
 	<div class="form-header">
-		<h2>Sign In</h2>
-		<p>Welcome back</p>
+		<h2>Welcome back</h2>
+		<p>Sign in to your account to continue</p>
 	</div>
 
 	<form on:submit|preventDefault={handleLogin} class="form">
 		<div class="form-group">
-			<label for="email">Email</label>
-			<input
-				id="email"
-				type="email"
-				bind:value={email}
-				on:keypress={handleKeyPress}
-				placeholder="Enter your email"
-				disabled={isLoading}
-				required
-			/>
+			<label for="email">Email address</label>
+			<div class="input-wrapper">
+				<div class="input-icon">
+					<Mail size={18} />
+				</div>
+				<input
+					id="email"
+					type="email"
+					bind:value={email}
+					on:keypress={handleKeyPress}
+					placeholder="name@company.com"
+					disabled={isLoading}
+					required
+					class="with-icon"
+				/>
+			</div>
 		</div>
 
 		<div class="form-group">
 			<label for="password">Password</label>
-			<div class="password-input">
+			<div class="input-wrapper">
+				<div class="input-icon">
+					<Lock size={18} />
+				</div>
 				<input
 					id="password"
 					type={showPassword ? 'text' : 'password'}
@@ -98,21 +108,28 @@
 					placeholder="Enter your password"
 					disabled={isLoading}
 					required
+					class="with-icon"
 				/>
 				<button
 					type="button"
 					class="password-toggle"
 					on:click={() => showPassword = !showPassword}
 					disabled={isLoading}
+					aria-label={showPassword ? 'Hide password' : 'Show password'}
 				>
-					{showPassword ? '👁️' : '👁️‍🗨️'}
+					{#if showPassword}
+						<EyeOff size={18} />
+					{:else}
+						<Eye size={18} />
+					{/if}
 				</button>
 			</div>
 		</div>
 
 		{#if error}
 			<div class="error-message">
-				{error}
+				<AlertCircle size={16} />
+				<span>{error}</span>
 			</div>
 		{/if}
 
@@ -121,47 +138,43 @@
 				<span class="spinner"></span>
 				Signing in...
 			{:else}
-				Sign In
+				Sign in
 			{/if}
 		</button>
 	</form>
 
 	<div class="form-footer">
-		<p class="text-center text-gray-600">
-			Contact your administrator for access
-		</p>
+		<p>Need access? Contact your administrator</p>
 	</div>
 </div>
 
 <style>
 	.login-form {
 		width: 100%;
-		max-width: 400px;
-		margin: 0 auto;
 	}
 
 	.form-header {
-		text-align: center;
 		margin-bottom: 2rem;
 	}
 
 	.form-header h2 {
 		margin: 0 0 0.5rem 0;
-		font-size: 1.875rem;
+		font-size: 1.75rem;
 		font-weight: 700;
-		color: #ffffff;
+		color: #f8fafc;
+		letter-spacing: -0.025em;
 	}
 
 	.form-header p {
 		margin: 0;
-		color: #9ca3af;
-		font-size: 1rem;
+		color: #64748b;
+		font-size: 0.95rem;
 	}
 
 	.form {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: 1.25rem;
 	}
 
 	.form-group {
@@ -172,64 +185,78 @@
 
 	.form-group label {
 		display: block;
-		margin-bottom: 0.5rem;
 		font-weight: 500;
-		color: #d1d5db;
+		color: #cbd5e1;
 		font-size: 0.875rem;
 	}
 
-	.form-group input {
-		padding: 0.75rem;
-		border: 1px solid #374151;
-		border-radius: 6px;
-		font-size: 1rem;
-		background: #111827;
-		color: #ffffff;
-		transition: border-color 0.2s, box-shadow 0.2s;
-	}
-
-	.form-group input:focus {
-		outline: none;
-		border-color: #3b82f6;
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-	}
-
-	.form-group input::placeholder {
-		color: #6b7280;
-	}
-
-	.form-group input:disabled {
-		background-color: #1f2937;
-		cursor: not-allowed;
-		opacity: 0.5;
-	}
-
-	.password-input {
+	.input-wrapper {
 		position: relative;
 		display: flex;
 		align-items: center;
 	}
 
-	.password-input input {
-		flex: 1;
-		padding-right: 3rem;
+	.input-icon {
+		position: absolute;
+		left: 0.875rem;
+		color: #475569;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	.form-group input {
+		width: 100%;
+		padding: 0.875rem 1rem;
+		border: 1px solid #1e293b;
+		border-radius: 10px;
+		font-size: 0.95rem;
+		background: #0f172a;
+		color: #f1f5f9;
+		transition: all 0.2s ease;
+	}
+
+	.form-group input.with-icon {
+		padding-left: 2.75rem;
+	}
+
+	.form-group input:focus {
+		outline: none;
+		border-color: #3b82f6;
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+		background: #0c1322;
+	}
+
+	.form-group input::placeholder {
+		color: #475569;
+	}
+
+	.form-group input:disabled {
+		background-color: #1e293b;
+		cursor: not-allowed;
+		opacity: 0.6;
 	}
 
 	.password-toggle {
 		position: absolute;
-		right: 0.75rem;
+		right: 0.875rem;
 		background: none;
 		border: none;
 		cursor: pointer;
-		color: #9ca3af;
-		padding: 0;
+		color: #475569;
+		padding: 0.25rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		border-radius: 6px;
+		transition: all 0.2s ease;
 	}
 
 	.password-toggle:hover {
-		color: #d1d5db;
+		color: #94a3b8;
+		background: rgba(255, 255, 255, 0.05);
 	}
 
 	.password-toggle:disabled {
@@ -238,47 +265,67 @@
 	}
 
 	.error-message {
-		padding: 0.75rem;
-		background-color: #450a0a;
-		border: 1px solid #dc2626;
-		border-radius: 6px;
-		color: #fca5a5;
+		padding: 0.875rem 1rem;
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.2);
+		border-radius: 10px;
+		color: #f87171;
 		font-size: 0.875rem;
-		margin-bottom: 1rem;
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		animation: shake 0.4s ease-out;
+	}
+
+	@keyframes shake {
+		0%, 100% { transform: translateX(0); }
+		20% { transform: translateX(-4px); }
+		40% { transform: translateX(4px); }
+		60% { transform: translateX(-4px); }
+		80% { transform: translateX(4px); }
 	}
 
 	.submit-btn {
-		padding: 0.75rem 1.5rem;
-		background-color: #3b82f6;
+		margin-top: 0.5rem;
+		padding: 0.875rem 1.5rem;
+		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 		color: white;
 		border: none;
-		border-radius: 6px;
-		font-size: 1rem;
-		font-weight: 500;
+		border-radius: 10px;
+		font-size: 0.95rem;
+		font-weight: 600;
 		cursor: pointer;
-		transition: background-color 0.2s;
+		transition: all 0.2s ease;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
+		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 	}
 
 	.submit-btn:hover:not(:disabled) {
-		background-color: #1d4ed8;
+		background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+		box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+		transform: translateY(-1px);
+	}
+
+	.submit-btn:active:not(:disabled) {
+		transform: translateY(0);
 	}
 
 	.submit-btn:disabled {
-		background-color: #9ca3af;
+		background: #334155;
+		box-shadow: none;
 		cursor: not-allowed;
 	}
 
 	.spinner {
-		width: 1rem;
-		height: 1rem;
-		border: 2px solid transparent;
-		border-top: 2px solid currentColor;
+		width: 1.125rem;
+		height: 1.125rem;
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-top-color: white;
 		border-radius: 50%;
-		animation: spin 1s linear infinite;
+		animation: spin 0.8s linear infinite;
 	}
 
 	@keyframes spin {
@@ -289,14 +336,14 @@
 
 	.form-footer {
 		text-align: center;
+		margin-top: 2rem;
 		padding-top: 1.5rem;
-		border-top: 1px solid #374151;
+		border-top: 1px solid #1e293b;
 	}
 
 	.form-footer p {
 		margin: 0;
-		color: #9ca3af;
-		font-size: 0.875rem;
+		color: #475569;
+		font-size: 0.85rem;
 	}
-
 </style>

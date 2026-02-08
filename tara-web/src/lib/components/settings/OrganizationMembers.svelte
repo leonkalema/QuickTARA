@@ -32,36 +32,48 @@
 	let loading = false;
 	let showAddForm = false;
 	let editingUserId: string | null = null;
+	let confirmingRemoveId: string | null = null;
 	let canManageMembers = false;
 
 	let addFormData = {
 		user_id: '',
-		role: 'TARA_ANALYST'
+		role: 'analyst'
 	};
 
 	let editFormData: { [key: string]: { role: string } } = {};
 
 	const roleOptions = [
-		{ value: 'VIEWER', label: 'Viewer' },
-		{ value: 'TARA_ANALYST', label: 'TARA Analyst' },
-		{ value: 'RISK_MANAGER', label: 'Risk Manager' },
-		{ value: 'ORG_ADMIN', label: 'Organization Admin' }
+		{ value: 'viewer', label: 'Viewer' },
+		{ value: 'analyst', label: 'Analyst' },
+		{ value: 'risk_manager', label: 'Risk Manager' },
+		{ value: 'auditor', label: 'Auditor' },
+		{ value: 'org_admin', label: 'Department Admin' }
 	];
 
 	onMount(() => {
-		loadMembers();
-		loadAvailableUsers();
-		const isSuperuser = (get(authStore).user as any)?.is_superuser === true;
-		canManageMembers = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+		let unsubscribe: (() => void) | null = null;
+		unsubscribe = authStore.subscribe((state) => {
+			if (!state.isInitialized) return;
+			const isSuperuser = (state.user as any)?.is_superuser === true;
+			canManageMembers = isSuperuser || authStore.hasRole('tool_admin') || authStore.hasRole('org_admin');
+			if (state.isAuthenticated && state.token) {
+				loadMembers();
+				loadAvailableUsers();
+			}
+			unsubscribe?.();
+		});
+		return () => unsubscribe?.();
 	});
 
 	async function loadMembers() {
 		loading = true;
 		try {
 			const auth = get(authStore);
+			const tokenFromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+			const token = auth.token ?? tokenFromStorage;
 			const response = await fetch(`${API_BASE_URL}/organizations/${organizationId}/members`, {
 				headers: {
-					'Authorization': `Bearer ${auth.token}`,
+					'Authorization': `Bearer ${token}`,
 					'Content-Type': 'application/json'
 				}
 			});
@@ -81,16 +93,19 @@
 	async function loadAvailableUsers() {
 		try {
 			const auth = get(authStore);
+			const tokenFromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+			const token = auth.token ?? tokenFromStorage;
 			const response = await fetch(`${API_BASE_URL}/users`, {
 				headers: {
-					'Authorization': `Bearer ${auth.token}`,
+					'Authorization': `Bearer ${token}`,
 					'Content-Type': 'application/json'
 				}
 			});
 
 			if (response.ok) {
 				const data = await response.json();
-				availableUsers = data.users || [];
+				// API returns array directly, not {users: []}
+				availableUsers = Array.isArray(data) ? data : (data.users || []);
 			}
 		} catch (error) {
 			console.error('Failed to load users:', error);
@@ -157,7 +172,7 @@
 			if (response.ok) {
 				notifications.show('Member added successfully', 'success');
 				showAddForm = false;
-				addFormData = { user_id: '', role: 'TARA_ANALYST' };
+				addFormData = { user_id: '', role: 'analyst' };
 				await loadMembers();
 			} else {
 				throw new Error('Failed to add member');
@@ -169,12 +184,19 @@
 
 	function cancelAdd() {
 		showAddForm = false;
-		addFormData = { user_id: '', role: 'TARA_ANALYST' };
+		addFormData = { user_id: '', role: 'analyst' };
 	}
 
-	async function removeMember(member: Member) {
+	function startRemove(member: Member) {
+		confirmingRemoveId = member.user_id;
+	}
+
+	function cancelRemove() {
+		confirmingRemoveId = null;
+	}
+
+	async function confirmRemove(member: Member) {
 		if (!canManageMembers) return;
-		if (!confirm(`Remove ${member.first_name} ${member.last_name} from ${organizationName}?`)) return;
 
 		try {
 			const auth = get(authStore);
@@ -187,13 +209,15 @@
 			});
 
 			if (response.ok) {
-				notifications.show('Member removed successfully', 'success');
+				notifications.show('Member removed', 'success');
+				confirmingRemoveId = null;
 				await loadMembers();
 			} else {
 				throw new Error('Failed to remove member');
 			}
 		} catch (error) {
 			notifications.show('Failed to remove member', 'error');
+			confirmingRemoveId = null;
 		}
 	}
 
@@ -286,7 +310,7 @@
 			<div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
 				<Users class="w-6 h-6 text-gray-400" />
 			</div>
-			<p class="text-sm text-gray-500">No members in this organization yet</p>
+			<p class="text-sm text-gray-500">No members in this department yet</p>
 			<p class="text-xs text-gray-400 mt-1">Add users to get started</p>
 		</div>
 	{:else}
@@ -388,24 +412,42 @@
 									{new Date(member.joined_at).toLocaleDateString()}
 								</td>
 								<td class="px-4 py-3 text-right">
-									<div class="flex justify-end space-x-1">
-										{#if canManageMembers}
-										<button
-											class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-											on:click={() => startEdit(member)}
-											title="Edit member role"
-										>
-											<Edit class="w-4 h-4" />
-										</button>
-										<button
-											class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-											on:click={() => removeMember(member)}
-											title="Remove member"
-										>
-											<Trash2 class="w-4 h-4" />
-										</button>
-										{/if}
-									</div>
+									{#if confirmingRemoveId === member.user_id}
+										<div class="flex items-center justify-end space-x-2">
+											<span class="text-xs text-gray-500">Remove?</span>
+											<button
+												class="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+												on:click={() => confirmRemove(member)}
+											>
+												Yes
+											</button>
+											<button
+												class="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+												on:click={cancelRemove}
+											>
+												No
+											</button>
+										</div>
+									{:else}
+										<div class="flex justify-end space-x-1">
+											{#if canManageMembers}
+											<button
+												class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+												on:click={() => startEdit(member)}
+												title="Edit member role"
+											>
+												<Edit class="w-4 h-4" />
+											</button>
+											<button
+												class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+												on:click={() => startRemove(member)}
+												title="Remove member"
+											>
+												<Trash2 class="w-4 h-4" />
+											</button>
+											{/if}
+										</div>
+									{/if}
 								</td>
 							{/if}
 						</tr>

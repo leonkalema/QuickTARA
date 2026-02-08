@@ -34,9 +34,9 @@ import {
 describe('Centralized Role Management', () => {
   let mockGet: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    mockGet = vi.mocked(await import('svelte/store')).get;
+    mockGet = vi.mocked((await import('svelte/store')).get);
   });
 
   describe('Core Role Functions', () => {
@@ -74,15 +74,15 @@ describe('Centralized Role Management', () => {
         user: {
           is_superuser: false,
           organizations: [
-            { role: UserRole.TARA_ANALYST },
+            { role: UserRole.ANALYST },
             { role: UserRole.VIEWER }
           ]
         },
         isAuthenticated: true
       });
 
-      expect(getPrimaryRole()).toBe(UserRole.TARA_ANALYST);
-      expect(getUserRoleDisplay()).toBe('TARA Analyst');
+      expect(getPrimaryRole()).toBe(UserRole.ANALYST);
+      expect(getUserRoleDisplay()).toBe('Analyst');
     });
   });
 
@@ -91,7 +91,7 @@ describe('Centralized Role Management', () => {
       const testCases = [
         { role: UserRole.TOOL_ADMIN, canManage: true },
         { role: UserRole.ORG_ADMIN, canManage: true },
-        { role: UserRole.TARA_ANALYST, canManage: false },
+        { role: UserRole.ANALYST, canManage: false },
         { role: UserRole.VIEWER, canManage: false }
       ];
 
@@ -116,7 +116,7 @@ describe('Centralized Role Management', () => {
       const testCases = [
         { role: UserRole.TOOL_ADMIN, canManage: true },
         { role: UserRole.ORG_ADMIN, canManage: false },
-        { role: UserRole.TARA_ANALYST, canManage: false }
+        { role: UserRole.ANALYST, canManage: false }
       ];
 
       testCases.forEach(({ role, canManage }) => {
@@ -136,7 +136,7 @@ describe('Centralized Role Management', () => {
       const testCases = [
         { role: UserRole.TOOL_ADMIN, canManage: true },
         { role: UserRole.ORG_ADMIN, canManage: false },
-        { role: UserRole.TARA_ANALYST, canManage: false }
+        { role: UserRole.ANALYST, canManage: false }
       ];
 
       testCases.forEach(({ role, canManage }) => {
@@ -157,13 +157,13 @@ describe('Centralized Role Management', () => {
         UserRole.TOOL_ADMIN,
         UserRole.ORG_ADMIN,
         UserRole.RISK_MANAGER,
-        UserRole.SECURITY_ENGINEER,
-        UserRole.TARA_ANALYST
+        UserRole.ANALYST,
+        UserRole.ANALYST
       ];
 
       const nonTaraRoles = [
-        UserRole.COMPLIANCE_OFFICER,
-        UserRole.PRODUCT_OWNER,
+        UserRole.AUDITOR,
+        UserRole.ANALYST,
         UserRole.AUDITOR,
         UserRole.VIEWER
       ];
@@ -201,10 +201,10 @@ describe('Centralized Role Management', () => {
       ];
 
       const nonRiskRoles = [
-        UserRole.COMPLIANCE_OFFICER,
-        UserRole.PRODUCT_OWNER,
-        UserRole.SECURITY_ENGINEER,
-        UserRole.TARA_ANALYST,
+        UserRole.AUDITOR,
+        UserRole.ANALYST,
+        UserRole.ANALYST,
+        UserRole.ANALYST,
         UserRole.AUDITOR,
         UserRole.VIEWER
       ];
@@ -250,7 +250,7 @@ describe('Centralized Role Management', () => {
       mockGet.mockReturnValue({
         user: {
           is_superuser: false,
-          organizations: [{ role: UserRole.TARA_ANALYST }]
+          organizations: [{ role: UserRole.ANALYST }]
         },
         isAuthenticated: true
       });

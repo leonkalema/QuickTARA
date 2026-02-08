@@ -15,7 +15,7 @@ def get_user_organizations_with_roles(db: Session, user_id: str) -> List[dict]:
         return [
             {
                 "organization_id": membership.organization_id,
-                "role": membership.role,
+                "role": (membership.role or '').lower(),
                 "joined_at": membership.created_at
             }
             for membership in memberships
@@ -35,7 +35,14 @@ def get_user_role_in_organization(db: Session, user_id: str, organization_id: st
             )
         ).first()
         
-        return membership.role if membership else None
+        if not membership or not membership.role:
+            return None
+        # Normalize role to lowercase and convert to enum
+        role_str = membership.role.lower()
+        try:
+            return UserRole(role_str)
+        except ValueError:
+            return None
     except Exception:
         return None
 
@@ -48,10 +55,11 @@ def user_has_org_permission(db: Session, user_id: str, organization_id: str, req
     # Role hierarchy (higher roles include lower role permissions)
     role_hierarchy = {
         UserRole.VIEWER: 1,
-        UserRole.TARA_ANALYST: 2,
-        UserRole.RISK_MANAGER: 3,
-        UserRole.ORG_ADMIN: 4,
-        UserRole.TOOL_ADMIN: 5
+        UserRole.AUDITOR: 2,
+        UserRole.ANALYST: 3,
+        UserRole.RISK_MANAGER: 4,
+        UserRole.ORG_ADMIN: 5,
+        UserRole.TOOL_ADMIN: 6
     }
     
     user_level = role_hierarchy.get(user_role, 0)
@@ -107,7 +115,7 @@ ROLE_PERMISSIONS = {
         OrgPermissions.VIEW,
         OrgPermissions.VIEW_MEMBERS
     ],
-    UserRole.TARA_ANALYST: [
+    UserRole.ANALYST: [
         OrgPermissions.VIEW,
         OrgPermissions.VIEW_MEMBERS
     ],

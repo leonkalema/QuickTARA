@@ -42,6 +42,7 @@ class UserResponse(BaseModel):
     last_name: str
     status: UserStatus
     is_verified: bool
+    is_superuser: bool
     created_at: datetime
     organizations: list
 
@@ -90,6 +91,7 @@ async def register_user(
         last_name=new_user.last_name,
         status=new_user.status,
         is_verified=new_user.is_verified,
+        is_superuser=new_user.is_superuser,
         created_at=new_user.created_at,
         organizations=[]
     )
@@ -136,17 +138,18 @@ async def login_user(
         ).first()
         
         if org:
+            role_lower = membership.role.lower() if membership.role else ""
             user_orgs.append({
                 "organization_id": org.organization_id,
                 "name": org.name,
-                "role": membership.role,
+                "role": role_lower,
                 "permissions": []  # Can be expanded later
             })
             
             # Add role to user_roles if not already present
-            if membership.role not in [role.value for role in user_roles]:
+            if role_lower not in [role.value for role in user_roles]:
                 try:
-                    role_enum = UserRole(membership.role)
+                    role_enum = UserRole(role_lower)
                     user_roles.append(role_enum)
                 except ValueError:
                     # Handle invalid role values gracefully
@@ -265,17 +268,18 @@ async def refresh_access_token(
         ).first()
         
         if org:
+            role_lower = membership.role.lower() if membership.role else ""
             user_orgs.append({
                 "organization_id": org.organization_id,
                 "name": org.name,
-                "role": membership.role,
+                "role": role_lower,
                 "permissions": []
             })
             
             # Add role to user_roles if not already present
-            if membership.role not in [role.value for role in user_roles]:
+            if role_lower not in [role.value for role in user_roles]:
                 try:
-                    role_enum = UserRole(membership.role)
+                    role_enum = UserRole(role_lower)
                     user_roles.append(role_enum)
                 except ValueError:
                     pass
@@ -302,14 +306,24 @@ async def refresh_access_token(
 @router.post("/logout")
 async def logout_user(
     refresh_data: RefreshTokenRequest,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Logout user by revoking refresh token"""
+    """Logout user by revoking refresh token (no auth required - uses refresh token to identify user)"""
+    
+    # Verify refresh token to get user_id
+    try:
+        token_payload = security_manager.verify_token(refresh_data.refresh_token, "refresh")
+        user_id = token_payload.get("sub")
+    except Exception:
+        # If token is invalid, just return success (user is effectively logged out)
+        return {"message": "Successfully logged out"}
+    
+    if not user_id:
+        return {"message": "Successfully logged out"}
     
     # Revoke refresh token
     refresh_token_record = db.query(RefreshToken).filter(
-        RefreshToken.user_id == current_user.user_id,
+        RefreshToken.user_id == user_id,
         RefreshToken.is_revoked == False
     ).first()
     
@@ -343,7 +357,7 @@ async def get_current_user_info(
             user_orgs.append({
                 "organization_id": org.organization_id,
                 "name": org.name,
-                "role": membership.role,
+                "role": membership.role.lower() if membership.role else "",
                 "permissions": []
             })
     
@@ -355,6 +369,7 @@ async def get_current_user_info(
         last_name=current_user.last_name,
         status=current_user.status,
         is_verified=current_user.is_verified,
+        is_superuser=current_user.is_superuser,
         created_at=current_user.created_at,
         organizations=user_orgs
     )

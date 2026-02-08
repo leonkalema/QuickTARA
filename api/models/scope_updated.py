@@ -55,6 +55,7 @@ class ProductScopeBase(BaseModel):
 class ProductScopeCreate(ProductScopeBase):
     """Used for creating a new product scope"""
     scope_id: Optional[str] = Field(None, description="Optional unique product identifier")
+    organization_id: Optional[str] = Field(None, description="Department/Organization that owns this product")
     
     
 class ProductScopeUpdate(BaseModel):
@@ -75,6 +76,7 @@ class ProductScopeUpdate(BaseModel):
 class ProductScope(ProductScopeBase):
     """Full product scope model with ID, timestamps, and versioning"""
     scope_id: str = Field(..., description="Unique product identifier")
+    organization_id: Optional[str] = Field(None, description="Department/Organization that owns this product")
     version: int = Field(1, description="Version number of this product definition")
     is_current: bool = Field(True, description="Whether this is the current version")
     revision_notes: Optional[str] = Field(None, description="Notes on this revision")
