@@ -535,6 +535,13 @@ def _convert_db_threat_to_model(db_threat: ThreatCatalog) -> ThreatCatalogItem:
         cwe_ids=db_threat.cwe_ids,
         capec_ids=db_threat.capec_ids,
         examples=db_threat.examples,
+        source=getattr(db_threat, "source", "custom") or "custom",
+        source_version=getattr(db_threat, "source_version", None),
+        mitre_technique_id=getattr(db_threat, "mitre_technique_id", None),
+        mitre_tactic=getattr(db_threat, "mitre_tactic", None),
+        automotive_relevance=getattr(db_threat, "automotive_relevance", 3) or 3,
+        automotive_context=getattr(db_threat, "automotive_context", None),
+        is_user_modified=getattr(db_threat, "is_user_modified", False) or False,
         created_at=db_threat.created_at,
         updated_at=db_threat.updated_at
     )

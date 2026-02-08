@@ -1,7 +1,7 @@
 """
 SQLAlchemy models for the threat catalog
 """
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Table, JSON, Enum
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Table, JSON, Enum, Boolean
 # Remove the declarative_base import as we're using Base from db.base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -62,6 +62,16 @@ class ThreatCatalog(Base):
     cwe_ids = Column(JSON, nullable=True)
     capec_ids = Column(JSON, nullable=True)
     examples = Column(JSON, nullable=True)
+    
+    # MITRE ATT&CK provenance fields
+    source = Column(String, nullable=False, default="custom")  # mitre_attack_ics | capec | custom
+    source_version = Column(String, nullable=True)  # e.g. "15.1" for ATT&CK v15.1
+    mitre_technique_id = Column(String, nullable=True, index=True)  # e.g. "T0800"
+    mitre_tactic = Column(String, nullable=True)  # original ATT&CK tactic name
+    automotive_relevance = Column(Integer, nullable=False, default=3)  # 1-5 relevance to automotive
+    automotive_context = Column(String, nullable=True)  # automotive-specific description
+    is_user_modified = Column(Boolean, nullable=False, default=False)
+    
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 

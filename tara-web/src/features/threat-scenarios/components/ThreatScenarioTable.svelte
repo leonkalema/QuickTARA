@@ -7,6 +7,7 @@
   import type { DamageScenario } from '$lib/types/damageScenario';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
   import DamageScenarioTagSelector from './DamageScenarioTagSelector.svelte';
+  import ThreatCatalogPicker from './ThreatCatalogPicker.svelte';
   import { authStore } from '$lib/stores/auth';
 
   export let threatScenarios: ThreatScenario[] = [];
@@ -23,6 +24,18 @@
     damage_scenario_id: '',
     damage_scenario_ids: []
   };
+  let validationErrors: Record<string, string> = {};
+
+  // Catalog picker
+  let showCatalogPicker = false;
+
+  function handleCatalogSelect(event: CustomEvent) {
+    const selected = event.detail;
+    newScenario.name = selected.name;
+    newScenario.description = selected.description;
+    newScenario.attack_vector = selected.attack_vector;
+    showCatalogPicker = false;
+  }
 
   // Delete confirmation
   let showDeleteDialog = false;
@@ -51,21 +64,22 @@
     dispatch('cancelAdd');
   }
 
-  async function addNewScenario() {
+  function validateForm(): boolean {
+    validationErrors = {};
     if (!newScenario.name.trim()) {
-      notifications.show('Please enter a threat scenario name', 'error');
-      return;
+      validationErrors['name'] = 'Threat scenario name is required';
     }
-
     if (!newScenario.damage_scenario_ids.length && !newScenario.damage_scenario_id) {
-      notifications.show('Please select at least one damage scenario', 'error');
-      return;
+      validationErrors['damage'] = 'Select at least one damage scenario';
     }
-
     if (!$selectedProduct?.scope_id) {
-      notifications.show('Please select a product first', 'error');
-      return;
+      validationErrors['product'] = 'Select a product first';
     }
+    return Object.keys(validationErrors).length === 0;
+  }
+
+  async function addNewScenario() {
+    if (!validateForm()) return;
 
     try {
       const scenarioData: CreateThreatScenarioRequest = {
@@ -202,18 +216,39 @@
   {#if isAddingNew}
     <form on:submit|preventDefault={addNewScenario} class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
       <div class="grid grid-cols-1 gap-4 mb-4">
-        <input bind:value={newScenario.name} placeholder="Threat scenario name *" class="px-3 py-2 border rounded-md" />
+        <div>
+        <input bind:value={newScenario.name} placeholder="Threat scenario name *"
+          class="px-3 py-2 border rounded-md w-full {validationErrors['name'] ? 'border-red-500 ring-1 ring-red-500' : ''}" />
+        {#if validationErrors['name']}
+          <p class="text-red-600 text-xs mt-1">{validationErrors['name']}</p>
+        {/if}
+      </div>
         
         <!-- Use the new tag selector component -->
-        <DamageScenarioTagSelector 
-          bind:selectedDamageScenarios={newScenario.damage_scenario_ids}
-          placeholder="Select damage scenarios that this threat could cause..."
-        />
+        <div class="{validationErrors['damage'] ? 'ring-1 ring-red-500 rounded-md' : ''}">
+          <DamageScenarioTagSelector 
+            bind:selectedDamageScenarios={newScenario.damage_scenario_ids}
+            placeholder="Select damage scenarios that this threat could cause..."
+          />
+        </div>
+        {#if validationErrors['damage']}
+          <p class="text-red-600 text-xs mt-1">{validationErrors['damage']}</p>
+        {/if}
+        {#if validationErrors['product']}
+          <p class="text-red-600 text-xs mt-1">{validationErrors['product']}</p>
+        {/if}
       </div>
       
       <textarea bind:value={newScenario.description} placeholder="Description" class="w-full px-3 py-2 border rounded-md mb-3" rows="2"></textarea>
       <input bind:value={newScenario.attack_vector} placeholder="Attack vector" class="w-full px-3 py-2 border rounded-md mb-4" />
       
+      <div class="flex gap-2 mb-4">
+        <button type="button" on:click={() => showCatalogPicker = true}
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2">
+          &#128737; Pick from MITRE Catalog
+        </button>
+      </div>
+
       <div class="flex gap-2">
         <button type="submit" class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md font-medium">
           Add Threat Scenario
@@ -338,6 +373,8 @@
 </div>
 
 <!-- Delete Confirmation Dialog -->
+<ThreatCatalogPicker bind:isOpen={showCatalogPicker} on:select={handleCatalogSelect} />
+
 <ConfirmDialog
   isOpen={showDeleteDialog}
   title="Delete Threat Scenario"

@@ -81,6 +81,13 @@ class ThreatCatalogItem(BaseModel):
     cwe_ids: List[str] = Field(default_factory=list, description="Related Common Weakness Enumeration IDs")
     capec_ids: List[str] = Field(default_factory=list, description="Related CAPEC IDs")
     examples: List[str] = Field(default_factory=list, description="Examples of this threat in real-world scenarios")
+    source: str = Field(default="custom", description="Data source: mitre_attack_ics | capec | custom")
+    source_version: Optional[str] = Field(None, description="Source data version, e.g. '15.1' for ATT&CK v15.1")
+    mitre_technique_id: Optional[str] = Field(None, description="Original MITRE technique ID, e.g. 'T0800'")
+    mitre_tactic: Optional[str] = Field(None, description="Original MITRE ATT&CK tactic name")
+    automotive_relevance: int = Field(default=3, ge=1, le=5, description="Relevance to automotive domain (1-5)")
+    automotive_context: Optional[str] = Field(None, description="Automotive-specific context for this threat")
+    is_user_modified: bool = Field(default=False, description="Whether a user has modified the auto-imported data")
     created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
     updated_at: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
     
@@ -103,6 +110,12 @@ class ThreatCatalogCreate(BaseModel):
     cwe_ids: List[str] = Field(default_factory=list, description="Related Common Weakness Enumeration IDs")
     capec_ids: List[str] = Field(default_factory=list, description="Related CAPEC IDs")
     examples: List[str] = Field(default_factory=list, description="Examples of this threat in real-world scenarios")
+    source: str = Field(default="custom", description="Data source: mitre_attack_ics | capec | custom")
+    source_version: Optional[str] = Field(None, description="Source data version")
+    mitre_technique_id: Optional[str] = Field(None, description="Original MITRE technique ID")
+    mitre_tactic: Optional[str] = Field(None, description="Original MITRE ATT&CK tactic name")
+    automotive_relevance: int = Field(default=3, ge=1, le=5, description="Relevance to automotive (1-5)")
+    automotive_context: Optional[str] = Field(None, description="Automotive-specific context")
 
 
 class ThreatCatalogUpdate(BaseModel):
@@ -120,6 +133,8 @@ class ThreatCatalogUpdate(BaseModel):
     cwe_ids: Optional[List[str]] = Field(None, description="Related Common Weakness Enumeration IDs")
     capec_ids: Optional[List[str]] = Field(None, description="Related CAPEC IDs")
     examples: Optional[List[str]] = Field(None, description="Examples of this threat in real-world scenarios")
+    automotive_relevance: Optional[int] = Field(None, ge=1, le=5, description="Relevance to automotive (1-5)")
+    automotive_context: Optional[str] = Field(None, description="Automotive-specific context")
 
 
 class ThreatMatchResult(BaseModel):

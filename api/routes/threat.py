@@ -23,6 +23,9 @@ from api.services.threat_service import (
     delete_threat_catalog_item,
     perform_threat_analysis
 )
+from core.threat_catalog.catalog_seeder import seed_from_stix, get_catalog_stats
+from api.auth.dependencies import get_current_active_user
+from api.models.user import User
 
 router = APIRouter(
     prefix="",  # Remove the /threat prefix since it will be added in app.py
@@ -73,6 +76,30 @@ async def bulk_create_catalog_items(
     """Bulk create threat catalog items"""
     created_items = [create_threat_catalog_item(db, t) for t in threats]
     return {"inserted": len(created_items), "catalog_items": created_items}
+
+@router.post("/catalog/seed-mitre")
+async def seed_mitre_catalog(
+    force_update: bool = False,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Seed threat catalog from MITRE ATT&CK ICS STIX bundle.
+    Requires Tool Admin role. Set force_update=true to overwrite user-modified entries.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Tool Admin access required")
+    result = seed_from_stix(db, force_update=force_update)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=f"Seed failed: {result['error']}")
+    return result
+
+
+@router.get("/catalog/stats")
+async def catalog_statistics(db: Session = Depends(get_db)):
+    """Return summary statistics about the threat catalog."""
+    return get_catalog_stats(db)
+
 
 @router.get("/catalog/{threat_id}", response_model=ThreatCatalogItem)
 async def get_catalog_item(threat_id: str, db: Session = Depends(get_db)):
@@ -142,3 +169,5 @@ async def analyze_threats(
             status_code=500,
             detail=f"Error performing threat analysis: {str(e)}"
         )
+
+

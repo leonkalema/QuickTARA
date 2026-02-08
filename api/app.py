@@ -100,6 +100,22 @@ def create_app(settings=None):
         """Simple health check endpoint"""
         return {"status": "ok"}
     
+    @app.on_event("startup")
+    async def seed_threat_catalog_on_startup():
+        """Auto-seed threat catalog from bundled data if empty. No internet needed."""
+        try:
+            from core.threat_catalog.startup_seed import auto_seed_catalog
+            from api.deps.db import SessionLocal
+            db = SessionLocal()
+            try:
+                result = auto_seed_catalog(db)
+                if result.get("created", 0) > 0:
+                    logger.info("Auto-seeded %d threats into catalog", result["created"])
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning("Threat catalog auto-seed skipped: %s", str(e))
+    
     return app
 
 # Create the app instance for uvicorn

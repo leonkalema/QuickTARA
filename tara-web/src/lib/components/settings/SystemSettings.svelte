@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Save, Database, Shield, Globe, Bell } from '@lucide/svelte';
 	import { notifications } from '$lib/stores/notifications';
+	import ThreatCatalogManager from './ThreatCatalogManager.svelte';
 
 	let settings = {
 		database: {
@@ -299,6 +300,9 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Threat Catalog -->
+		<ThreatCatalogManager />
 	</div>
 </div>
 
