@@ -91,6 +91,10 @@ def create_app(settings=None):
     from api.routes import audit as audit_routes
     app.include_router(audit_routes.router, prefix="/api/audit", tags=["audit"])
     
+    # CRA compliance module
+    from api.routes import cra as cra_routes
+    app.include_router(cra_routes.router, prefix="/api/cra", tags=["cra"])
+    
     app.include_router(settings_router.router, tags=["settings"])
     app.include_router(organizations.router, tags=["organizations"])
     app.include_router(organization_members.router, tags=["organization-members"])

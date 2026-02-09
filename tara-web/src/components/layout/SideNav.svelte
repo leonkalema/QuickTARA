@@ -10,6 +10,7 @@
     Zap,
     AlertTriangle,
     Shield,
+    ShieldCheck,
     Pill,
     BarChart3,
     ClipboardCheck,
@@ -43,6 +44,7 @@
     { id: 'risk', label: 'Risk Assessment', icon: Shield, path: '/risk-assessment', group: 'analyze', permission: 'tara', requiresProduct: true, step: 5 },
     { id: 'treatment', label: 'Risk Treatment', icon: Pill, path: '/risk-treatment', group: 'analyze', permission: 'tara', requiresProduct: true, step: 6 },
     { id: 'reports', label: 'Reports', icon: BarChart3, path: '/reports', group: 'deliver', permission: 'reports', requiresProduct: true },
+    { id: 'cra', label: 'CRA Compliance', icon: ShieldCheck, path: '/cra', group: 'deliver', permission: 'reports' },
     { id: 'audit', label: 'Audit & Compliance', icon: ClipboardCheck, path: '/audit', group: 'deliver', permission: 'reports', requiresProduct: true },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/settings', group: 'admin', permission: 'admin' },
   ];
