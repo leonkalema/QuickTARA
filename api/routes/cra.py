@@ -723,11 +723,14 @@ async def get_gap_analysis(
         has_verified_control = any(
             c["status"] == "verified" for c in applied_controls
         )
+        has_implemented_control = any(
+            c["status"] == "implemented" for c in applied_controls
+        )
         if is_compliant:
             risk_level = "none"
         elif has_verified_control:
             risk_level = "low"
-        elif applied_controls:
+        elif has_implemented_control:
             risk_level = "medium" if base_risk in ("high", "critical") else "low"
         else:
             risk_level = base_risk
@@ -757,6 +760,7 @@ async def get_gap_analysis(
             "tara_evidence": tara_evidence,
             "owner": req_status.owner,
             "target_date": req_status.target_date,
+            "evidence_notes": req_status.evidence_notes or "",
         })
     gap_items = [g for g in gaps if g["is_gap"]]
     return {

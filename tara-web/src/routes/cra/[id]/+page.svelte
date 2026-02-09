@@ -9,6 +9,7 @@
   import CraInventory from '../../../features/cra/components/CraInventory.svelte';
   import CraClassificationWizard from '../../../features/cra/components/CraClassificationWizard.svelte';
   import CraGapAnalysis from '../../../features/cra/components/CraGapAnalysis.svelte';
+  import CraClassificationImpact from '../../../features/cra/components/CraClassificationImpact.svelte';
   import {
     ArrowLeft, Shield, Calendar, Wand2, Trash2,
     FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package
@@ -100,6 +101,15 @@
   function formatDeadline(d?: string): string {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  function getDeadlineColor(): string {
+    if (!assessment?.compliance_deadline) return 'var(--color-text-tertiary)';
+    const months = Math.round((new Date(assessment.compliance_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30));
+    if (months <= 0) return '#dc2626';
+    if (months <= 6) return 'var(--color-status-error)';
+    if (months <= 12) return 'var(--color-status-warning)';
+    return 'var(--color-text-primary)';
   }
 
   const CLASSIFICATION_LABELS: Record<string, string> = {
@@ -250,15 +260,15 @@
           </div>
         </div>
         <div>
-          <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Compliance Path</div>
-          <div class="text-sm font-medium" style="color: {assessment.compliance_path === 'compensating_control' ? 'var(--color-status-warning)' : assessment.compliance_path === 'hybrid' ? 'var(--color-accent-primary)' : 'var(--color-status-success)'};">
-            {assessment.compliance_path === 'direct_patch' ? 'Direct Patch' : assessment.compliance_path === 'compensating_control' ? 'Compensating Control' : 'Hybrid'}
+          <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Conformity Path</div>
+          <div class="text-sm font-medium" style="color: {assessment.classification === 'critical' ? '#dc2626' : assessment.classification === 'class_ii' ? 'var(--color-status-error)' : assessment.classification === 'class_i' ? 'var(--color-status-warning)' : 'var(--color-status-success)'};">
+            {assessment.classification === 'critical' ? 'EU Certification' : assessment.classification === 'class_ii' ? 'Third-Party' : assessment.classification === 'class_i' ? 'Self + Standards' : assessment.classification ? 'Self-Assessment' : 'Not classified'}
           </div>
         </div>
         <div>
           <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Deadline</div>
-          <div class="flex items-center gap-1 text-sm font-medium" style="color: var(--color-text-primary);">
-            <Calendar class="w-3.5 h-3.5" style="color: var(--color-text-tertiary);" />
+          <div class="flex items-center gap-1 text-sm font-medium" style="color: {getDeadlineColor()};">
+            <Calendar class="w-3.5 h-3.5" />
             {formatDeadline(assessment.compliance_deadline)}
           </div>
         </div>
@@ -437,25 +447,18 @@
         </div>
       {/if}
 
-      <!-- Classification details -->
+      <!-- Classification impact -->
       {#if assessment.classification}
-        <div class="rounded-lg border p-4" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
-          <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--color-text-tertiary);">Classification Details</div>
-          <div class="grid grid-cols-3 gap-3 text-sm">
-            {#each Object.entries(assessment.classification_answers) as [qId, answer]}
-              <div class="flex items-center gap-2">
-                <span class="w-5 h-5 rounded-full flex items-center justify-center" style="background: {answer ? 'var(--color-status-success)' : 'var(--color-bg-surface-hover)'}20; color: {answer ? 'var(--color-status-success)' : 'var(--color-text-tertiary)'};">
-                  {#if answer}<Check class="w-3 h-3" />{:else}<X class="w-3 h-3" />{/if}
-                </span>
-                <span style="color: var(--color-text-secondary);">{qId}</span>
-              </div>
-            {/each}
-          </div>
-        </div>
+        <CraClassificationImpact
+          classification={assessment.classification}
+          productType={assessment.product_type}
+          complianceDeadline={assessment.compliance_deadline}
+          automotiveException={assessment.automotive_exception}
+        />
       {:else}
         <div class="rounded-lg border border-dashed p-6 text-center" style="border-color: var(--color-border-default);">
           <Shield class="w-8 h-8 mx-auto mb-2" style="color: var(--color-text-tertiary);" />
-          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">Product not yet classified</p>
+          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">Product not yet classified — classification determines your conformity path, deadline, and obligations.</p>
           <button
             class="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
             style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
@@ -473,6 +476,9 @@
     {:else if activeTab === 'gap_analysis'}
       <CraGapAnalysis
         assessmentId={assessment.id ?? ''}
+        productName={assessment.product_name ?? assessment.product_id}
+        classification={assessment.classification}
+        complianceDeadline={assessment.compliance_deadline}
       />
     {:else if activeTab === 'controls'}
       <CraCompensatingControls

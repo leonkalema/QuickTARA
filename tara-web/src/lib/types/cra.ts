@@ -253,6 +253,7 @@ export interface GapRequirementItem {
   }>;
   readonly owner?: string;
   readonly target_date?: string;
+  readonly evidence_notes?: string;
 }
 
 export interface GapAnalysisSummary {

@@ -1,14 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { craApi } from '$lib/api/craApi';
-  import type { GapAnalysisResponse, GapRequirementItem, CompensatingControlCatalogItem } from '$lib/types/cra';
-  import { ShieldCheck, AlertTriangle, ChevronDown, ChevronRight, Plus, Shield, Check, Loader2 } from '@lucide/svelte';
+  import type { GapAnalysisResponse, GapRequirementItem, CompensatingControlCatalogItem, CraClassification } from '$lib/types/cra';
+  import { ShieldCheck, AlertTriangle, ChevronDown, ChevronRight, Plus, Shield, Check, Loader2, FileText, Users } from '@lucide/svelte';
+  import CraTraceabilityReport from './CraTraceabilityReport.svelte';
+  import CraCustomerSummary from './CraCustomerSummary.svelte';
 
   interface Props {
     assessmentId: string;
+    productName?: string;
+    classification?: CraClassification;
+    complianceDeadline?: string;
   }
 
-  let { assessmentId }: Props = $props();
+  let { assessmentId, productName = 'Product', classification, complianceDeadline }: Props = $props();
+  let showReport = $state(false);
+  let showCustomerSummary = $state(false);
 
   let analysis: GapAnalysisResponse | null = $state(null);
   let catalog: CompensatingControlCatalogItem[] = $state([]);
@@ -119,7 +126,41 @@
       <p class="text-sm" style="color: var(--color-status-error);">{error}</p>
       <button class="mt-2 text-xs underline cursor-pointer" style="color: var(--color-accent-primary);" onclick={loadData}>Retry</button>
     </div>
+  {:else if analysis && showCustomerSummary}
+    <CraCustomerSummary
+      {assessmentId}
+      {productName}
+      {classification}
+      {complianceDeadline}
+      onclose={() => { showCustomerSummary = false; }}
+    />
+  {:else if analysis && showReport}
+    <CraTraceabilityReport
+      {analysis}
+      {productName}
+      onclose={() => { showReport = false; }}
+    />
   {:else if analysis}
+    <!-- Report buttons -->
+    <div class="flex justify-end gap-2">
+      <button
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium cursor-pointer"
+        style="background: var(--color-bg-surface-hover); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
+        onclick={() => { showReport = true; }}
+      >
+        <FileText class="w-3 h-3" />
+        Audit Report
+      </button>
+      <button
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium cursor-pointer"
+        style="background: var(--color-status-success)15; color: var(--color-status-success); border: 1px solid var(--color-status-success)30;"
+        onclick={() => { showCustomerSummary = true; }}
+      >
+        <Users class="w-3 h-3" />
+        Customer Summary
+      </button>
+    </div>
+
     <!-- Summary Cards -->
     <div class="grid grid-cols-4 gap-4">
       <div class="rounded-lg border p-4 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">

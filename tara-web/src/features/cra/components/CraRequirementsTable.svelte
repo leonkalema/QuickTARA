@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { CraRequirementStatusRecord, UpdateRequirementRequest } from '$lib/types/cra';
   import { craApi } from '$lib/api/craApi';
+  import { userApi, type User } from '$lib/api/userApi';
   import { ChevronDown, ChevronRight, Check, Circle, AlertTriangle, Minus } from '@lucide/svelte';
 
   interface Props {
@@ -14,6 +16,23 @@
   let editingId: string | null = $state(null);
   let editForm: UpdateRequirementRequest = $state({});
   let saving = $state(false);
+  let validationError: string | null = $state(null);
+  let orgUsers: User[] = $state([]);
+
+  onMount(async () => {
+    try {
+      orgUsers = await userApi.getUsers();
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    }
+  });
+
+  function getUserDisplayName(user: User): string {
+    if (user.first_name || user.last_name) {
+      return `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
+    }
+    return user.username || user.email;
+  }
 
   const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
     not_started: { label: 'Not Started', color: 'var(--color-text-tertiary)' },
@@ -48,13 +67,25 @@
   function cancelEdit(): void {
     editingId = null;
     editForm = {};
+    validationError = null;
+  }
+
+  function validate(): boolean {
+    if (editForm.status === 'not_applicable' && !editForm.evidence_notes?.trim()) {
+      validationError = 'N/A status requires a justification in Evidence Notes.';
+      return false;
+    }
+    validationError = null;
+    return true;
   }
 
   async function saveEdit(id: string): Promise<void> {
+    if (!validate()) return;
     saving = true;
     try {
       await craApi.updateRequirement(id, editForm);
       editingId = null;
+      validationError = null;
       onupdate?.();
     } catch (err) {
       console.error('Failed to update requirement:', err);
@@ -180,14 +211,17 @@
               </div>
               <div>
                 <label for="req-owner" class="block text-xs font-medium mb-1" style="color: var(--color-text-tertiary);">Owner</label>
-                <input
+                <select
                   id="req-owner"
-                  type="text"
                   class="w-full px-2 py-1.5 rounded text-sm border"
                   style="background: var(--color-bg-surface); border-color: var(--color-border-default); color: var(--color-text-primary);"
                   bind:value={editForm.owner}
-                  placeholder="Responsible person"
-                />
+                >
+                  <option value="">— Unassigned —</option>
+                  {#each orgUsers as user (user.user_id)}
+                    <option value={getUserDisplayName(user)}>{getUserDisplayName(user)} ({user.email})</option>
+                  {/each}
+                </select>
               </div>
               <div>
                 <label for="req-target-date" class="block text-xs font-medium mb-1" style="color: var(--color-text-tertiary);">Target Date</label>
@@ -200,17 +234,27 @@
                 />
               </div>
               <div class="col-span-2">
-                <label for="req-evidence" class="block text-xs font-medium mb-1" style="color: var(--color-text-tertiary);">Evidence Notes</label>
+                <label for="req-evidence" class="block text-xs font-medium mb-1" style="color: var(--color-text-tertiary);">
+                  Evidence Notes
+                  {#if editForm.status === 'not_applicable'}
+                    <span style="color: var(--color-status-error);"> *Required for N/A</span>
+                  {/if}
+                </label>
                 <textarea
                   id="req-evidence"
                   class="w-full px-2 py-1.5 rounded text-sm border resize-none"
-                  style="background: var(--color-bg-surface); border-color: var(--color-border-default); color: var(--color-text-primary);"
+                  style="background: var(--color-bg-surface); border-color: {editForm.status === 'not_applicable' && !editForm.evidence_notes?.trim() ? 'var(--color-status-error)' : 'var(--color-border-default)'}; color: var(--color-text-primary);"
                   rows="2"
                   bind:value={editForm.evidence_notes}
-                  placeholder="What evidence exists for this requirement?"
+                  placeholder={editForm.status === 'not_applicable' ? 'Justification required — why does this requirement not apply?' : 'What evidence exists for this requirement?'}
                 ></textarea>
               </div>
             </div>
+            {#if validationError}
+              <div class="text-xs mt-1 px-2 py-1 rounded" style="color: var(--color-status-error); background: var(--color-status-error)10;">
+                {validationError}
+              </div>
+            {/if}
             <div class="flex gap-2 mt-2">
               <button
                 class="px-3 py-1.5 rounded text-xs font-medium cursor-pointer"
