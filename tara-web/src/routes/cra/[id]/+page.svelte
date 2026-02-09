@@ -22,6 +22,7 @@
   let showClassifyWizard = $state(false);
   let autoMapping = $state(false);
   let deleting = $state(false);
+  let showDeleteConfirm = $state(false);
   let autoMapResult: { mapped: number; total: number } | null = $state(null);
   let nextStepsDismissed = $state(false);
 
@@ -75,7 +76,7 @@
   }
 
   async function deleteAssessment(): Promise<void> {
-    if (!confirm('Delete this CRA assessment? This cannot be undone.')) return;
+    showDeleteConfirm = false;
     deleting = true;
     try {
       if (assessmentId) await craApi.deleteAssessment(assessmentId);
@@ -213,7 +214,7 @@
         <button
           class="inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium cursor-pointer"
           style="color: var(--color-status-error);"
-          onclick={deleteAssessment}
+          onclick={() => { showDeleteConfirm = true; }}
           disabled={deleting}
         >
           <Trash2 class="w-3 h-3" />
@@ -493,5 +494,38 @@
         onupdate={loadAssessment}
       />
     {/if}
+  </div>
+{/if}
+
+<!-- Delete confirmation modal -->
+{#if showDeleteConfirm}
+  <div class="fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.5);">
+    <div class="rounded-lg border p-6 w-full max-w-sm shadow-xl" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="p-2 rounded-full" style="background: var(--color-status-error)15;">
+          <Trash2 class="w-5 h-5" style="color: var(--color-status-error);" />
+        </div>
+        <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Delete Assessment</h3>
+      </div>
+      <p class="text-sm mb-4" style="color: var(--color-text-secondary);">
+        This will permanently delete this CRA assessment, including all requirement statuses, controls, and inventory data. This cannot be undone.
+      </p>
+      <div class="flex justify-end gap-2">
+        <button
+          class="px-4 py-2 rounded text-sm font-medium cursor-pointer"
+          style="background: var(--color-bg-surface-hover); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
+          onclick={() => { showDeleteConfirm = false; }}
+        >
+          Cancel
+        </button>
+        <button
+          class="px-4 py-2 rounded text-sm font-medium cursor-pointer"
+          style="background: var(--color-status-error); color: white;"
+          onclick={deleteAssessment}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
   </div>
 {/if}
