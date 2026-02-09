@@ -6,12 +6,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![ISO 21434](https://img.shields.io/badge/ISO%2021434-Compliant-green.svg)](https://www.iso.org/standard/70918.html)
 [![UN R155](https://img.shields.io/badge/UN%20R155-Compliant-green.svg)](https://unece.org/transport/documents/2021/03/standards/un-regulation-no-155-cyber-security-and-cyber-security)
-[![Version](https://img.shields.io/badge/Version-2.0.0-brightgreen.svg)](https://github.com/leonkalema/QuickTARA/releases)
+[![Version](https://img.shields.io/badge/Version-2.1.0-brightgreen.svg)](https://github.com/leonkalema/QuickTARA/releases)
+[![CRA](https://img.shields.io/badge/EU%20CRA-Compliance%20Module-orange.svg)](https://digital-strategy.ec.europa.eu/en/policies/cyber-resilience-act)
 
 **Professional-grade Threat Analysis and Risk Assessment (TARA) for automotive cybersecurity**  
-*Complete workflow from asset identification to regulatory compliance documentation*
+*Complete workflow from asset identification to CRA compliance — ISO 21434, UN R155, and EU Cyber Resilience Act*
 
-[🚀 One-Line Install](#-one-line-installation) • [👥 User Roles](#-user-roles--permissions) • [🎯 Features](#-comprehensive-features) • [⚙️ Requirements](#️-system-requirements)
+[🚀 One-Line Install](#-one-line-installation) • [🇪🇺 CRA Module](#-cra-compliance-module) • [👥 User Roles](#-user-roles--permissions) • [🎯 Features](#-comprehensive-features) • [⚙️ Requirements](#️-system-requirements)
 
 </div>
 
@@ -49,6 +50,42 @@
 </td>
 </tr>
 </table>
+
+---
+
+## 🇪🇺 **CRA Compliance Module**
+
+QuickTARA is the first TARA tool with **native EU Cyber Resilience Act (CRA) compliance** built in — no plugins, no add-ons.
+
+<table>
+<tr>
+<td width="50%">
+
+### 📋 **Classification & Gap Analysis**
+- **Product Classification** — 6-question wizard determines Default, Class I, Class II, or Critical
+- **Auto-Mapping** — Existing TARA artifacts (assets, damage scenarios, controls) automatically map to CRA requirements
+- **Gap Analysis** — All 18 Annex I requirements tracked with risk-level scoring
+- **Legacy Product Support** — Compensating controls catalog for products that can't be redesigned
+- **Risk-Driven Workflow** — Apply a suggested control directly from a gap → control is created + linked → risk drops
+
+</td>
+<td width="50%">
+
+### 📊 **Reports & Compliance Evidence**
+- **Audit Traceability Report** — Full requirement × control matrix with residual risk, status definitions, justification notes (print + CSV)
+- **Customer Compliance Summary** — External-safe report with classification, methodology, assurance statement, and Annex A (all 18 requirements with status)
+- **Auto-Generated Milestones** — Quarterly roadmap derived from requirement target dates
+- **Inventory Tracking** — SKU, firmware version, units in field/stock, OEM customer, target market
+- **Classification Impact Panel** — Conformity path, deadline urgency, cost estimate, and regulatory obligations
+
+</td>
+</tr>
+</table>
+
+### 🔒 **Validation & Integrity**
+- N/A status requires documented justification — form blocks save without it
+- Residual risk labels accurately reflect control status (planned ≠ implemented ≠ verified)
+- Single source of truth — gap analysis reads from requirement statuses, not parallel data
 
 ---
 
@@ -315,20 +352,26 @@ QuickTARA implements comprehensive role-based access control (RBAC) for enterpri
 ## 🔎 **Project Status & Roadmap**
 
 ### Implemented
-- RBAC: system admin, org admin, risk manager, analyst
-- JWT authentication with refresh tokens
-- Organization membership and settings UI
-- Reporting exports: PDF (ReportLab), Excel, JSON, Text
-- TARA workflow UI and APIs for products, assets, damage/threat scenarios, risk, reports
+- **TARA Workflow** — Products, assets, damage scenarios, threat scenarios, risk assessment, risk treatment
+- **RBAC** — System admin, org admin, risk manager, analyst with permission matrix
+- **Authentication** — JWT with refresh tokens, bcrypt password hashing, session management
+- **Organization Management** — Multi-org support, membership assignment, settings UI
+- **Reports** — PDF (ReportLab), Excel, JSON, Text with ISO 21434 documentation sections
+- **CRA Compliance Module** — Classification wizard, auto-mapping, gap analysis, compensating controls
+- **CRA Reports** — Audit traceability report (internal) and customer compliance summary (external)
+- **CRA Inventory** — SKU tracking, firmware versions, units in field/stock, OEM customers
+- **Audit Trail** — Immutable action logging, evidence attachments, approval workflows, snapshots
+- **SFOP Risk Calculator** — Safety, Financial, Operational, Privacy impact scoring
+- **ISO 21434 Mapping** — Requirement traceability to standard clauses
+- **On-Premise Deployment** — Private instances, no cloud dependency
 
-### Planned (not yet implemented)
+### Planned
 - Executive dashboards and C-level summaries
 - Custom report templates and branding
-- Audit trail (immutable action logging)
-- Automated scheduling/periodic report delivery
 - SSO/LDAP integration
-- Strong multi-tenant isolation
+- Multi-tenant isolation hardening
 - Encryption at rest and default HTTPS deployment
+- Automated periodic compliance re-assessment
 
 ---
 
@@ -501,5 +544,5 @@ For questions or contributions, please open an issue on GitHub.
 
 ---
 
-**© 2025 QuickTARA. All rights reserved.**
+**© 2025–2026 QuickTARA. All rights reserved.**
 
