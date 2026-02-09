@@ -157,13 +157,13 @@
     goto('/products');
   }
 
-  function getStatusColor(status: string) {
+  function getStatusStyle(status: string): string {
     switch (status) {
-      case 'production': return 'bg-green-100 text-green-800';
-      case 'testing': return 'bg-yellow-100 text-yellow-800';
-      case 'development': return 'bg-blue-100 text-blue-800';
-      case 'deprecated': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'production': return 'background: color-mix(in srgb, var(--color-status-accepted-text, #10b981) 15%, transparent); color: var(--color-status-accepted-text, #10b981);';
+      case 'testing': return 'background: color-mix(in srgb, var(--color-status-draft-text, #f59e0b) 15%, transparent); color: var(--color-status-draft-text, #f59e0b);';
+      case 'development': return 'background: color-mix(in srgb, var(--color-accent-primary) 15%, transparent); color: var(--color-accent-primary);';
+      case 'deprecated': return 'background: color-mix(in srgb, var(--color-error) 15%, transparent); color: var(--color-error);';
+      default: return 'background: var(--color-bg-elevated); color: var(--color-text-secondary);';
     }
   }
 
@@ -190,24 +190,24 @@
   <div class="mb-6">
     <button
       on:click={goBack}
-      class="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+      class="flex items-center text-xs mb-4 transition-colors" style="color: var(--color-text-secondary);"
     >
-      <ArrowLeft class="w-4 h-4 mr-2" />
+      <ArrowLeft class="w-3.5 h-3.5 mr-2" />
       Back to Products
     </button>
   </div>
 
   {#if loading}
     <div class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <span class="ml-3 text-gray-600">Loading product details...</span>
+      <div class="animate-spin rounded-full h-6 w-6 border-2 border-t-transparent" style="border-color: var(--color-accent-primary);"></div>
+      <span class="ml-3 text-xs" style="color: var(--color-text-tertiary);">Loading product details...</span>
     </div>
   {:else if error}
-    <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-      <p class="text-red-800">{error}</p>
+    <div class="rounded-lg p-6 text-center" style="background: color-mix(in srgb, var(--color-error) 10%, var(--color-bg-surface)); border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);">
+      <p class="text-xs" style="color: var(--color-error);">{error}</p>
       <button
         on:click={loadProduct}
-        class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        class="mt-4 px-4 py-2 text-xs font-medium rounded-lg transition-colors" style="background: var(--color-error); color: var(--color-text-inverse);"
       >
         Try Again
       </button>
@@ -218,21 +218,21 @@
       <div class="flex items-start justify-between">
         <div class="flex-1">
           <div class="flex items-center space-x-3 mb-2">
-            <Package class="w-6 h-6 text-blue-600" />
+            <Package class="w-5 h-5" style="color: var(--color-accent-primary);" />
             {#if isEditing}
               <input
                 bind:value={editedProduct.name}
-                class="text-2xl font-bold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 outline-none"
+                class="text-lg font-bold bg-transparent outline-none" style="color: var(--color-text-primary); border-bottom: 2px solid var(--color-accent-primary);"
                 placeholder="Product name"
               />
             {:else}
-              <h1 class="text-2xl font-bold text-gray-900">{product.name}</h1>
+              <h1 class="text-lg font-bold" style="color: var(--color-text-primary);">{product.name}</h1>
             {/if}
-            <span class="px-2 py-1 text-xs font-medium rounded-full {getStatusColor('production')}">
+            <span class="px-2 py-0.5 text-[10px] font-medium rounded-full" style="{getStatusStyle('production')}">
               {product.product_type}
             </span>
             {#if !isEditing}
-              <span class="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+              <span class="px-2 py-0.5 text-[10px] font-medium rounded-full" style="background: var(--color-bg-elevated); color: var(--color-text-secondary);">
                 {getOrganizationName(product.organization_id)}
               </span>
             {/if}
@@ -241,12 +241,12 @@
           {#if isEditing}
             <textarea
               bind:value={editedProduct.description}
-              class="w-full text-gray-600 mb-4 bg-transparent border border-gray-300 rounded-md p-2 focus:border-blue-500 outline-none resize-none"
+              class="w-full mb-4 rounded-md p-2 outline-none resize-none text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               placeholder="Product description"
               rows="3"
             ></textarea>
             <div class="mb-4">
-              <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
+              <label for="department" class="block text-[10px] font-medium mb-1" style="color: var(--color-text-tertiary);">
                 Department *
               </label>
               <select
@@ -254,7 +254,7 @@
                 bind:value={selectedOrganizationId}
                 required
                 disabled={isLoadingOrganizations}
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="mt-1 block w-full rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 <option value="">{isLoadingOrganizations ? 'Loading departments...' : 'Select department'}</option>
                 {#each organizations as org (org.organizationId)}
@@ -263,17 +263,17 @@
               </select>
             </div>
           {:else if product.description}
-            <p class="text-gray-600 mb-4">{product.description}</p>
+            <p class="text-xs mb-4" style="color: var(--color-text-secondary);">{product.description}</p>
           {/if}
 
-          <div class="flex items-center space-x-6 text-sm text-gray-500">
+          <div class="flex items-center space-x-6 text-xs" style="color: var(--color-text-tertiary);">
             <div class="flex items-center">
               <Shield class="w-4 h-4 mr-1" />
               Safety Level: 
               {#if isEditing}
                 <select
                   bind:value={editedProduct.safety_level}
-                  class="ml-1 bg-transparent border border-gray-300 rounded px-2 py-1 focus:border-blue-500 outline-none"
+                  class="ml-1 rounded px-2 py-1 outline-none text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                 >
                   <option value="QM">QM</option>
                   <option value="ASIL A">ASIL A</option>
@@ -291,7 +291,7 @@
               {#if isEditing}
                 <input
                   bind:value={editedProduct.location}
-                  class="ml-1 bg-transparent border border-gray-300 rounded px-2 py-1 focus:border-blue-500 outline-none"
+                  class="ml-1 rounded px-2 py-1 outline-none text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                   placeholder="Location"
                 />
               {:else}
@@ -308,7 +308,7 @@
         <!-- Action Buttons -->
         <div class="flex items-center space-x-2">
           {#if permissions?.role}
-            <span class="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+            <span class="px-2 py-0.5 text-[10px] font-medium rounded-full" style="background: var(--color-bg-elevated); color: var(--color-text-secondary);">
               Your role: {permissions.role}
             </span>
           {/if}
@@ -316,17 +316,17 @@
           {#if isEditing}
             <button
               on:click={cancelEdit}
-              class="flex items-center px-3 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              class="flex items-center px-3 py-2 text-xs rounded-lg transition-colors" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
             >
               Cancel
             </button>
             <button
               on:click={handleEdit}
               disabled={isSaving}
-              class="flex items-center px-3 py-2 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors"
+              class="flex items-center px-3 py-2 text-xs font-medium disabled:opacity-50 rounded-lg transition-colors" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
             >
               {#if isSaving}
-                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent mr-2" style="border-color: var(--color-text-inverse);"></div>
                 Saving...
               {:else}
                 Save
@@ -335,14 +335,14 @@
           {:else if permissions?.can_edit}
             <button
               on:click={handleEdit}
-              class="flex items-center px-3 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              class="flex items-center px-3 py-2 text-xs rounded-lg transition-colors" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
             >
-              <Edit class="w-4 h-4 mr-2" />
+              <Edit class="w-3.5 h-3.5 mr-2" />
               Edit
             </button>
           {:else}
-            <div class="flex items-center px-3 py-2 text-gray-400 bg-gray-50 rounded-lg">
-              <Lock class="w-4 h-4 mr-2" />
+            <div class="flex items-center px-3 py-2 text-xs rounded-lg" style="color: var(--color-text-tertiary); background: var(--color-bg-elevated);">
+              <Lock class="w-3.5 h-3.5 mr-2" />
               View Only
             </div>
           {/if}
@@ -350,9 +350,9 @@
           {#if permissions?.can_delete}
             <button
               on:click={() => { /* TODO: implement delete */ }}
-              class="flex items-center px-3 py-2 text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+              class="flex items-center px-3 py-2 text-xs rounded-lg transition-colors" style="color: var(--color-error); border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);"
             >
-              <Trash2 class="w-4 h-4 mr-2" />
+              <Trash2 class="w-3.5 h-3.5 mr-2" />
               Delete
             </button>
           {/if}
@@ -365,7 +365,7 @@
     <ProductQuickActions />
   {:else}
     <div class="text-center py-12">
-      <p class="text-gray-500">Product not found</p>
+      <p class="text-xs" style="color: var(--color-text-tertiary);">Product not found</p>
     </div>
   {/if}
 </div>
