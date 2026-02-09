@@ -18,6 +18,7 @@
   );
 
   $: feasibilityRating.overall_rating = overallRating;
+  $: rs = getRatingStyle(overallRating);
 
   function getAFR(afs: number): string {
     if (afs >= 25) return 'Very Low';
@@ -35,20 +36,12 @@
     return 0.0;
   }
 
-  function getRatingColor(afs: number): string {
-    if (afs >= 25) return 'bg-red-100';      // Very Low (NRV: 0.0)
-    if (afs >= 20) return 'bg-orange-100';   // Low (NRV: 1.0)
-    if (afs >= 14) return 'bg-yellow-100';   // Medium (NRV: 1.5)
-    if (afs >= 1) return 'bg-green-100';     // High (NRV: 2.0)
-    return 'bg-gray-100';                    // No score
-  }
-
-  function getRatingTextColor(afs: number): string {
-    if (afs >= 25) return 'text-red-700';
-    if (afs >= 20) return 'text-orange-700';
-    if (afs >= 14) return 'text-yellow-700';
-    if (afs >= 1) return 'text-green-700';
-    return 'text-gray-700';
+  function getRatingStyle(afs: number): { bg: string; fg: string } {
+    if (afs >= 25) return { bg: 'var(--color-risk-low-bg)', fg: 'var(--color-risk-low)' };
+    if (afs >= 20) return { bg: 'var(--color-risk-medium-bg)', fg: 'var(--color-risk-medium)' };
+    if (afs >= 14) return { bg: 'var(--color-risk-high-bg)', fg: 'var(--color-risk-high)' };
+    if (afs >= 1) return { bg: 'var(--color-risk-critical-bg)', fg: 'var(--color-risk-critical)' };
+    return { bg: 'var(--color-bg-elevated)', fg: 'var(--color-text-tertiary)' };
   }
 
   function getProgressWidth(afs: number): number {
@@ -101,127 +94,81 @@
   ];
 </script>
 
-<div class="space-y-6">
-  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-    <h4 class="text-sm font-medium text-blue-900 mb-2">Attack Feasibility Rating</h4>
-    <p class="text-sm text-blue-700">Select the appropriate value for each factor. Higher values indicate lower feasibility.</p>
+<div class="space-y-4">
+  <div class="rounded-md p-3" style="background: var(--color-info-bg); border: 1px solid var(--color-info);">
+    <p class="text-xs" style="color: var(--color-text-secondary);">Select the appropriate value for each factor. Higher values = lower feasibility.</p>
   </div>
 
-  <div class="grid grid-cols-1 gap-6">
-    <div class="space-y-3">
-      <label class="block text-sm font-medium text-gray-700">
-        Elapsed Time
-      </label>
-      <div class="grid grid-cols-2 lg:grid-cols-5 gap-2">
+  <div class="space-y-4">
+    <div class="space-y-2">
+      <span class="block text-xs font-medium" style="color: var(--color-text-secondary);">Elapsed Time</span>
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-1.5">
         {#each elapsedTimeOptions as option}
-          <label class="relative">
-            <input
-              type="radio"
-              bind:group={feasibilityRating.elapsed_time}
-              value={option.value}
-              class="sr-only"
-            />
-            <div class="border-2 rounded-lg p-3 cursor-pointer transition-all
-                       {feasibilityRating.elapsed_time === option.value ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}">
-              <div class="text-center">
-                <div class="text-xs font-medium {feasibilityRating.elapsed_time === option.value ? 'text-blue-700' : 'text-gray-600'}">{option.label}</div>
-              </div>
+          <label class="relative cursor-pointer">
+            <input type="radio" bind:group={feasibilityRating.elapsed_time} value={option.value} class="sr-only" />
+            <div class="rounded-md p-2.5 text-center transition-all text-xs font-medium"
+              style="border: 1px solid {feasibilityRating.elapsed_time === option.value ? 'var(--color-accent-primary)' : 'var(--color-border-default)'}; background: {feasibilityRating.elapsed_time === option.value ? 'var(--color-accent-primary)' : 'var(--color-bg-inset)'}; color: {feasibilityRating.elapsed_time === option.value ? 'var(--color-text-inverse)' : 'var(--color-text-secondary)'};">
+              {option.label}
             </div>
           </label>
         {/each}
       </div>
     </div>
 
-    <div class="space-y-3">
-      <label class="block text-sm font-medium text-gray-700">
-        Specialist Expertise
-      </label>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+    <div class="space-y-2">
+      <span class="block text-xs font-medium" style="color: var(--color-text-secondary);">Specialist Expertise</span>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-1.5">
         {#each expertiseOptions as option}
-          <label class="relative">
-            <input
-              type="radio"
-              bind:group={feasibilityRating.specialist_expertise}
-              value={option.value}
-              class="sr-only"
-            />
-            <div class="border-2 rounded-lg p-3 cursor-pointer transition-all
-                       {feasibilityRating.specialist_expertise === option.value ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}">
-              <div class="text-center">
-                <div class="text-xs font-medium {feasibilityRating.specialist_expertise === option.value ? 'text-blue-700' : 'text-gray-600'}">{option.label}</div>
-              </div>
+          <label class="relative cursor-pointer">
+            <input type="radio" bind:group={feasibilityRating.specialist_expertise} value={option.value} class="sr-only" />
+            <div class="rounded-md p-2.5 text-center transition-all text-xs font-medium"
+              style="border: 1px solid {feasibilityRating.specialist_expertise === option.value ? 'var(--color-accent-primary)' : 'var(--color-border-default)'}; background: {feasibilityRating.specialist_expertise === option.value ? 'var(--color-accent-primary)' : 'var(--color-bg-inset)'}; color: {feasibilityRating.specialist_expertise === option.value ? 'var(--color-text-inverse)' : 'var(--color-text-secondary)'};">
+              {option.label}
             </div>
           </label>
         {/each}
       </div>
     </div>
 
-    <div class="space-y-3">
-      <label class="block text-sm font-medium text-gray-700">
-        Knowledge of Component
-      </label>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+    <div class="space-y-2">
+      <span class="block text-xs font-medium" style="color: var(--color-text-secondary);">Knowledge of Component</span>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-1.5">
         {#each knowledgeOptions as option}
-          <label class="relative">
-            <input
-              type="radio"
-              bind:group={feasibilityRating.knowledge_of_target}
-              value={option.value}
-              class="sr-only"
-            />
-            <div class="border-2 rounded-lg p-3 cursor-pointer transition-all
-                       {feasibilityRating.knowledge_of_target === option.value ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}">
-              <div class="text-center">
-                <div class="text-xs font-medium {feasibilityRating.knowledge_of_target === option.value ? 'text-blue-700' : 'text-gray-600'}">{option.label}</div>
-              </div>
+          <label class="relative cursor-pointer">
+            <input type="radio" bind:group={feasibilityRating.knowledge_of_target} value={option.value} class="sr-only" />
+            <div class="rounded-md p-2.5 text-center transition-all text-xs font-medium"
+              style="border: 1px solid {feasibilityRating.knowledge_of_target === option.value ? 'var(--color-accent-primary)' : 'var(--color-border-default)'}; background: {feasibilityRating.knowledge_of_target === option.value ? 'var(--color-accent-primary)' : 'var(--color-bg-inset)'}; color: {feasibilityRating.knowledge_of_target === option.value ? 'var(--color-text-inverse)' : 'var(--color-text-secondary)'};">
+              {option.label}
             </div>
           </label>
         {/each}
       </div>
     </div>
 
-    <div class="space-y-3">
-      <label class="block text-sm font-medium text-gray-700">
-        Window of Opportunity
-      </label>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+    <div class="space-y-2">
+      <span class="block text-xs font-medium" style="color: var(--color-text-secondary);">Window of Opportunity</span>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-1.5">
         {#each opportunityOptions as option}
-          <label class="relative">
-            <input
-              type="radio"
-              bind:group={feasibilityRating.window_of_opportunity}
-              value={option.value}
-              class="sr-only"
-            />
-            <div class="border-2 rounded-lg p-3 cursor-pointer transition-all
-                       {feasibilityRating.window_of_opportunity === option.value ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}">
-              <div class="text-center">
-                <div class="text-xs font-medium {feasibilityRating.window_of_opportunity === option.value ? 'text-blue-700' : 'text-gray-600'}">{option.label}</div>
-              </div>
+          <label class="relative cursor-pointer">
+            <input type="radio" bind:group={feasibilityRating.window_of_opportunity} value={option.value} class="sr-only" />
+            <div class="rounded-md p-2.5 text-center transition-all text-xs font-medium"
+              style="border: 1px solid {feasibilityRating.window_of_opportunity === option.value ? 'var(--color-accent-primary)' : 'var(--color-border-default)'}; background: {feasibilityRating.window_of_opportunity === option.value ? 'var(--color-accent-primary)' : 'var(--color-bg-inset)'}; color: {feasibilityRating.window_of_opportunity === option.value ? 'var(--color-text-inverse)' : 'var(--color-text-secondary)'};">
+              {option.label}
             </div>
           </label>
         {/each}
       </div>
     </div>
 
-    <div class="space-y-3">
-      <label class="block text-sm font-medium text-gray-700">
-        Equipment
-      </label>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+    <div class="space-y-2">
+      <span class="block text-xs font-medium" style="color: var(--color-text-secondary);">Equipment</span>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-1.5">
         {#each equipmentOptions as option}
-          <label class="relative">
-            <input
-              type="radio"
-              bind:group={feasibilityRating.equipment}
-              value={option.value}
-              class="sr-only"
-            />
-            <div class="border-2 rounded-lg p-3 cursor-pointer transition-all
-                       {feasibilityRating.equipment === option.value ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}">
-              <div class="text-center">
-                <div class="text-xs font-medium {feasibilityRating.equipment === option.value ? 'text-blue-700' : 'text-gray-600'}">{option.label}</div>
-              </div>
+          <label class="relative cursor-pointer">
+            <input type="radio" bind:group={feasibilityRating.equipment} value={option.value} class="sr-only" />
+            <div class="rounded-md p-2.5 text-center transition-all text-xs font-medium"
+              style="border: 1px solid {feasibilityRating.equipment === option.value ? 'var(--color-accent-primary)' : 'var(--color-border-default)'}; background: {feasibilityRating.equipment === option.value ? 'var(--color-accent-primary)' : 'var(--color-bg-inset)'}; color: {feasibilityRating.equipment === option.value ? 'var(--color-text-inverse)' : 'var(--color-text-secondary)'};">
+              {option.label}
             </div>
           </label>
         {/each}
@@ -229,17 +176,14 @@
     </div>
   </div>
 
-  <div class="bg-white border border-gray-300 rounded-lg p-6 shadow-sm">
-    <div class="text-center">
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">Attack Feasibility Rating</h3>
-      
-      <div class="inline-flex items-center justify-center px-6 py-3 rounded-full text-lg font-semibold {getRatingColor(overallRating)} {getRatingTextColor(overallRating)} mb-4">
-        {getAFR(overallRating)}
-      </div>
-      
-      <div class="text-sm text-gray-600 max-w-md mx-auto">
-        {getRatingExplanation(overallRating)}
-      </div>
+  <div class="rounded-md p-4 text-center" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--color-text-tertiary);">Attack Feasibility Rating</h3>
+    <div class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold mb-3"
+      style="background: {rs.bg}; color: {rs.fg};">
+      {getAFR(overallRating)}
     </div>
+    <p class="text-xs max-w-sm mx-auto" style="color: var(--color-text-tertiary);">
+      {getRatingExplanation(overallRating)}
+    </p>
   </div>
 </div>

@@ -200,7 +200,7 @@
 <div class="database-settings">
   <div class="header">
     <div class="header-content">
-      <Database class="w-6 h-6 text-blue-600" />
+      <Database class="w-5 h-5" style="color: var(--color-accent-primary);" />
       <h2>Database Configuration</h2>
     </div>
   </div>
@@ -392,7 +392,7 @@
   }
 
   .header {
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--color-border-default);
     padding-bottom: 1rem;
   }
 
@@ -404,23 +404,23 @@
 
   .header h2 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--color-text-primary);
   }
 
   .config-section, .migration-section {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
     border-radius: 8px;
     padding: 1.5rem;
   }
 
   .config-section h3, .migration-section h3 {
     margin: 0 0 1.5rem 0;
-    font-size: 1.125rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--color-text-primary);
   }
 
   .form-grid {
@@ -442,27 +442,28 @@
 
   label {
     font-weight: 500;
-    color: #374151;
-    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-size: 0.6875rem;
   }
 
   input, select {
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-border-default);
     border-radius: 6px;
-    font-size: 0.875rem;
-    background: white;
+    font-size: 0.75rem;
+    background: var(--color-bg-inset);
+    color: var(--color-text-primary);
   }
 
   input:focus, select:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
   }
 
   .help-text {
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: 0.6875rem;
+    color: var(--color-text-tertiary);
   }
 
   .button-group {
@@ -475,36 +476,37 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 1rem;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
+    font-size: 0.75rem;
     transition: all 0.2s;
   }
 
   .btn-primary {
-    background: #3b82f6;
-    color: white;
+    background: var(--color-accent-primary);
+    color: var(--color-text-inverse);
   }
 
   .btn-primary:disabled {
-    background: #9ca3af;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
   .btn-primary:not(:disabled):hover {
-    background: #2563eb;
+    filter: brightness(1.1);
   }
 
   .btn-secondary {
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid #d1d5db;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-default);
   }
 
   .btn-secondary:not(:disabled):hover {
-    background: #e5e7eb;
+    filter: brightness(1.1);
   }
 
   .migration-info {
@@ -522,11 +524,13 @@
 
   .label {
     font-weight: 500;
-    color: #374151;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
   }
 
   .value {
-    color: #1f2937;
+    color: var(--color-text-primary);
+    font-size: 0.75rem;
   }
 
   .status {
@@ -537,11 +541,11 @@
   }
 
   .up-to-date {
-    color: #059669;
+    color: var(--color-status-accepted-text, #10b981);
   }
 
   .updates-available {
-    color: #d97706;
+    color: var(--color-status-draft-text, #f59e0b);
   }
 
   .pending-migrations {
@@ -553,10 +557,10 @@
   .pending-migrations ul {
     margin: 0;
     padding-left: 1.5rem;
-    color: #6b7280;
+    color: var(--color-text-tertiary);
   }
 
   .pending-migrations li {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
   }
 </style>

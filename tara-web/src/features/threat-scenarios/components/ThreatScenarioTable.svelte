@@ -9,6 +9,7 @@
   import DamageScenarioTagSelector from './DamageScenarioTagSelector.svelte';
   import ThreatCatalogPicker from './ThreatCatalogPicker.svelte';
   import { authStore } from '$lib/stores/auth';
+  import WorkflowBadge from '../../audit/components/WorkflowBadge.svelte';
 
   export let threatScenarios: ThreatScenario[] = [];
   export let damageScenarios: DamageScenario[] = [];
@@ -228,46 +229,46 @@
 
 <div class="space-y-6">
   {#if isAddingNew}
-    <form on:submit|preventDefault={addNewScenario} class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
+    <form on:submit|preventDefault={addNewScenario} class="p-5 rounded-lg mb-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
       <div class="grid grid-cols-1 gap-4 mb-4">
         <div>
         <input bind:value={newScenario.name} placeholder="Threat scenario name *"
-          class="px-3 py-2 border rounded-md w-full {validationErrors['name'] ? 'border-red-500 ring-1 ring-red-500' : ''}" />
+          class="px-3 py-2 rounded-md w-full text-sm" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid {validationErrors['name'] ? 'var(--color-error)' : 'var(--color-border-default)'};" />
         {#if validationErrors['name']}
-          <p class="text-red-600 text-xs mt-1">{validationErrors['name']}</p>
+          <p class="text-xs mt-1" style="color: var(--color-error);">{validationErrors['name']}</p>
         {/if}
       </div>
         
         <!-- Use the new tag selector component -->
-        <div class="{validationErrors['damage'] ? 'ring-1 ring-red-500 rounded-md' : ''}">
+        <div class="{validationErrors['damage'] ? 'rounded-md' : ''}" style="{validationErrors['damage'] ? 'box-shadow: 0 0 0 1px var(--color-error);' : ''}">
           <DamageScenarioTagSelector 
             bind:selectedDamageScenarios={newScenario.damage_scenario_ids}
             placeholder="Select damage scenarios that this threat could cause..."
           />
         </div>
         {#if validationErrors['damage']}
-          <p class="text-red-600 text-xs mt-1">{validationErrors['damage']}</p>
+          <p class="text-xs mt-1" style="color: var(--color-error);">{validationErrors['damage']}</p>
         {/if}
         {#if validationErrors['product']}
-          <p class="text-red-600 text-xs mt-1">{validationErrors['product']}</p>
+          <p class="text-xs mt-1" style="color: var(--color-error);">{validationErrors['product']}</p>
         {/if}
       </div>
       
-      <textarea bind:value={newScenario.description} placeholder="Description" class="w-full px-3 py-2 border rounded-md mb-3" rows="2"></textarea>
-      <input bind:value={newScenario.attack_vector} placeholder="Attack vector" class="w-full px-3 py-2 border rounded-md mb-4" />
+      <textarea bind:value={newScenario.description} placeholder="Description" class="w-full px-3 py-2 rounded-md mb-3 text-sm" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" rows="2"></textarea>
+      <input bind:value={newScenario.attack_vector} placeholder="Attack vector" class="w-full px-3 py-2 rounded-md mb-4 text-sm" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" />
       
       <div class="flex gap-2 mb-4">
         <button type="button" on:click={() => showCatalogPicker = true}
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2">
+          class="px-3 py-2 rounded-md font-medium text-xs flex items-center gap-2" style="background: var(--color-info); color: var(--color-text-inverse);">
           &#128737; Pick from MITRE Catalog
         </button>
       </div>
 
       <div class="flex gap-2">
-        <button type="submit" class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md font-medium">
+        <button type="submit" class="px-3 py-2 rounded-md font-medium text-sm" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">
           Add Threat Scenario
         </button>
-        <button type="button" on:click={resetForm} class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-medium">
+        <button type="button" on:click={resetForm} class="px-3 py-2 rounded-md font-medium text-sm" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);">
           Cancel
         </button>
       </div>
@@ -275,49 +276,49 @@
   {/if}
 
   <!-- Table -->
-  <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+  <div class="rounded-lg overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+      <table class="min-w-full" style="border-collapse: separate;">
+        <thead style="background: var(--color-bg-elevated);">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">Damage Scenario</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Attack Vector</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Description</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12">Actions</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider w-1/5" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Name</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider w-1/5" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Damage Scenario</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider w-1/6" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Attack Vector</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider w-1/3" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Description</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider w-1/12" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody>
           {#each threatScenarios as scenario (scenario.threat_scenario_id)}
-            <tr class="hover:bg-gray-50">
+            <tr style="border-bottom: 1px solid var(--color-border-subtle);">
               <td class="px-6 py-4">
                 {#if editingCell?.scenarioId === scenario.threat_scenario_id && editingCell?.field === 'name'}
                   <input
                     bind:value={editingValue}
                     on:keydown={(e) => handleKeyPress(e, scenario, 'name')}
-                    class="w-full px-2 py-1 border rounded text-sm"
+                    class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                     disabled={isSaving}
                   />
                 {:else}
-                  <div class="text-sm font-medium text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded break-words flex items-center gap-2" 
+                  <div class="text-xs font-medium cursor-pointer px-2 py-1 rounded break-words flex items-center gap-2" style="color: var(--color-text-primary);" 
                        on:click={() => startEdit(scenario, 'name')}>
                     {scenario.name}
                     {#if scenario.status === 'draft'}
-                      <span class="px-1.5 py-0.5 text-xs rounded bg-amber-100 text-amber-700 font-normal">Draft</span>
+                      <span class="px-1.5 py-0.5 text-[10px] rounded font-normal" style="background: var(--color-warning-bg); color: var(--color-warning);">Draft</span>
                     {/if}
                   </div>
                 {/if}
               </td>
               <td class="px-6 py-4">
                 {#await getLinkedDamageScenarios(scenario.threat_scenario_id)}
-                  <span class="text-sm text-gray-500">Loading...</span>
+                  <span class="text-xs" style="color: var(--color-text-tertiary);">Loading...</span>
                 {:then linkedIds}
-                  <div class="text-sm text-gray-900">
+                  <div class="text-xs" style="color: var(--color-text-primary);">
                     {#if linkedIds.length > 0}
                       <div class="flex flex-wrap gap-1">
                         {#each linkedIds as damageId}
                           <span 
-                            class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full cursor-help"
+                            class="inline-block text-[10px] px-2 py-0.5 rounded-full cursor-help" style="background: var(--color-info-bg); color: var(--color-info);"
                             title={getDamageScenarioName(damageId)}
                           >
                             {damageId}
@@ -325,11 +326,11 @@
                         {/each}
                       </div>
                     {:else}
-                      <span class="text-gray-500 italic">No damage scenarios linked</span>
+                      <span class="italic" style="color: var(--color-text-tertiary);">No linked scenarios</span>
                     {/if}
                   </div>
                 {:catch error}
-                  <span class="text-sm text-red-500">Error loading scenarios</span>
+                  <span class="text-xs" style="color: var(--color-error);">Error loading</span>
                 {/await}
               </td>
               <td class="px-6 py-4">
@@ -337,11 +338,11 @@
                   <input
                     bind:value={editingValue}
                     on:keydown={(e) => handleKeyPress(e, scenario, 'attack_vector')}
-                    class="w-full px-2 py-1 border rounded text-sm"
+                    class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                     disabled={isSaving}
                   />
                 {:else}
-                  <div class="text-sm text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded" 
+                  <div class="text-xs cursor-pointer px-2 py-1 rounded" style="color: var(--color-text-secondary);"
                        on:click={() => startEdit(scenario, 'attack_vector')}>
                     {scenario.attack_vector || 'Click to add'}
                   </div>
@@ -352,24 +353,29 @@
                   <textarea
                     bind:value={editingValue}
                     on:keydown={(e) => handleKeyPress(e, scenario, 'description')}
-                    class="w-full px-2 py-1 border rounded text-sm"
+                    class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                     rows="2"
                     disabled={isSaving}
                   ></textarea>
                 {:else}
-                  <div class="text-sm text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded max-w-xs" 
+                  <div class="text-xs cursor-pointer px-2 py-1 rounded max-w-xs" style="color: var(--color-text-secondary);"
                        on:click={() => startEdit(scenario, 'description')}>
                     {scenario.description || 'Click to add description'}
                   </div>
                 {/if}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex items-center justify-end gap-2">
+                <div class="flex items-center justify-end gap-2 flex-wrap">
+                  <WorkflowBadge
+                    artifactType="threat_scenario"
+                    artifactId={scenario.threat_scenario_id}
+                    scopeId={$selectedProduct?.scope_id || ''}
+                  />
                   {#if scenario.status === 'draft'}
-                    <button on:click={() => acceptScenario(scenario)} class="text-green-600 hover:text-green-800 font-medium">Accept</button>
+                    <button on:click={() => acceptScenario(scenario)} class="font-medium text-xs" style="color: var(--color-success);">Accept</button>
                   {/if}
                   {#if canDelete}
-                    <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900">Delete</button>
+                    <button on:click={() => confirmDelete(scenario)} class="text-xs" style="color: var(--color-error);">Delete</button>
                   {/if}
                 </div>
               </td>
@@ -378,7 +384,7 @@
           
           {#if threatScenarios.length === 0}
             <tr>
-              <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="5" class="px-4 py-10 text-center text-xs" style="color: var(--color-text-tertiary);">
                 No threat scenarios found. Add one above to get started.
               </td>
             </tr>

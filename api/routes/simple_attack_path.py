@@ -2,7 +2,7 @@
 Simple Attack Path API routes for Risk Assessment
 """
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, text
 import logging
@@ -12,6 +12,7 @@ from api.models.simple_attack_path import (
     AttackPath, AttackPathCreate, AttackPathResponse, AttackPathDB, FeasibilityRating
 )
 from api.deps.db import get_db
+from core.audit_helpers import get_user_from_request, audit_create, audit_update, audit_delete
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -81,40 +82,19 @@ def create_risk_treatments_for_attack_path(db: Session, attack_path: AttackPathD
         raise
 
 def calculate_impact_level_from_scenario(scenario):
-    """Calculate impact level from damage scenario SFOP or CIA fields"""
-    impacts = []
-    
-    # Check SFOP impact fields first
-    if scenario.safety_impact:
-        impacts.append(scenario.safety_impact.title())
-    if scenario.financial_impact:
-        impacts.append(scenario.financial_impact.title())
-    if scenario.operational_impact:
-        impacts.append(scenario.operational_impact.title())
-    if scenario.privacy_impact:
-        impacts.append(scenario.privacy_impact.title())
-    
-    # If no SFOP impacts, check CIA boolean fields with severity
-    if not impacts:
-        has_impact = (scenario.confidentiality_impact or 
-                     scenario.integrity_impact or 
-                     scenario.availability_impact)
-        if has_impact and scenario.severity:
-            impacts.append(scenario.severity.title())
-    
-    # Determine highest impact based on severity order
-    if not impacts:
-        return "Negligible"
-    
-    severity_order = ["Negligible", "Moderate", "Major", "Severe"]
-    highest_impact = "Negligible"
-    
-    for impact in impacts:
-        if impact in severity_order:
-            if severity_order.index(impact) > severity_order.index(highest_impact):
-                highest_impact = impact
-    
-    return highest_impact
+    """Calculate impact level from damage scenario SFOP or CIA fields.
+    Uses the shared sfop_risk_calculator for consistent worst-case logic."""
+    from core.sfop_risk_calculator import compute_overall_impact, SfopRating, _parse_impact
+    sfop = SfopRating(
+        safety=_parse_impact(scenario.safety_impact),
+        financial=_parse_impact(scenario.financial_impact),
+        operational=_parse_impact(scenario.operational_impact),
+        privacy=_parse_impact(scenario.privacy_impact),
+    )
+    overall, _ = compute_overall_impact(sfop)
+    # Map ImpactLevel enum value to title-cased label for the risk matrix
+    label_map = {"negligible": "Negligible", "moderate": "Moderate", "major": "Major", "severe": "Severe"}
+    return label_map.get(overall.value, "Negligible")
 
 def calculate_feasibility_level_from_score(score: float) -> str:
     """Convert Attack Feasibility Score to qualitative level"""
@@ -130,14 +110,19 @@ def calculate_feasibility_level_from_score(score: float) -> str:
         return "Very High"
 
 def calculate_risk_level_from_matrix(impact: str, feasibility: str) -> str:
-    """Calculate risk level using ISO 21434 risk matrix"""
-    risk_matrix = {
-        "Severe": {"Very High": "Critical", "High": "Critical", "Medium": "High", "Low": "Medium", "Very Low": "Medium"},
-        "Major": {"Very High": "High", "High": "High", "Medium": "Medium", "Low": "Low", "Very Low": "Low"},
-        "Moderate": {"Very High": "Medium", "High": "Medium", "Medium": "Low", "Low": "Low", "Very Low": "Low"},
-        "Negligible": {"Very High": "Low", "High": "Low", "Medium": "Low", "Low": "Low", "Very Low": "Low"}
-    }
-    return risk_matrix.get(impact, {}).get(feasibility, "Low")
+    """Calculate risk level using ISO 21434 risk matrix.
+    Uses the shared sfop_risk_calculator RISK_MATRIX for consistency."""
+    from core.sfop_risk_calculator import (
+        RISK_MATRIX, IMPACT_NUMERIC, FEASIBILITY_NUMERIC, ImpactLevel, FeasibilityLevel,
+    )
+    impact_map = {"Negligible": ImpactLevel.NEGLIGIBLE, "Moderate": ImpactLevel.MODERATE,
+                  "Major": ImpactLevel.MAJOR, "Severe": ImpactLevel.SEVERE}
+    feas_map = {"Very Low": FeasibilityLevel.VERY_LOW, "Low": FeasibilityLevel.LOW,
+                "Medium": FeasibilityLevel.MEDIUM, "High": FeasibilityLevel.HIGH,
+                "Very High": FeasibilityLevel.VERY_HIGH}
+    imp = impact_map.get(impact, ImpactLevel.NEGLIGIBLE)
+    fea = feas_map.get(feasibility, FeasibilityLevel.MEDIUM)
+    return RISK_MATRIX[IMPACT_NUMERIC[imp]][FEASIBILITY_NUMERIC[fea]].value
 
 def get_suggested_treatment_from_risk(risk_level: str) -> str:
     """Get suggested treatment based on risk level"""
@@ -239,6 +224,7 @@ async def get_attack_paths_by_threat_scenario(
 @router.post("", response_model=AttackPath)
 async def create_attack_path(
     attack_path: AttackPathCreate,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Create a new attack path"""
@@ -274,6 +260,8 @@ async def create_attack_path(
         # Create risk treatment entries for all damage scenarios linked to this threat scenario
         create_risk_treatments_for_attack_path(db, db_attack_path)
         
+        user = get_user_from_request(request)
+        audit_create(db, "attack_path", db_attack_path.attack_path_id, user, summary=f"Attack path for {attack_path.threat_scenario_id}")
         
         # Return the created attack path
         feasibility_rating = FeasibilityRating(
@@ -305,6 +293,7 @@ async def create_attack_path(
 async def update_attack_path(
     attack_path_id: str,
     attack_path: AttackPathCreate,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Update an existing attack path"""
@@ -338,6 +327,8 @@ async def update_attack_path(
         db_attack_path.equipment = rating.equipment
         db_attack_path.overall_rating = overall_rating
         
+        user = get_user_from_request(request)
+        audit_update(db, "attack_path", attack_path_id, user, summary="Attack path updated")
         db.commit()
         db.refresh(db_attack_path)
         
@@ -372,6 +363,7 @@ async def update_attack_path(
 @router.delete("/{attack_path_id}")
 async def delete_attack_path(
     attack_path_id: str,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Delete an attack path"""
@@ -383,6 +375,8 @@ async def delete_attack_path(
         if not db_attack_path:
             raise HTTPException(status_code=404, detail="Attack path not found")
         
+        user = get_user_from_request(request)
+        audit_delete(db, "attack_path", attack_path_id, user)
         db.delete(db_attack_path)
         db.commit()
         

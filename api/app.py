@@ -86,6 +86,11 @@ def create_app(settings=None):
     app.include_router(reports_router.router, prefix="/api", tags=["reports-pdf"])
     app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
     app.include_router(review.router, prefix="/api/review", tags=["review"])
+    
+    # Audit trail, approval workflows, evidence, and TARA snapshots
+    from api.routes import audit as audit_routes
+    app.include_router(audit_routes.router, prefix="/api/audit", tags=["audit"])
+    
     app.include_router(settings_router.router, tags=["settings"])
     app.include_router(organizations.router, tags=["organizations"])
     app.include_router(organization_members.router, tags=["organization-members"])

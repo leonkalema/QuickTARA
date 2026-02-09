@@ -16,60 +16,60 @@
   }
 </script>
 
-<!-- Product Selector Component -->
 <div class="relative">
   {#if $selectedProduct}
-    <!-- Selected Product Display -->
-    <button 
-      class="flex items-center space-x-2 bg-blue-50 border border-blue-200 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors"
-      on:click={() => showDropdown = !showDropdown}
+    <button
+      class="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all focus-ring"
+      style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default); color: var(--color-text-primary);"
+      onclick={() => showDropdown = !showDropdown}
     >
-      <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
-      <span class="text-sm font-medium text-blue-900">
-        {$selectedProduct.name}
-      </span>
-      <ChevronDown class="w-4 h-4 text-blue-700" />
+      <div class="w-1.5 h-1.5 rounded-full" style="background: var(--color-accent-primary);"></div>
+      <span class="font-medium max-w-[180px] truncate">{$selectedProduct.name}</span>
+      <ChevronDown class="w-3.5 h-3.5" style="color: var(--color-text-tertiary);" />
     </button>
   {:else}
-    <!-- No Product Selected -->
-    <button 
-      class="flex items-center space-x-2 bg-gray-100 border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-      on:click={() => showDropdown = !showDropdown}
+    <button
+      class="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all focus-ring"
+      style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default); color: var(--color-text-secondary);"
+      onclick={() => showDropdown = !showDropdown}
     >
-      <span class="text-sm font-medium text-gray-700">Select Product</span>
-      <ChevronDown class="w-4 h-4 text-gray-600" />
+      <span>Select Product</span>
+      <ChevronDown class="w-3.5 h-3.5" style="color: var(--color-text-tertiary);" />
     </button>
   {/if}
 
-  <!-- Dropdown Menu -->
   {#if showDropdown}
-    <div class="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+    <div
+      class="absolute top-full left-0 mt-1 w-64 rounded-lg z-50"
+      style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default); box-shadow: var(--shadow-lg);"
+    >
       <div class="p-2">
         {#if $selectedProduct}
-          <div class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <div class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style="color: var(--color-text-tertiary);">
             Current Product
           </div>
-          <div class="px-3 py-2 bg-blue-50 rounded-md mb-2">
-            <div class="font-medium text-blue-900">{$selectedProduct.name}</div>
-            <div class="text-sm text-blue-700">{$selectedProduct.product_type}</div>
-            {#if $selectedProduct.description}
-              <div class="text-xs text-blue-600 mt-1">{$selectedProduct.description}</div>
-            {/if}
+          <div class="px-3 py-2 rounded-md mb-2" style="background: var(--color-info-bg);">
+            <div class="font-medium text-sm" style="color: var(--color-text-primary);">{$selectedProduct.name}</div>
+            <div class="text-xs" style="color: var(--color-text-secondary);">{$selectedProduct.product_type}</div>
           </div>
         {/if}
-
-        <div class="border-t border-gray-100 pt-2">
+        <div class="border-t pt-2" style="border-color: var(--color-border-subtle);">
           <button
-            class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
-            on:click={selectProduct}
+            class="w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors"
+            style="color: var(--color-text-secondary);"
+            onmouseenter={(e) => { e.currentTarget.style.background = 'var(--color-bg-surface-hover)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+            onmouseleave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
+            onclick={selectProduct}
           >
             <Plus class="w-4 h-4 mr-2" />
             Change Product
           </button>
-          
           <button
-            class="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
-            on:click={manageProducts}
+            class="w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors"
+            style="color: var(--color-text-secondary);"
+            onmouseenter={(e) => { e.currentTarget.style.background = 'var(--color-bg-surface-hover)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+            onmouseleave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
+            onclick={manageProducts}
           >
             Manage Products
           </button>
@@ -79,10 +79,10 @@
   {/if}
 </div>
 
-<!-- Click outside to close -->
 {#if showDropdown}
-  <div 
-    class="fixed inset-0 z-40" 
-    on:click={() => showDropdown = false}
+  <div
+    class="fixed inset-0 z-40"
+    onclick={() => showDropdown = false}
+    role="presentation"
   ></div>
 {/if}

@@ -11,6 +11,7 @@
     AlertTriangle, 
     Shield, 
     BarChart3,
+    ClipboardCheck,
     Settings
   } from '@lucide/svelte';
 
@@ -97,6 +98,15 @@
       description: 'Generate documentation',
       requiresProduct: true,
       permission: 'reports'
+    },
+    {
+      id: 'audit',
+      title: 'Audit & Compliance',
+      icon: ClipboardCheck,
+      path: '/audit',
+      description: 'Trail, approvals, evidence',
+      requiresProduct: true,
+      permission: 'reports'
     }
   ];
 
@@ -149,16 +159,16 @@
   $: visibleSteps = steps.filter(shouldShowStep);
 </script>
 
-<aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+<aside class="w-64 flex flex-col" style="background: var(--color-bg-surface); border-right: 1px solid var(--color-border-default);">
   <!-- Sidebar Header -->
-  <div class="p-6 border-b border-gray-200">
-    <h2 class="text-lg font-semibold text-gray-900">TARA Workflow</h2>
+  <div class="p-5" style="border-bottom: 1px solid var(--color-border-default);">
+    <h2 class="text-xs font-semibold" style="color: var(--color-text-primary);">TARA Workflow</h2>
     {#if $selectedProduct}
-      <p class="text-sm text-gray-600 mt-1">
-        Working on: <span class="font-medium">{$selectedProduct.name}</span>
+      <p class="text-[11px] mt-1" style="color: var(--color-text-tertiary);">
+        Working on: <span class="font-medium" style="color: var(--color-text-secondary);">{$selectedProduct.name}</span>
       </p>
     {:else}
-      <p class="text-sm text-gray-500 mt-1">Select a product to begin</p>
+      <p class="text-[11px] mt-1" style="color: var(--color-text-tertiary);">Select a product to begin</p>
     {/if}
   </div>
 
@@ -249,8 +259,8 @@
   </nav>
 
   <!-- Sidebar Footer -->
-  <div class="p-4 border-t border-gray-200">
-    <div class="text-xs text-gray-500">
+  <div class="p-4" style="border-top: 1px solid var(--color-border-default);">
+    <div class="text-[10px]" style="color: var(--color-text-tertiary);">
       <p class="font-medium mb-1">Progress Tracking</p>
       <p>Complete each step in sequence for comprehensive threat analysis.</p>
     </div>

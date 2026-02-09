@@ -30,10 +30,10 @@
   }
 </script>
 
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+<div class="rounded-lg mb-6" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
   <div class="flex items-center justify-between p-4 cursor-pointer" on:click={() => isExpanded = !isExpanded}>
     <div class="flex items-center space-x-2">
-      <h3 class="text-lg font-medium text-gray-900">Filters</h3>
+      <h3 class="text-xs font-medium" style="color: var(--color-text-primary);">Filters</h3>
       <svg 
         class="w-5 h-5 text-gray-400 transition-transform duration-200 {isExpanded ? 'rotate-180' : ''}" 
         fill="none" 
@@ -45,7 +45,7 @@
     </div>
     <button
       on:click|stopPropagation={clearFilters}
-      class="text-sm text-gray-500 hover:text-gray-700"
+      class="text-xs" style="color: var(--color-accent-primary);"
     >
       Clear all
     </button>
@@ -56,23 +56,23 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     <!-- Search -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+      <label class="block text-[11px] font-medium mb-1" style="color: var(--color-text-tertiary);">Search</label>
       <input
         type="text"
         bind:value={filters.search}
         on:input={() => updateFilter('search', filters.search)}
         placeholder="Search scenarios..."
-        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        class="w-full px-3 py-2 rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
       />
     </div>
     
     <!-- Asset -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Asset</label>
+      <label class="block text-[11px] font-medium mb-1" style="color: var(--color-text-tertiary);">Asset</label>
       <select
         bind:value={filters.asset}
         on:change={() => updateFilter('asset', filters.asset)}
-        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        class="w-full px-3 py-2 rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
       >
         <option value="">All assets</option>
         {#each assets as asset}
@@ -83,11 +83,11 @@
     
     <!-- CIA -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">CIA Impact</label>
+      <label class="block text-[11px] font-medium mb-1" style="color: var(--color-text-tertiary);">CIA Impact</label>
       <select
         bind:value={filters.cia}
         on:change={() => updateFilter('cia', filters.cia)}
-        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        class="w-full px-3 py-2 rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
       >
         <option value="">Any CIA</option>
         {#each ciaOptions as cia}

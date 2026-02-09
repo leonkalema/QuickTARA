@@ -17,16 +17,16 @@
 </script>
 
 {#if products.length === 0}
-	<div class="mt-1 text-xs text-slate-400">No products</div>
+	<div class="mt-1 text-[10px]" style="color: var(--color-text-tertiary);">No products</div>
 {:else}
 	<div class="mt-1 flex flex-wrap gap-1">
 		{#each visibleProducts as product (product.scope_id)}
-			<span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+			<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px]" style="background: var(--color-bg-elevated); color: var(--color-text-secondary); border: 1px solid var(--color-border-subtle);">
 				{product.name}
 			</span>
 		{/each}
 		{#if remainingCount > 0}
-			<span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+			<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px]" style="background: var(--color-bg-elevated); color: var(--color-text-tertiary); border: 1px solid var(--color-border-subtle);">
 				+{remainingCount}
 			</span>
 		{/if}

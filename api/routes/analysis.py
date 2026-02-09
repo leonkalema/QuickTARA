@@ -2,7 +2,7 @@
 Analysis API routes
 """
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.orm import Session
 import logging
 
@@ -134,9 +134,27 @@ async def run_background_analysis(
     return {"status": "Analysis started in background", "analysis_id": analysis_id}
 
 
+@router.get("/preview-damage-generation/{scope_id}")
+async def preview_damage_generation(
+    scope_id: str,
+    db: Session = Depends(get_db),
+):
+    """Preview how many damage scenarios would be generated (no DB writes)."""
+    try:
+        from core.generators.scenario_orchestrator import preview_damage_generation
+        return preview_damage_generation(db, scope_id)
+    except Exception as e:
+        logger.error("Preview failed for %s: %s", scope_id, str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Preview failed: {str(e)}",
+        )
+
+
 @router.post("/generate-damage-scenarios/{scope_id}")
 async def generate_damage_scenarios(
     scope_id: str,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     """
@@ -151,6 +169,12 @@ async def generate_damage_scenarios(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=result["error"],
             )
+        from core.audit_helpers import get_user_from_request, audit_create
+        user = get_user_from_request(request)
+        count = result.get("created", 0)
+        if count:
+            audit_create(db, "damage_scenario", f"batch-{scope_id}", user, scope_id=scope_id, summary=f"Auto-generated {count} damage scenarios")
+            db.commit()
         return result
     except HTTPException:
         raise
@@ -165,6 +189,7 @@ async def generate_damage_scenarios(
 @router.post("/generate-threat-scenarios/{scope_id}")
 async def generate_threat_scenarios(
     scope_id: str,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     """
@@ -180,6 +205,12 @@ async def generate_threat_scenarios(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=result["error"],
             )
+        from core.audit_helpers import get_user_from_request, audit_create
+        user = get_user_from_request(request)
+        count = result.get("created", 0)
+        if count:
+            audit_create(db, "threat_scenario", f"batch-{scope_id}", user, scope_id=scope_id, summary=f"Auto-generated {count} threat scenarios")
+            db.commit()
         return result
     except HTTPException:
         raise
@@ -189,3 +220,85 @@ async def generate_threat_scenarios(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Threat scenario generation failed: {str(e)}",
         )
+
+
+# ── ISO/SAE 21434 Clause Mapping ─────────────────────────────────────────
+
+@router.get("/iso21434/mappings")
+async def get_iso21434_mappings():
+    """Return full ISO/SAE 21434 clause mapping for all artifact types."""
+    from core.iso21434_mapping import get_all_mappings
+    return get_all_mappings()
+
+
+@router.get("/iso21434/mappings/{artifact_type}")
+async def get_iso21434_mapping_for_artifact(artifact_type: str):
+    """Return ISO/SAE 21434 clauses for a specific artifact type."""
+    from core.iso21434_mapping import ArtifactType, get_clauses_for_artifact
+    try:
+        at = ArtifactType(artifact_type)
+    except ValueError:
+        valid = [a.value for a in ArtifactType]
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid artifact type '{artifact_type}'. Valid: {valid}",
+        )
+    clauses = get_clauses_for_artifact(at)
+    return [
+        {
+            "clause_id": c.clause_id,
+            "clause_title": c.clause_title,
+            "work_product": c.work_product,
+            "requirement_summary": c.requirement_summary,
+            "section": c.section,
+        }
+        for c in clauses
+    ]
+
+
+# ── SFOP Risk Calculator ─────────────────────────────────────────────────
+
+@router.post("/risk/calculate-sfop")
+async def calculate_sfop_risk(payload: Dict[str, Any]):
+    """Calculate risk level from SFOP impact ratings and feasibility.
+
+    Expects JSON body:
+      { "safety": "moderate", "financial": "negligible",
+        "operational": "major", "privacy": "negligible",
+        "feasibility": "high" }
+    Returns full risk breakdown including overall_impact and risk_level.
+    """
+    from core.sfop_risk_calculator import calculate_risk, risk_result_to_dict
+    result = calculate_risk(
+        safety=payload.get("safety"),
+        financial=payload.get("financial"),
+        operational=payload.get("operational"),
+        privacy=payload.get("privacy"),
+        feasibility=payload.get("feasibility"),
+    )
+    return risk_result_to_dict(result)
+
+
+@router.post("/risk/calculate-sfop-for-scenario/{scenario_id}")
+async def calculate_sfop_risk_for_scenario(
+    scenario_id: str,
+    feasibility: str = "medium",
+    db: Session = Depends(get_db),
+):
+    """Calculate risk for an existing damage scenario using its SFOP ratings."""
+    from core.sfop_risk_calculator import (
+        calculate_risk_from_damage_scenario,
+        risk_result_to_dict,
+    )
+    from db.product_asset_models import DamageScenario as ProductDS
+    ds = db.query(ProductDS).filter(ProductDS.scenario_id == scenario_id).first()
+    if not ds:
+        raise HTTPException(status_code=404, detail="Damage scenario not found")
+    scenario_dict = {
+        "safety_impact": ds.safety_impact,
+        "financial_impact": ds.financial_impact,
+        "operational_impact": ds.operational_impact,
+        "privacy_impact": ds.privacy_impact,
+    }
+    result = calculate_risk_from_damage_scenario(scenario_dict, feasibility)
+    return risk_result_to_dict(result)

@@ -25,16 +25,16 @@
   }
 </script>
 
-<header class="bg-white border-b border-gray-200 px-6 py-4">
+<header class="px-6 py-3" style="background: var(--color-bg-surface); border-bottom: 1px solid var(--color-border-default);">
   <div class="flex items-center justify-between">
     <!-- Logo and Brand -->
     <div class="flex items-center space-x-6">
       <a href="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-          <span class="text-white font-bold text-sm">QT</span>
+        <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--color-accent-primary);">
+          <span class="font-bold text-[10px]" style="color: var(--color-text-inverse);">QT</span>
         </div>
         <div>
-          <h1 class="text-xl font-bold text-gray-900">QuickTARA</h1>
+          <h1 class="text-sm font-bold" style="color: var(--color-text-primary);">QuickTARA</h1>
         </div>
       </a>
       
@@ -47,7 +47,7 @@
     <!-- User Menu -->
     <div class="flex items-center space-x-4">
       {#if canSeeSettings}
-        <a href="/settings" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+        <a href="/settings" class="flex items-center space-x-2" style="color: var(--color-text-secondary);">
           <Settings class="w-5 h-5" />
           <span class="hidden sm:inline">Settings</span>
         </a>

@@ -92,11 +92,11 @@
 
 <div class="flex flex-1">
 	<!-- Left Sidebar -->
-	<aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+	<aside class="w-64 flex flex-col" style="background: var(--color-bg-surface); border-right: 1px solid var(--color-border-default);">
 		<!-- Sidebar Header -->
-		<div class="p-6 border-b border-gray-200">
-			<h2 class="text-lg font-semibold text-gray-900">Administration</h2>
-			<p class="text-sm text-gray-500 mt-1">System configuration and user management</p>
+		<div class="p-6" style="border-bottom: 1px solid var(--color-border-default);">
+			<h2 class="text-xs font-semibold" style="color: var(--color-text-primary);">Administration</h2>
+			<p class="text-[11px] mt-1" style="color: var(--color-text-tertiary);">System configuration and user management</p>
 		</div>
 
 		<!-- Navigation Steps -->
@@ -106,14 +106,16 @@
 				
 				<a
 					href={step.path}
-					class="flex items-center p-3 rounded-lg transition-colors group {isCurrent 
-						? 'bg-blue-50 text-blue-700 border border-blue-200' 
-						: 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'}"
+					class="flex items-center p-3 rounded-lg transition-colors group"
+					style="{isCurrent 
+						? 'background: var(--color-bg-elevated); color: var(--color-accent-primary); border: 1px solid var(--color-accent-primary);' 
+						: 'color: var(--color-text-secondary);'}"
 				>
 					<!-- Step Number -->
-					<div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mr-3 {isCurrent
-						? 'bg-blue-100 text-blue-700'
-						: 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'}">
+					<div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium mr-3"
+						style="{isCurrent
+						? 'background: var(--color-accent-primary); color: var(--color-text-inverse);'
+						: 'background: var(--color-bg-inset); color: var(--color-text-tertiary);'}">
 						{index + 1}
 					</div>
 
@@ -121,41 +123,42 @@
 					<div class="flex-1 min-w-0">
 						<div class="flex items-center">
 							<step.icon 
-								class="w-5 h-5 mr-2 {isCurrent ? 'text-blue-600' : 'text-gray-500'}" 
+								class="w-4 h-4 mr-2"
+								style="color: {isCurrent ? 'var(--color-accent-primary)' : 'var(--color-text-tertiary)'};"
 							/>
-							<span class="text-sm font-medium truncate">{step.title}</span>
+							<span class="text-xs font-medium truncate">{step.title}</span>
 						</div>
-						<p class="text-xs mt-1 {isCurrent ? 'text-blue-600' : 'text-gray-500'}">
+						<p class="text-[10px] mt-1" style="color: {isCurrent ? 'var(--color-accent-primary)' : 'var(--color-text-tertiary)'};">
 							{step.description}
 						</p>
 					</div>
 
 					<!-- Status Indicator -->
 					{#if isCurrent}
-						<div class="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500"></div>
+						<div class="flex-shrink-0 w-2 h-2 rounded-full" style="background: var(--color-accent-primary);"></div>
 					{:else}
-						<div class="flex-shrink-0 w-2 h-2 rounded-full bg-gray-200"></div>
+						<div class="flex-shrink-0 w-2 h-2 rounded-full" style="background: var(--color-border-subtle);"></div>
 					{/if}
 				</a>
 			{/each}
 		</nav>
 
 		<!-- Back to Workflow Link -->
-		<div class="p-4 border-t border-gray-200">
+		<div class="p-4" style="border-top: 1px solid var(--color-border-default);">
 			<a 
 				href="/" 
-				class="flex items-center p-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+				class="flex items-center p-2 rounded-lg transition-colors" style="color: var(--color-text-secondary);"
 			>
 				<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
 				</svg>
-				<span class="text-sm font-medium">Back to Dashboard</span>
+				<span class="text-xs font-medium">Back to Dashboard</span>
 			</a>
 		</div>
 
 		<!-- Sidebar Footer -->
-		<div class="p-4 border-t border-gray-200">
-			<div class="text-xs text-gray-500">
+		<div class="p-4" style="border-top: 1px solid var(--color-border-default);">
+			<div class="text-[10px]" style="color: var(--color-text-tertiary);">
 				{#if isToolAdmin}
 					<p class="font-medium mb-1">System Administration</p>
 					<p>Full system access</p>

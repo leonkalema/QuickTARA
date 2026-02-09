@@ -283,124 +283,95 @@
   <title>Reports - QuickTARA</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-5">
   <!-- Header -->
-  <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0">
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900">Reports</h1>
+  <div>
+    <h1 class="text-xl font-bold tracking-tight" style="color: var(--color-text-primary);">Reports</h1>
+    <p class="text-sm mt-1" style="color: var(--color-text-secondary);">
       {#if $selectedProduct}
-        <p class="mt-2 text-gray-600 max-w-2xl">
-          Generate comprehensive TARA documentation for <strong>{$selectedProduct.name}</strong> regulatory submission and compliance.
-        </p>
+        Generate TARA documentation for <strong style="color: var(--color-text-primary);">{$selectedProduct.name}</strong>.
       {:else}
-        <p class="mt-2 text-gray-600 max-w-2xl">
-          Please select a product first to generate reports.
-        </p>
+        Select a product to generate reports.
       {/if}
-    </div>
+    </p>
   </div>
 
   {#if !$selectedProduct}
-    <!-- No Product Selected State -->
-    <div class="text-center py-16">
-      <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-      </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No Product Selected</h3>
-      <p class="text-gray-500 mb-6 max-w-md mx-auto">
-        Select a product from the header dropdown to generate reports.
-      </p>
-      <a
-        href="/products"
-        class="bg-slate-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-700 transition-colors inline-flex items-center space-x-2"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-        </svg>
-        <span>Select a Product</span>
-      </a>
+    <div class="relative flex flex-col items-center py-16 text-center">
+      <div class="absolute inset-0 radar-bg pointer-events-none"></div>
+      <div class="relative z-10 flex flex-col items-center max-w-md">
+        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        </div>
+        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No Product Selected</h3>
+        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Select a product from the header to generate reports.</p>
+        <a href="/products" class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Select a Product</a>
+      </div>
+    </div>
+  {:else if loading}
+    <div class="flex flex-col items-center py-16">
+      <div class="animate-spin rounded-full h-7 w-7 border-2 border-t-transparent mb-3" style="border-color: var(--color-accent-primary); border-top-color: transparent;"></div>
+      <p class="text-sm" style="color: var(--color-text-tertiary);">Loading report data...</p>
     </div>
   {:else}
-    <!-- Content -->
-    {#if loading}
-      <div class="flex flex-col justify-center items-center py-16">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mb-4"></div>
-        <p class="text-gray-500">Loading report data...</p>
+    <div class="rounded-lg p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+      <h2 class="text-sm font-semibold mb-1" style="color: var(--color-text-primary);">Complete TARA Package</h2>
+      <p class="text-xs mb-4" style="color: var(--color-text-secondary);">
+        ISO 21434 compliant report with all scenarios, attack paths, and treatment plans.
+      </p>
+
+      <div class="rounded-md p-3 mb-4" style="background: var(--color-info-bg); border: 1px solid var(--color-info);">
+        <h3 class="text-xs font-medium mb-1.5" style="color: var(--color-info);">Report Contents</h3>
+        <ul class="text-xs space-y-0.5" style="color: var(--color-text-secondary);">
+          <li>- Executive Summary with risk overview</li>
+          <li>- Product scope and asset inventory</li>
+          <li>- Damage & threat scenario analysis</li>
+          <li>- Attack paths and feasibility ratings</li>
+          <li>- Risk treatment strategies</li>
+          <li>- ISO 21434 compliance statement</li>
+        </ul>
       </div>
-    {:else}
-      <!-- Report Generation -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <h2 class="text-xl font-semibold text-gray-900 mb-2">Complete TARA Package</h2>
-            <p class="text-gray-600 mb-4">
-              Generate a comprehensive Threat Analysis and Risk Assessment document for regulatory submission. 
-              This report includes all damage scenarios, threat scenarios, attack paths, risk assessments, and treatment plans.
-            </p>
-            
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h3 class="text-sm font-medium text-blue-900 mb-2">Report Contents:</h3>
-              <ul class="text-sm text-blue-800 space-y-1">
-                <li>• Executive Summary with risk overview</li>
-                <li>• Product scope and asset inventory</li>
-                <li>• Complete damage scenario analysis</li>
-                <li>• Threat scenarios and attack paths</li>
-                <li>• Risk treatment and mitigation strategies</li>
-                <li>• ISO 21434 compliance documentation</li>
-              </ul>
-            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div class="bg-gray-50 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-gray-900">{riskTreatmentData.length}</div>
-                <div class="text-sm text-gray-600">Damage Scenarios</div>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-gray-900">{threatScenarios.length}</div>
-                <div class="text-sm text-gray-600">Threat Scenarios</div>
-              </div>
-              <div class="bg-gray-50 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-gray-900">{attackPaths.length}</div>
-                <div class="text-sm text-gray-600">Attack Paths</div>
-              </div>
-            </div>
-          </div>
+      <div class="grid grid-cols-3 gap-3 mb-5">
+        <div class="rounded-md p-3 text-center" style="background: var(--color-bg-elevated);">
+          <div class="text-lg font-bold" style="color: var(--color-text-primary);">{riskTreatmentData.length}</div>
+          <div class="text-[11px]" style="color: var(--color-text-tertiary);">Damage Scenarios</div>
         </div>
-
-        <div class="flex justify-end">
-          <button
-            on:click={generateTARAReport}
-            disabled={generating || riskTreatmentData.length === 0}
-            class="bg-slate-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-          >
-            {#if generating}
-              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              <span>Generating...</span>
-            {:else}
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <span>Generate TARA Report</span>
-            {/if}
-          </button>
+        <div class="rounded-md p-3 text-center" style="background: var(--color-bg-elevated);">
+          <div class="text-lg font-bold" style="color: var(--color-text-primary);">{threatScenarios.length}</div>
+          <div class="text-[11px]" style="color: var(--color-text-tertiary);">Threat Scenarios</div>
         </div>
-
-        {#if riskTreatmentData.length === 0}
-          <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div class="flex">
-              <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
-              </svg>
-              <div>
-                <h3 class="text-sm font-medium text-yellow-800">No Data Available</h3>
-                <p class="text-sm text-yellow-700 mt-1">
-                  You need to create damage scenarios and complete the TARA workflow before generating reports.
-                </p>
-              </div>
-            </div>
-          </div>
-        {/if}
+        <div class="rounded-md p-3 text-center" style="background: var(--color-bg-elevated);">
+          <div class="text-lg font-bold" style="color: var(--color-text-primary);">{attackPaths.length}</div>
+          <div class="text-[11px]" style="color: var(--color-text-tertiary);">Attack Paths</div>
+        </div>
       </div>
-    {/if}
+
+      <div class="flex justify-end">
+        <button
+          on:click={generateTARAReport}
+          disabled={generating || riskTreatmentData.length === 0}
+          class="px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
+        >
+          {#if generating}
+            <div class="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
+            Generating...
+          {:else}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Generate TARA Report
+          {/if}
+        </button>
+      </div>
+
+      {#if riskTreatmentData.length === 0}
+        <div class="mt-4 rounded-md p-3" style="background: var(--color-warning-bg); border: 1px solid var(--color-warning);">
+          <h3 class="text-xs font-medium" style="color: var(--color-warning);">No Data Available</h3>
+          <p class="text-xs mt-0.5" style="color: var(--color-text-secondary);">
+            Complete the TARA workflow (damage scenarios → threat scenarios → risk assessment) before generating reports.
+          </p>
+        </div>
+      {/if}
+    </div>
   {/if}
 </div>

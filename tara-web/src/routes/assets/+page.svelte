@@ -94,14 +94,14 @@
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Assets & Components</h1>
+      <h1 class="text-sm font-bold" style="color: var(--color-text-primary);">Assets & Components</h1>
       {#if $selectedProduct}
-        <p class="mt-2 text-gray-600 max-w-2xl">
-          Manage assets and components for <strong>{$selectedProduct.name}</strong>. 
+        <p class="mt-1 text-xs max-w-2xl" style="color: var(--color-text-tertiary);">
+          Manage assets and components for <strong style="color: var(--color-text-secondary);">{$selectedProduct.name}</strong>. 
           Define the building blocks that will be analyzed for potential damage scenarios.
         </p>
       {:else}
-        <p class="mt-2 text-gray-600 max-w-2xl">
+        <p class="mt-1 text-xs max-w-2xl" style="color: var(--color-text-tertiary);">
           Please select a product first to view and manage its assets and components.
         </p>
       {/if}
@@ -111,18 +111,18 @@
   {#if !$selectedProduct}
     <!-- No Product Selected State -->
     <div class="text-center py-16">
-      <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-10 h-10 mx-auto mb-4" style="color: var(--color-text-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
       </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No Product Selected</h3>
-      <p class="text-gray-500 mb-6 max-w-md mx-auto">
+      <h3 class="text-sm font-medium mb-2" style="color: var(--color-text-primary);">No Product Selected</h3>
+      <p class="text-xs mb-6 max-w-md mx-auto" style="color: var(--color-text-tertiary);">
         Select a product from the header dropdown or visit the Products page to choose which product's assets you want to manage.
       </p>
       <a
         href="/products"
-        class="bg-slate-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-700 transition-colors inline-flex items-center space-x-2"
+        class="px-4 py-2 rounded-lg text-xs font-medium transition-colors inline-flex items-center space-x-2" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
         </svg>
         <span>Select a Product</span>

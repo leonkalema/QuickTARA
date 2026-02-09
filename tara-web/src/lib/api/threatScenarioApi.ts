@@ -22,7 +22,7 @@ export const threatScenarioApi = {
   },
 
   async getThreatScenariosByProduct(scopeId: string): Promise<ThreatScenarioListResponse> {
-    const response = await fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${scopeId}`);
+    const response = await fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${scopeId}&limit=1000`);
     return this.handleResponse<ThreatScenarioListResponse>(response);
   },
 

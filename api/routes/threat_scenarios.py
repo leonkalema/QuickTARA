@@ -2,9 +2,10 @@
 Threat Scenario API routes for QuickTARA
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from sqlalchemy.orm import Session
 from api.deps.db import get_db
+from core.audit_helpers import get_user_from_request, audit_create, audit_update, audit_delete, audit_status_change
 from api.models.threat_scenario import ThreatScenario, ThreatScenarioCreate, ThreatScenarioUpdate, ThreatScenarioList
 from db.threat_scenario import ThreatScenario as DBThreatScenario
 from db.product_asset_models import ProductScope as DBProductScope
@@ -88,6 +89,7 @@ async def list_threat_scenarios(
 
 @router.post("", response_model=ThreatScenario, status_code=status.HTTP_201_CREATED)
 async def create_threat_scenario(
+    request: Request,
     threat_scenario: ThreatScenarioCreate,
     db: Session = Depends(get_db)
 ):
@@ -139,6 +141,8 @@ async def create_threat_scenario(
                 text("INSERT OR IGNORE INTO threat_damage_links (threat_scenario_id, damage_scenario_id) VALUES (:threat_scenario_id, :damage_scenario_id)"),
                 {"threat_scenario_id": threat_scenario.threat_scenario_id, "damage_scenario_id": threat_scenario.damage_scenario_id}
             )  
+        user = get_user_from_request(request)
+        audit_create(db, "threat_scenario", threat_scenario.threat_scenario_id, user, scope_id=threat_scenario.scope_id)
         db.commit()
         return db_threat_scenario
     except Exception as e:
@@ -204,6 +208,7 @@ async def get_threat_scenario_damage_scenarios(
 async def update_threat_scenario(
     threat_scenario_id: str,
     threat_scenario_update: ThreatScenarioUpdate,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Update a threat scenario"""
@@ -230,6 +235,8 @@ async def update_threat_scenario(
     # Increment version
     db_threat_scenario.version += 1
     
+    user = get_user_from_request(request)
+    audit_update(db, "threat_scenario", threat_scenario_id, user, scope_id=getattr(db_threat_scenario, 'scope_id', None), summary="Threat scenario updated")
     db.commit()
     db.refresh(db_threat_scenario)
     
@@ -248,7 +255,9 @@ async def accept_threat_scenario(
     ).first()
     if not scenario:
         raise HTTPException(status_code=404, detail="Threat scenario not found")
+    old_status = scenario.status or "draft"
     scenario.status = "accepted"
+    audit_status_change(db, "threat_scenario", threat_scenario_id, "system", old_status, "accepted", scope_id=getattr(scenario, 'scope_id', None))
     db.commit()
     db.refresh(scenario)
     return scenario
@@ -257,6 +266,7 @@ async def accept_threat_scenario(
 @router.delete("/{threat_scenario_id}")
 async def delete_threat_scenario(
     threat_scenario_id: str,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Delete a threat scenario (soft delete)"""
@@ -276,6 +286,8 @@ async def delete_threat_scenario(
     
     # Soft delete
     threat_scenario.is_deleted = True
+    user = get_user_from_request(request)
+    audit_delete(db, "threat_scenario", threat_scenario_id, user, scope_id=getattr(threat_scenario, 'scope_id', None))
     db.commit()
     
     return {"message": f"Threat scenario {threat_scenario_id} deleted successfully"}

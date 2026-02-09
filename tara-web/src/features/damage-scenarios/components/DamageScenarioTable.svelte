@@ -10,6 +10,7 @@
     type CreateDamageScenarioRequest
   } from '../../../lib/types/damageScenario';
   import type { Asset } from '../../../lib/types/asset';
+  import WorkflowBadge from '../../audit/components/WorkflowBadge.svelte';
 
   export let damageScenarios: DamageScenario[] = [];
   export let assets: Asset[] = [];
@@ -188,12 +189,12 @@
     return asset ? asset.name : 'Unknown Asset';
   }
 
-  function getCIABadgeColor(property: CIAProperty): string {
+  function getCIABadgeStyle(property: CIAProperty): string {
     switch (property) {
-      case CIAProperty.CONFIDENTIALITY: return 'text-blue-700 bg-blue-100';
-      case CIAProperty.INTEGRITY: return 'text-green-700 bg-green-100';
-      case CIAProperty.AVAILABILITY: return 'text-red-700 bg-red-100';
-      default: return 'text-gray-700 bg-gray-100';
+      case CIAProperty.CONFIDENTIALITY: return 'background: var(--color-info-bg); color: var(--color-info);';
+      case CIAProperty.INTEGRITY: return 'background: var(--color-success-bg); color: var(--color-success);';
+      case CIAProperty.AVAILABILITY: return 'background: var(--color-error-bg); color: var(--color-error);';
+      default: return 'background: var(--color-bg-elevated); color: var(--color-text-tertiary);';
     }
   }
 
@@ -201,46 +202,31 @@
   loadThreatScenarios();
 </script>
 
-<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-  <!-- Table Header -->
-  <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-medium text-gray-900">Damage Scenarios</h3>
-      <button
-        on:click={() => isAddingNew = true}
-        class="px-3 py-1.5 bg-slate-600 text-white text-sm rounded-md hover:bg-slate-700 transition-colors"
-      >
-        + Add Damage Scenario
-      </button>
-    </div>
+<div class="rounded-lg overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+  <div class="px-4 py-3 flex items-center justify-between" style="background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-border-subtle);">
+    <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Damage Scenarios</h3>
+    <button on:click={() => isAddingNew = true} class="px-3 py-1.5 text-xs font-medium rounded-md" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">
+      + Add Scenario
+    </button>
   </div>
 
   <!-- Table -->
   <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+    <table class="min-w-full">
+      <thead style="background: var(--color-bg-elevated);">
         <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-48">
-            Name
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-40">
-            Asset
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-32">
-            Affected CIA
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-64">
-            Description
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-64">
-            Threat Scenario
-          </th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-48" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Name</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-40" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Asset</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-32" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">CIA</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-64" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Description</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-64" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Threat Scenario</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-32" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Workflow</th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody>
         <!-- Existing Damage Scenarios -->
         {#each damageScenarios as scenario (scenario.damage_scenario_id)}
-          <tr class="hover:bg-gray-50">
+          <tr style="border-bottom: 1px solid var(--color-border-subtle);">
             <!-- Name -->
             <td class="px-4 py-3">
               {#if editingCell?.scenarioId === scenario.damage_scenario_id && editingCell?.field === 'name'}
@@ -249,14 +235,14 @@
                   bind:value={editingValue}
                   on:keydown={(e) => handleKeyPress(e, scenario, 'name')}
                   on:blur={() => saveEdit(scenario, 'name')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 />
               {:else}
                 <button
                   on:click={() => startEdit(scenario, 'name')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors font-medium text-gray-900"
+                  class="text-left w-full px-2 py-1 rounded transition-colors text-xs font-medium" style="color: var(--color-text-primary);"
                 >
                   {scenario.name}
                 </button>
@@ -270,7 +256,7 @@
                   bind:value={editingValue}
                   on:change={() => saveEdit(scenario, 'asset_id')}
                   on:blur={() => saveEdit(scenario, 'asset_id')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 >
@@ -281,7 +267,7 @@
               {:else}
                 <button
                   on:click={() => startEdit(scenario, 'asset_id')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm"
+                  class="text-left w-full px-2 py-1 rounded transition-colors text-xs" style="color: var(--color-text-secondary);"
                 >
                   {getAssetName(scenario.asset_id)}
                 </button>
@@ -294,11 +280,11 @@
                 {#each Object.values(CIAProperty) as property}
                   <button
                     on:click={() => toggleExistingCIA(scenario, property)}
-                    class="px-2 py-1 text-xs font-medium rounded-full transition-colors {
-                      scenario.affected_cia?.includes(property) 
-                        ? getCIABadgeColor(property)
-                        : 'text-gray-400 bg-gray-100 hover:bg-gray-200'
-                    }"
+                    class="px-2 py-1 text-[10px] font-medium rounded-full transition-colors"
+                    style="{scenario.affected_cia?.includes(property) 
+                        ? getCIABadgeStyle(property)
+                        : 'background: var(--color-bg-inset); color: var(--color-text-tertiary);'}"
+
                   >
                     {property.charAt(0)}
                   </button>
@@ -313,7 +299,7 @@
                   bind:value={editingValue}
                   on:keydown={(e) => e.key === 'Enter' && e.ctrlKey && saveEdit(scenario, 'description')}
                   on:blur={() => saveEdit(scenario, 'description')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  class="w-full px-2 py-1 rounded text-xs resize-none" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   rows="2"
                   disabled={isSaving}
                   autofocus
@@ -321,7 +307,7 @@
               {:else}
                 <button
                   on:click={() => startEdit(scenario, 'description')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
+                  class="text-left w-full px-2 py-1 rounded transition-colors text-xs" style="color: var(--color-text-secondary);"
                 >
                   {scenario.description || 'Click to add...'}
                 </button>
@@ -335,7 +321,7 @@
                   bind:value={editingValue}
                   on:keydown={(e) => e.key === 'Enter' && e.ctrlKey && saveEdit(scenario, 'threat_scenario_text')}
                   on:blur={() => saveEdit(scenario, 'threat_scenario_text')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  class="w-full px-2 py-1 rounded text-xs resize-none" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   rows="2"
                   disabled={isSaving}
                   autofocus
@@ -343,25 +329,34 @@
               {:else}
                 <button
                   on:click={() => startEdit(scenario, 'threat_scenario_text')}
-                  class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
+                  class="text-left w-full px-2 py-1 rounded transition-colors text-xs" style="color: var(--color-text-secondary);"
                 >
                   {scenario.threat_scenario_text || 'Click to add...'}
                 </button>
               {/if}
+            </td>
+
+            <!-- Workflow -->
+            <td class="px-4 py-3">
+              <WorkflowBadge
+                artifactType="damage_scenario"
+                artifactId={scenario.damage_scenario_id || scenario.scenario_id}
+                scopeId={productId}
+              />
             </td>
           </tr>
         {/each}
 
         <!-- Add New Scenario Row -->
         {#if isAddingNew}
-          <tr class="bg-blue-50 border-2 border-blue-200">
+          <tr style="background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-border-default);">
             <!-- Name -->
             <td class="px-4 py-3">
               <input
                 type="text"
                 bind:value={newScenario.name}
                 placeholder="Scenario name..."
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                 autofocus
               />
             </td>
@@ -370,7 +365,7 @@
             <td class="px-4 py-3">
               <select
                 bind:value={newScenario.asset_id}
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 <option value="">Select asset...</option>
                 {#each assets as asset}
@@ -386,11 +381,10 @@
                   <button
                     type="button"
                     on:click={() => toggleCIAProperty(property)}
-                    class="px-2 py-1 text-xs font-medium rounded-full transition-colors {
-                      newScenario.affected_cia?.includes(property) 
-                        ? getCIABadgeColor(property)
-                        : 'text-gray-400 bg-gray-100 hover:bg-gray-200'
-                    }"
+                    class="px-2 py-1 text-[10px] font-medium rounded-full transition-colors"
+                    style="{newScenario.affected_cia?.includes(property) 
+                        ? getCIABadgeStyle(property)
+                        : 'background: var(--color-bg-inset); color: var(--color-text-tertiary);'}"
                   >
                     {property.charAt(0)}
                   </button>
@@ -403,7 +397,7 @@
               <textarea
                 bind:value={newScenario.description}
                 placeholder="Describe the damage scenario..."
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                class="w-full px-2 py-1 rounded text-xs resize-none" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                 rows="2"
               ></textarea>
             </td>
@@ -413,19 +407,19 @@
               <textarea
                 bind:value={newScenario.threat_scenario_text}
                 placeholder="Describe the threat scenario..."
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                class="w-full px-2 py-1 rounded text-xs resize-none" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                 rows="2"
               ></textarea>
             </td>
           </tr>
           
           <!-- Action Row -->
-          <tr class="bg-blue-50">
-            <td colspan="5" class="px-4 py-3">
+          <tr style="background: var(--color-bg-elevated);">
+            <td colspan="6" class="px-4 py-3">
               <div class="flex justify-end space-x-2">
                 <button
                   on:click={cancelNewScenario}
-                  class="px-3 py-1.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                  class="px-3 py-1.5 rounded text-xs transition-colors" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
                   disabled={isSaving}
                 >
                   Cancel
@@ -433,7 +427,7 @@
                 <button
                   on:click={addNewScenario}
                   disabled={isSaving || !newScenario.name?.trim() || !newScenario.asset_id || !newScenario.affected_cia?.length}
-                  class="px-3 py-1.5 bg-slate-600 text-white rounded text-sm hover:bg-slate-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
+                  class="px-3 py-1.5 rounded text-xs disabled:opacity-50 transition-colors flex items-center space-x-2" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
                 >
                   {#if isSaving}
                     <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
@@ -453,12 +447,12 @@
   <!-- Empty State -->
   {#if damageScenarios.length === 0 && !isAddingNew}
     <div class="text-center py-12">
-      <div class="text-gray-400 text-6xl mb-4">⚠️</div>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No damage scenarios yet</h3>
-      <p class="text-gray-500 mb-4">Start by adding your first damage scenario for this product.</p>
+      <div class="text-4xl mb-3">⚠️</div>
+      <h3 class="text-sm font-semibold mb-1" style="color: var(--color-text-primary);">No damage scenarios yet</h3>
+      <p class="text-xs mb-4" style="color: var(--color-text-tertiary);">Add your first damage scenario for this product.</p>
       <button
         on:click={() => isAddingNew = true}
-        class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+        class="px-3 py-2 rounded-md text-xs font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
       >
         Add First Damage Scenario
       </button>

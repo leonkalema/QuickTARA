@@ -37,7 +37,7 @@
 </script>
 
 {#if canViewUserManagement()}
-<div class="h-full bg-slate-50">
+<div class="h-full">
 	<UserTable 
 		{users}
 		{loading}
@@ -49,11 +49,11 @@
 	/>
 </div>
 {:else}
-<div class="h-full bg-slate-50 flex items-center justify-center">
+<div class="h-full flex items-center justify-center">
 	<div class="text-center">
-		<ShieldX class="w-12 h-12 text-slate-300 mx-auto mb-3" />
-		<h2 class="text-lg font-semibold text-slate-700 mb-1">Access Restricted</h2>
-		<p class="text-sm text-slate-500">You don't have permission to view user management.</p>
+		<ShieldX class="w-10 h-10 mx-auto mb-3" style="color: var(--color-text-tertiary);" />
+		<h2 class="text-xs font-semibold mb-1" style="color: var(--color-text-primary);">Access Restricted</h2>
+		<p class="text-[11px]" style="color: var(--color-text-tertiary);">You don't have permission to view user management.</p>
 	</div>
 </div>
 {/if}

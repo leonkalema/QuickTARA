@@ -93,13 +93,13 @@
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
-  function getRiskColor(riskLevel: string): string {
+  function getRiskStyle(riskLevel: string): string {
     switch (riskLevel) {
-      case 'Critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'High': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'Critical': return 'background: var(--color-risk-critical-bg); color: var(--color-risk-critical);';
+      case 'High': return 'background: var(--color-risk-high-bg); color: var(--color-risk-high);';
+      case 'Medium': return 'background: var(--color-risk-medium-bg); color: var(--color-risk-medium);';
+      case 'Low': return 'background: var(--color-risk-low-bg); color: var(--color-risk-low);';
+      default: return 'background: var(--color-bg-elevated); color: var(--color-text-tertiary);';
     }
   }
 
@@ -204,15 +204,14 @@
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Risk Treatment</h1>
+      <h1 class="text-xl font-bold" style="color: var(--color-text-primary);">Risk Treatment</h1>
       {#if $selectedProduct}
-        <p class="mt-2 text-gray-600 max-w-2xl">
-          Review calculated risk levels and define treatment strategies for <strong>{$selectedProduct.name}</strong>. 
-          Each risk is automatically calculated using the ISO 21434 risk matrix.
+        <p class="mt-1 text-xs max-w-2xl" style="color: var(--color-text-tertiary);">
+          Review risk levels and define treatment strategies for <strong style="color: var(--color-text-secondary);">{$selectedProduct.name}</strong>.
         </p>
       {:else}
-        <p class="mt-2 text-gray-600 max-w-2xl">
-          Please select a product first to begin risk treatment.
+        <p class="mt-1 text-xs max-w-2xl" style="color: var(--color-text-tertiary);">
+          Select a product to begin risk treatment.
         </p>
       {/if}
     </div>
@@ -220,17 +219,17 @@
 
   {#if loading}
     <div class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
-      <span class="ml-3 text-gray-600">Loading risk treatment data...</span>
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2" style="border-color: var(--color-accent-primary);"></div>
+      <span class="ml-3 text-xs" style="color: var(--color-text-tertiary);">Loading risk treatment data...</span>
     </div>
   {:else if !$selectedProduct}
     <div class="text-center py-12">
       <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
       </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No Product Selected</h3>
-      <p class="text-gray-500 mb-4">Select a product from the Product Scope page to begin risk treatment.</p>
-      <a href="/products" class="text-slate-600 hover:text-slate-800 font-medium">
+      <h3 class="text-sm font-semibold mb-1" style="color: var(--color-text-primary);">No Product Selected</h3>
+      <p class="text-xs mb-4" style="color: var(--color-text-tertiary);">Select a product to begin risk treatment.</p>
+      <a href="/products" class="text-xs font-medium" style="color: var(--color-accent-primary);">
         Go to Product Scope →
       </a>
     </div>
@@ -239,28 +238,28 @@
       <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 0a9 9 0 110-18 9 9 0 010 18z"></path>
       </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No Damage Scenarios Found</h3>
-      <p class="text-gray-500 mb-4">Create damage scenarios first to perform risk treatment analysis.</p>
-      <a href="/damage-scenarios" class="text-slate-600 hover:text-slate-800 font-medium">
+      <h3 class="text-sm font-semibold mb-1" style="color: var(--color-text-primary);">No Damage Scenarios Found</h3>
+      <p class="text-xs mb-4" style="color: var(--color-text-tertiary);">Create damage scenarios first to perform risk treatment analysis.</p>
+      <a href="/damage-scenarios" class="text-xs font-medium" style="color: var(--color-accent-primary);">
         Go to Damage Scenarios →
       </a>
     </div>
   {:else}
     <!-- Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <div class="rounded-lg p-4 mb-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
       <div class="flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex items-center space-x-2">
-          <span class="text-sm font-medium text-gray-700">Filters:</span>
+          <span class="text-xs font-medium" style="color: var(--color-text-secondary);">Filters:</span>
         </div>
         
         <div class="flex flex-col sm:flex-row gap-4 flex-1">
           <!-- Risk Level Filter -->
           <div class="flex items-center space-x-2">
-            <label for="risk-filter" class="text-sm text-gray-600 whitespace-nowrap">Risk Level:</label>
+            <label for="risk-filter" class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">Risk Level:</label>
             <select 
               id="risk-filter"
               bind:value={selectedRiskFilter}
-              class="w-32 px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+              class="w-32 px-2 py-1 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
             >
               <option value="All">All Levels</option>
               <option value="Critical">Critical</option>
@@ -272,11 +271,11 @@
 
           <!-- Status Filter -->
           <div class="flex items-center space-x-2">
-            <label for="status-filter" class="text-sm text-gray-600 whitespace-nowrap">Status:</label>
+            <label for="status-filter" class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">Status:</label>
             <select 
               id="status-filter"
               bind:value={selectedStatusFilter}
-              class="w-28 px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+              class="w-28 px-2 py-1 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
             >
               <option value="All">All Status</option>
               <option value="Draft">Draft</option>
@@ -286,7 +285,7 @@
         </div>
 
         <!-- Results Count -->
-        <div class="text-sm text-gray-500 whitespace-nowrap">
+        <div class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">
           Showing {filteredRiskTreatmentData.length} of {riskTreatmentData.length} treatments
         </div>
       </div>
@@ -303,10 +302,10 @@
         
         {@const isExpanded = expandedCards.has(damageScenario.scenario_id)}
         
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden {damageScenario.treatment_status === 'approved' ? 'ring-2 ring-green-200' : ''}">
+        <div class="rounded-lg overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid {damageScenario.treatment_status === 'approved' ? 'var(--color-success)' : 'var(--color-border-default)'};">
           <!-- Header - Always Visible -->
           <div 
-            class="px-6 py-4 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors" 
+            class="px-5 py-3 cursor-pointer transition-colors" style="background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-border-subtle);" 
             role="button"
             tabindex="0"
             on:click={() => toggleCard(damageScenario.scenario_id)}
@@ -315,39 +314,39 @@
             <div class="flex items-center justify-between">
               <div class="flex-1">
                 <div class="flex items-center space-x-3">
-                  <h3 class="text-lg font-medium text-gray-900">{damageScenario.name}</h3>
+                  <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">{damageScenario.name}</h3>
                   {#if damageScenario.treatment_status === 'approved'}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: var(--color-success-bg); color: var(--color-success);">
                       ✓ Approved
                     </span>
                   {:else}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: var(--color-warning-bg); color: var(--color-warning);">
                       Draft
                     </span>
                   {/if}
                   <!-- Risk Level Badge -->
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {getRiskColor(riskLevel)}">{riskLevel}</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium" style="{getRiskStyle(riskLevel)}">{riskLevel}</span>
                 </div>
                 
                 <!-- Minimized View - Show Goal when collapsed -->
                 {#if !isExpanded && (damageScenario.treatment_goal || damageScenario.suggested_goal)}
-                  <div class="mt-2 text-sm text-gray-700">
+                  <div class="mt-1 text-xs" style="color: var(--color-text-secondary);">
                     <span class="font-medium">Goal:</span> {damageScenario.treatment_goal || damageScenario.suggested_goal}
                   </div>
                 {:else if !isExpanded}
-                  <p class="text-sm text-gray-600 mt-1">{damageScenario.description}</p>
+                  <p class="text-xs mt-1" style="color: var(--color-text-tertiary);">{damageScenario.description}</p>
                 {/if}
               </div>
               
               <div class="flex items-center space-x-4">
                 <!-- Risk Level Info -->
-                <div class="text-right text-xs text-gray-500">
+                <div class="text-right text-[10px]" style="color: var(--color-text-tertiary);">
                   Impact: {damageScenario.impact_level} | Feasibility: {damageScenario.feasibility_level}
                 </div>
                 
                 <!-- Expand/Collapse Button -->
                 <button 
-                  class="text-gray-400 hover:text-gray-600 transition-colors"
+                  class="transition-colors" style="color: var(--color-text-tertiary);"
                   aria-label={isExpanded ? 'Collapse card' : 'Expand card'}
                 >
                   <svg class="w-5 h-5 transform transition-transform {isExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,44 +359,44 @@
 
           {#if isExpanded}
             <!-- Risk Calculation -->
-            <div class="px-6 py-4 bg-blue-50 border-b border-gray-200">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">Risk Calculation (ISO 21434)</h4>
+            <div class="px-5 py-3" style="background: var(--color-bg-inset); border-bottom: 1px solid var(--color-border-subtle);">
+              <h4 class="text-xs font-semibold mb-2" style="color: var(--color-text-secondary);">Risk Calculation (ISO 21434)</h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <span class="text-gray-600">Impact Level:</span>
+                  <span class="text-xs" style="color: var(--color-text-tertiary);">Impact:</span>
                   <span class="ml-2 font-medium {impactLevel === 'Severe' ? 'text-red-700' : impactLevel === 'Major' ? 'text-orange-700' : impactLevel === 'Moderate' ? 'text-yellow-700' : 'text-green-700'}">{impactLevel}</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Feasibility Level:</span>
+                  <span class="text-xs" style="color: var(--color-text-tertiary);">Feasibility:</span>
                   <span class="ml-2 font-medium {feasibilityLevel === 'Very High' ? 'text-red-700' : feasibilityLevel === 'High' ? 'text-orange-700' : feasibilityLevel === 'Medium' ? 'text-yellow-700' : 'text-green-700'}">{feasibilityLevel}</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Risk Level:</span>
+                  <span class="text-xs" style="color: var(--color-text-tertiary);">Risk:</span>
                   <span class="ml-2 font-medium {riskLevel === 'Critical' ? 'text-red-700' : riskLevel === 'High' ? 'text-orange-700' : riskLevel === 'Medium' ? 'text-yellow-700' : 'text-green-700'}">{riskLevel}</span>
                 </div>
               </div>
             </div>
 
             <!-- Treatment Decision -->
-            <div class="px-6 py-4">
+            <div class="px-5 py-4">
               <div class="space-y-4">
                 <!-- Treatment Selection -->
                 <div>
-                  <label for="treatment-select-{damageScenario.scenario_id}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <label for="treatment-select-{damageScenario.scenario_id}" class="block text-xs font-medium mb-2" style="color: var(--color-text-secondary);">
                     Risk Treatment Decision
                   </label>
                   <select 
                     id="treatment-select-{damageScenario.scenario_id}"
                     bind:value={damageScenario.selected_treatment}
                     disabled={damageScenario.treatment_status === 'approved' || !canManageTreatment}
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent {damageScenario.treatment_status === 'approved' || !canManageTreatment ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
+                    class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default); {damageScenario.treatment_status === 'approved' || !canManageTreatment ? 'opacity: 0.6; cursor: not-allowed;' : ''}"
                   >
                     <option value="Reducing" selected={suggestedTreatment === 'Reducing'}>Reducing</option>
                     <option value="Retaining" selected={suggestedTreatment === 'Retaining'}>Retaining</option>
                     <option value="Sharing" selected={suggestedTreatment === 'Sharing'}>Sharing</option>
                     <option value="Avoiding" selected={suggestedTreatment === 'Avoiding'}>Avoiding</option>
                   </select>
-                  <p class="text-xs text-gray-500 mt-1">
+                  <p class="text-[10px] mt-1" style="color: var(--color-text-tertiary);">
                     {#if damageScenario.treatment_status === 'approved'}
                       🔒 Treatment decision is locked (approved)
                     {:else if !canManageTreatment}
@@ -410,7 +409,7 @@
 
                 <!-- Goal/Claim -->
                 <div>
-                  <label for="treatment-goal-{damageScenario.scenario_id}" class="block text-sm font-medium text-gray-700 mb-2">
+                  <label for="treatment-goal-{damageScenario.scenario_id}" class="block text-xs font-medium mb-2" style="color: var(--color-text-secondary);">
                     Security Goal/Claim <span class="text-red-500">*</span>
                   </label>
                   <textarea 
@@ -419,9 +418,9 @@
                     disabled={damageScenario.treatment_status === 'approved' || !canManageTreatment}
                     rows="3"
                     placeholder={damageScenario.suggested_goal || goalTemplate}
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-slate-500 focus:border-transparent placeholder-italic {damageScenario.treatment_status === 'approved' || !canManageTreatment ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}"
+                    class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default); {damageScenario.treatment_status === 'approved' || !canManageTreatment ? 'opacity: 0.6; cursor: not-allowed;' : ''}"
                   ></textarea>
-                  <p class="text-xs text-gray-500 mt-1">
+                  <p class="text-[10px] mt-1" style="color: var(--color-text-tertiary);">
                     {#if damageScenario.treatment_status === 'approved'}
                       🔒 Security goal is locked (approved)
                     {:else if !canManageTreatment}
@@ -433,9 +432,9 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <div class="flex justify-end space-x-3 pt-3" style="border-top: 1px solid var(--color-border-subtle);">
                   {#if damageScenario.treatment_status === 'approved'}
-                    <div class="flex items-center text-sm text-green-600">
+                    <div class="flex items-center text-xs" style="color: var(--color-success);">
                       <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                       </svg>
@@ -444,20 +443,20 @@
                   {:else if canManageTreatment}
                     <button 
                       on:click={() => saveTreatment(damageScenario, 'draft')}
-                      class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      class="px-3 py-1.5 text-xs font-medium rounded-md" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
                     >
                       Save Draft
                     </button>
                     {#if canApprove}
                       <button 
                         on:click={() => approveTreatment(damageScenario)}
-                        class="px-4 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
                       >
                         Approve Treatment
                       </button>
                     {/if}
                   {:else}
-                    <div class="flex items-center text-sm text-gray-500">
+                    <div class="flex items-center text-xs" style="color: var(--color-text-tertiary);">
                       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>

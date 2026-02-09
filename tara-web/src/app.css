@@ -1,3 +1,39 @@
 @import "tailwindcss";
+@import "./lib/styles/tokens.css";
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
+
+/* ── Base dark theme ── */
+body {
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar (dark) ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg-app); }
+::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
+
+/* ── Focus ring utility ── */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ── Signature motif: radar rings (used in empty states / backgrounds) ── */
+.radar-bg {
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 30%, var(--color-border-subtle) 30.5%, transparent 31%),
+    radial-gradient(circle at 50% 50%, transparent 50%, var(--color-border-subtle) 50.5%, transparent 51%),
+    radial-gradient(circle at 50% 50%, transparent 70%, var(--color-border-subtle) 70.5%, transparent 71%);
+  background-size: 400px 400px;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.3;
+}

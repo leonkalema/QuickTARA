@@ -278,26 +278,26 @@
 
 <div class="h-full">
   <!-- Header -->
-  <div class="bg-white border-b border-slate-200 px-6 py-4">
+  <div class="px-6 py-4" style="background: var(--color-bg-surface); border-bottom: 1px solid var(--color-border-default);">
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <Users class="w-5 h-5 text-slate-600" />
-        <h1 class="text-lg font-semibold text-slate-900">Users</h1>
-        <span class="text-sm text-slate-500">({users.length})</span>
+        <Users class="w-5 h-5" style="color: var(--color-text-secondary);" />
+        <h1 class="text-sm font-semibold" style="color: var(--color-text-primary);">Users</h1>
+        <span class="text-xs" style="color: var(--color-text-tertiary);">({users.length})</span>
       </div>
       <div class="flex items-center space-x-3">
         <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: var(--color-text-tertiary);" />
           <input
             type="text"
             placeholder="Search users..."
             bind:value={searchQuery}
-            class="pl-9 pr-4 py-2 w-64 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50"
+            class="pl-9 pr-4 py-2 w-64 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
           />
         </div>
         <select
           bind:value={statusFilter}
-          class="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"
+          class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
         >
           <option value="all">All Status</option>
           <option value="active">Active</option>
@@ -305,7 +305,7 @@
         </select>
         {#if canCreateUsers()}
           <button 
-            class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-lg transition-colors" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
             on:click={() => dispatch('toggleAddForm')}
           >
             <Plus class="w-4 h-4 mr-1.5" />
@@ -320,37 +320,37 @@
   <div class="p-6">
     {#if loading}
       <div class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+        <div class="animate-spin rounded-full h-6 w-6 border-2 border-t-transparent" style="border-color: var(--color-accent-primary);"></div>
       </div>
     {:else if filteredUsers.length === 0 && users.length === 0}
-      <div class="bg-white rounded-lg border border-slate-200 text-center py-12">
-        <Users class="w-10 h-10 text-slate-300 mx-auto mb-3" />
-        <p class="text-slate-600 font-medium">No users yet</p>
-        <p class="text-sm text-slate-400 mt-1">Create your first user to get started</p>
+      <div class="rounded-lg text-center py-12" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+        <Users class="w-10 h-10 mx-auto mb-3" style="color: var(--color-text-tertiary);" />
+        <p class="text-xs font-medium" style="color: var(--color-text-primary);">No users yet</p>
+        <p class="text-xs mt-1" style="color: var(--color-text-tertiary);">Create your first user to get started</p>
       </div>
     {:else if filteredUsers.length === 0}
-      <div class="bg-white rounded-lg border border-slate-200 text-center py-12">
-        <Search class="w-10 h-10 text-slate-300 mx-auto mb-3" />
-        <p class="text-slate-600 font-medium">No results found</p>
-        <p class="text-sm text-slate-400 mt-1">Try a different search term</p>
+      <div class="rounded-lg text-center py-12" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+        <Search class="w-10 h-10 mx-auto mb-3" style="color: var(--color-text-tertiary);" />
+        <p class="text-xs font-medium" style="color: var(--color-text-primary);">No results found</p>
+        <p class="text-xs mt-1" style="color: var(--color-text-tertiary);">Try a different search term</p>
       </div>
     {:else}
-      <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div class="rounded-lg overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
         <table class="w-full">
           <thead>
-            <tr class="bg-slate-50 border-b border-slate-200">
-              <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-              <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
-              <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-40">Actions</th>
+            <tr style="background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-border-subtle);">
+              <th class="text-left px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">User</th>
+              <th class="text-left px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Email</th>
+              <th class="text-left px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Role</th>
+              <th class="text-left px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Status</th>
+              <th class="text-left px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Created</th>
+              <th class="text-right px-4 py-2.5 text-[11px] font-medium uppercase tracking-wider w-40" style="color: var(--color-text-tertiary);">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <!-- Add User Row -->
             {#if isAddingNew && canCreateUsers()}
-              <tr class="bg-blue-50">
+              <tr style="background: var(--color-bg-elevated);">
                 <td colspan="6" class="px-4 py-4">
                   <div class="space-y-3">
                     <div class="grid grid-cols-4 gap-3">
@@ -358,25 +358,25 @@
                         type="email"
                         bind:value={newUser.email}
                         placeholder="Email *"
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       />
                       <input
                         type="text"
                         bind:value={newUser.username}
                         placeholder="Username"
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       />
                       <input
                         type="text"
                         bind:value={newUser.first_name}
                         placeholder="First Name"
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       />
                       <input
                         type="text"
                         bind:value={newUser.last_name}
                         placeholder="Last Name"
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       />
                     </div>
                     <div class="grid grid-cols-4 gap-3">
@@ -384,11 +384,11 @@
                         type="password"
                         bind:value={newUser.password}
                         placeholder="Password *"
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       />
                       <select
                         bind:value={newUser.organization_id}
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       >
                         <option value="">Department *</option>
                         {#each organizations as org}
@@ -397,7 +397,7 @@
                       </select>
                       <select
                         bind:value={newUser.organization_role}
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       >
                         {#each orgRoles as role}
                           <option value={role.value}>{role.label}</option>
@@ -407,13 +407,13 @@
                         <button
                           on:click={addNewUser}
                           disabled={isSaving}
-                          class="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+                          class="flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors disabled:opacity-50" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
                         >
                           {isSaving ? 'Adding...' : 'Add User'}
                         </button>
                         <button
                           on:click={resetForm}
-                          class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+                          class="px-3 py-2 text-xs font-medium transition-colors" style="color: var(--color-text-secondary);"
                         >
                           Cancel
                         </button>
@@ -426,35 +426,38 @@
 
             {#each paginatedUsers as user (user.user_id)}
               <!-- Main Row -->
-              <tr class="hover:bg-slate-50 transition-colors">
+              <tr class="transition-colors" style="border-bottom: 1px solid var(--color-border-subtle);">
                 <td class="px-4 py-3">
                   <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-white text-xs font-bold">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background: var(--color-bg-elevated); color: var(--color-text-secondary); border: 1px solid var(--color-border-default);">
                       {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
                     </div>
                     <div>
-                      <div class="font-medium text-slate-900">{user.first_name} {user.last_name}</div>
-                      <div class="text-xs text-slate-500">@{user.username}</div>
+                      <div class="text-xs font-medium" style="color: var(--color-text-primary);">{user.first_name} {user.last_name}</div>
+                      <div class="text-[10px]" style="color: var(--color-text-tertiary);">@{user.username}</div>
                     </div>
                   </div>
                 </td>
                 <td class="px-4 py-3">
-                  <span class="text-sm text-slate-700">{user.email}</span>
+                  <span class="text-xs" style="color: var(--color-text-secondary);">{user.email}</span>
                 </td>
                 <td class="px-4 py-3">
                   {#if user.is_superuser}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium" style="background: color-mix(in srgb, var(--color-accent-primary) 15%, transparent); color: var(--color-accent-primary);">
                       <Shield class="w-3 h-3 mr-1" />
                       Admin
                     </span>
                   {:else}
-                    <span class="text-sm text-slate-500">User</span>
+                    <span class="text-xs" style="color: var(--color-text-tertiary);">User</span>
                   {/if}
                 </td>
                 <td class="px-4 py-3">
                   <button
                     on:click={() => toggleStatus(user)}
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors {user.status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}"
+                    class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium transition-colors"
+                    style="{user.status === 'active'
+                      ? 'background: color-mix(in srgb, var(--color-status-accepted-text, #10b981) 15%, transparent); color: var(--color-status-accepted-text, #10b981);'
+                      : 'background: color-mix(in srgb, var(--color-error) 15%, transparent); color: var(--color-error);'}"
                     disabled={user.is_superuser}
                   >
                     {#if user.status === 'active'}
@@ -466,52 +469,52 @@
                   </button>
                 </td>
                 <td class="px-4 py-3">
-                  <span class="text-sm text-slate-500">{formatDate(user.created_at)}</span>
+                  <span class="text-xs" style="color: var(--color-text-tertiary);">{formatDate(user.created_at)}</span>
                 </td>
                 <td class="px-4 py-3 text-right">
                   {#if confirmDeleteId === user.user_id}
                     <div class="flex items-center justify-end space-x-2">
-                      <span class="text-xs text-slate-500">Delete?</span>
+                      <span class="text-xs" style="color: var(--color-text-tertiary);">Delete?</span>
                       <button
-                        class="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+                        class="px-2 py-1 text-xs font-medium rounded transition-colors" style="background: var(--color-error); color: var(--color-text-inverse);"
                         on:click={() => confirmDelete(user)}
                       >
                         Yes
                       </button>
                       <button
-                        class="px-2 py-1 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded transition-colors"
+                        class="px-2 py-1 text-xs font-medium rounded transition-colors" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
                         on:click={cancelDelete}
                       >
                         No
                       </button>
                     </div>
                   {:else if user.is_superuser}
-                    <span class="text-xs text-slate-400">Protected</span>
+                    <span class="text-[10px]" style="color: var(--color-text-tertiary);">Protected</span>
                   {:else}
                     <div class="flex items-center justify-end space-x-1">
                       {#if canEditUsers()}
                         <button
-                          class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                          class="p-1.5 rounded transition-colors" style="color: var(--color-text-tertiary);"
                           on:click={() => startEdit(user)}
                           title="Edit"
                         >
-                          <Edit class="w-4 h-4" />
+                          <Edit class="w-3.5 h-3.5" />
                         </button>
                         <button
-                          class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                          class="p-1.5 rounded transition-colors" style="color: var(--color-text-tertiary);"
                           on:click={() => openPasswordReset(user.user_id)}
                           title="Reset Password"
                         >
-                          <Key class="w-4 h-4" />
+                          <Key class="w-3.5 h-3.5" />
                         </button>
                       {/if}
                       {#if canDeleteUsers()}
                         <button
-                          class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          class="p-1.5 rounded transition-colors" style="color: var(--color-text-tertiary);"
                           on:click={() => startDelete(user.user_id)}
                           title="Delete"
                         >
-                          <Trash2 class="w-4 h-4" />
+                          <Trash2 class="w-3.5 h-3.5" />
                         </button>
                       {/if}
                     </div>
@@ -521,54 +524,54 @@
 
               <!-- Edit Row -->
               {#if editingUserId === user.user_id}
-                <tr class="bg-amber-50">
+                <tr style="background: var(--color-bg-elevated);">
                   <td colspan="6" class="px-4 py-4">
                     <div class="flex items-end space-x-3">
                       <div class="flex-1 grid grid-cols-4 gap-3">
                         <div>
-                          <label class="block text-xs font-medium text-slate-600 mb-1">Email</label>
+                          <label class="block text-[10px] font-medium mb-1" style="color: var(--color-text-tertiary);">Email</label>
                           <input
                             type="email"
                             bind:value={editFormData.email}
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                           />
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-slate-600 mb-1">Username</label>
+                          <label class="block text-[10px] font-medium mb-1" style="color: var(--color-text-tertiary);">Username</label>
                           <input
                             type="text"
                             bind:value={editFormData.username}
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                           />
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-slate-600 mb-1">First Name</label>
+                          <label class="block text-[10px] font-medium mb-1" style="color: var(--color-text-tertiary);">First Name</label>
                           <input
                             type="text"
                             bind:value={editFormData.first_name}
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                           />
                         </div>
                         <div>
-                          <label class="block text-xs font-medium text-slate-600 mb-1">Last Name</label>
+                          <label class="block text-[10px] font-medium mb-1" style="color: var(--color-text-tertiary);">Last Name</label>
                           <input
                             type="text"
                             bind:value={editFormData.last_name}
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                           />
                         </div>
                       </div>
                       <div class="flex space-x-2">
                         <button
                           on:click={cancelEdit}
-                          class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+                          class="px-3 py-2 text-xs font-medium transition-colors" style="color: var(--color-text-secondary);"
                         >
                           Cancel
                         </button>
                         <button
                           on:click={() => saveEdit(user)}
                           disabled={isSaving}
-                          class="px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+                          class="px-3 py-2 text-xs font-medium rounded-lg transition-colors disabled:opacity-50" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
                         >
                           {isSaving ? 'Saving...' : 'Save'}
                         </button>
@@ -580,26 +583,26 @@
 
               <!-- Password Reset Row -->
               {#if showPasswordReset === user.user_id}
-                <tr class="bg-amber-50">
+                <tr style="background: var(--color-bg-elevated);">
                   <td colspan="6" class="px-4 py-4">
                     <div class="flex items-center space-x-3">
-                      <span class="text-sm text-slate-600">New password for <strong>{user.email}</strong>:</span>
+                      <span class="text-xs" style="color: var(--color-text-secondary);">New password for <strong style="color: var(--color-text-primary);">{user.email}</strong>:</span>
                       <input
                         type="password"
                         bind:value={newPassword}
                         placeholder="Enter new password"
-                        class="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                        class="px-3 py-2 text-xs rounded-lg w-64" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                       />
                       <button
                         on:click={cancelPasswordReset}
-                        class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+                        class="px-3 py-2 text-xs font-medium transition-colors" style="color: var(--color-text-secondary);"
                       >
                         Cancel
                       </button>
                       <button
                         on:click={() => resetPassword(user)}
                         disabled={isSaving || !newPassword}
-                        class="px-3 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors disabled:opacity-50"
+                        class="px-3 py-2 text-xs font-medium rounded-lg transition-colors disabled:opacity-50" style="background: var(--color-status-draft-text, #f59e0b); color: var(--color-text-inverse);"
                       >
                         {isSaving ? 'Resetting...' : 'Reset'}
                       </button>
@@ -613,15 +616,15 @@
 
         <!-- Pagination -->
         {#if totalPages > 1}
-          <div class="px-4 py-3 border-t border-slate-200 flex items-center justify-between">
-            <div class="text-sm text-slate-500">
+          <div class="px-4 py-3 flex items-center justify-between" style="border-top: 1px solid var(--color-border-default);">
+            <div class="text-xs" style="color: var(--color-text-tertiary);">
               {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length}
             </div>
             <div class="flex items-center space-x-1">
               <button
                 on:click={() => currentPage--}
                 disabled={currentPage === 1}
-                class="px-3 py-1 text-sm border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-3 py-1 text-xs rounded disabled:opacity-40 disabled:cursor-not-allowed" style="border: 1px solid var(--color-border-default); color: var(--color-text-secondary);"
               >
                 Prev
               </button>
@@ -629,18 +632,21 @@
                 {#if totalPages <= 5 || i === 0 || i === totalPages - 1 || Math.abs(i - currentPage + 1) <= 1}
                   <button
                     on:click={() => currentPage = i + 1}
-                    class="px-3 py-1 text-sm border rounded {currentPage === i + 1 ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 hover:bg-slate-50'}"
+                    class="px-3 py-1 text-xs rounded"
+                    style="{currentPage === i + 1
+                      ? 'background: var(--color-accent-primary); color: var(--color-text-inverse); border: 1px solid var(--color-accent-primary);'
+                      : 'border: 1px solid var(--color-border-default); color: var(--color-text-secondary);'}"
                   >
                     {i + 1}
                   </button>
                 {:else if i === 1 || i === totalPages - 2}
-                  <span class="px-2 text-slate-400">...</span>
+                  <span class="px-2 text-xs" style="color: var(--color-text-tertiary);">...</span>
                 {/if}
               {/each}
               <button
                 on:click={() => currentPage++}
                 disabled={currentPage === totalPages}
-                class="px-3 py-1 text-sm border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-3 py-1 text-xs rounded disabled:opacity-40 disabled:cursor-not-allowed" style="border: 1px solid var(--color-border-default); color: var(--color-text-secondary);"
               >
                 Next
               </button>

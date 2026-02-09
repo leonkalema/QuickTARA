@@ -72,10 +72,10 @@
 
 {#if isOpen}
   <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div class="relative top-20 mx-auto p-5 w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
       <div class="mt-3">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-medium text-gray-900">Add Threat Scenario</h3>
+          <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Add Threat Scenario</h3>
           <button
             on:click={closeModal}
             class="text-gray-400 hover:text-gray-600"
@@ -89,40 +89,40 @@
         <div class="space-y-4">
           <!-- Threat Scenario Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Threat Scenario Name *
             </label>
             <input
               type="text"
               bind:value={newThreatScenario.name}
               placeholder="e.g., Firmware injection via OBD-II"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
             />
           </div>
           
           <!-- Attack Vector -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Attack Vector *
             </label>
             <input
               type="text"
               bind:value={newThreatScenario.attack_vector}
               placeholder="e.g., OBD-II, CAN Bus, Physical Access"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
             />
           </div>
           
           <!-- Description -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Threat Description *
             </label>
             <textarea
               bind:value={newThreatScenario.description}
               placeholder="Describe how an attacker could cause this damage scenario..."
               rows="4"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
             ></textarea>
           </div>
         </div>
@@ -130,14 +130,14 @@
         <div class="flex justify-end space-x-3 mt-6">
           <button
             on:click={closeModal}
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+            class="px-4 py-2 text-xs font-medium rounded-md" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
           >
             Cancel
           </button>
           <button
             on:click={saveThreatScenario}
             disabled={!canSave() || isSaving}
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 text-xs font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
           >
             {isSaving ? 'Creating...' : 'Create Threat Scenario'}
           </button>

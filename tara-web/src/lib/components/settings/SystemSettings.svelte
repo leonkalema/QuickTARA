@@ -85,7 +85,7 @@
 		<!-- Database Settings -->
 		<div class="settings-section">
 			<div class="section-header">
-				<Database class="w-5 h-5 text-blue-600" />
+				<Database class="w-4 h-4" style="color: var(--color-accent-primary);" />
 				<h3>Database & Backup</h3>
 			</div>
 
@@ -130,7 +130,7 @@
 		<!-- Security Settings -->
 		<div class="settings-section">
 			<div class="section-header">
-				<Shield class="w-5 h-5 text-green-600" />
+				<Shield class="w-4 h-4" style="color: var(--color-status-accepted-text, #10b981);" />
 				<h3>Security & Authentication</h3>
 			</div>
 
@@ -187,7 +187,7 @@
 		<!-- System Settings -->
 		<div class="settings-section">
 			<div class="section-header">
-				<Globe class="w-5 h-5 text-purple-600" />
+				<Globe class="w-4 h-4" style="color: var(--color-accent-primary);" />
 				<h3>System Preferences</h3>
 			</div>
 
@@ -254,7 +254,7 @@
 		<!-- Notification Settings -->
 		<div class="settings-section">
 			<div class="section-header">
-				<Bell class="w-5 h-5 text-orange-600" />
+				<Bell class="w-4 h-4" style="color: var(--color-status-draft-text, #f59e0b);" />
 				<h3>Notifications</h3>
 			</div>
 
@@ -321,9 +321,9 @@
 
 	.header h2 {
 		margin: 0;
-		font-size: 1.5rem;
+		font-size: 0.8125rem;
 		font-weight: 600;
-		color: #1f2937;
+		color: var(--color-text-primary);
 	}
 
 	.settings-sections {
@@ -333,8 +333,8 @@
 	}
 
 	.settings-section {
-		background: #f9fafb;
-		border: 1px solid #e5e7eb;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
 		border-radius: 8px;
 		padding: 1.5rem;
 	}
@@ -348,9 +348,9 @@
 
 	.section-header h3 {
 		margin: 0;
-		font-size: 1.125rem;
+		font-size: 0.75rem;
 		font-weight: 600;
-		color: #1f2937;
+		color: var(--color-text-primary);
 	}
 
 	.settings-grid {
@@ -378,8 +378,8 @@
 
 	label {
 		font-weight: 500;
-		color: #374151;
-		font-size: 0.875rem;
+		color: var(--color-text-secondary);
+		font-size: 0.6875rem;
 	}
 
 	.checkbox-item label {
@@ -387,17 +387,18 @@
 	}
 
 	input, select {
-		padding: 0.75rem;
-		border: 1px solid #d1d5db;
+		padding: 0.625rem 0.75rem;
+		border: 1px solid var(--color-border-default);
 		border-radius: 6px;
-		font-size: 0.875rem;
-		background: white;
+		font-size: 0.75rem;
+		background: var(--color-bg-inset);
+		color: var(--color-text-primary);
 	}
 
 	input:focus, select:focus {
 		outline: none;
-		border-color: #3b82f6;
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+		border-color: var(--color-accent-primary);
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
 	}
 
 	input[type="checkbox"] {
@@ -410,22 +411,23 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: #3b82f6;
-		color: white;
+		padding: 0.5rem 1rem;
+		background: var(--color-accent-primary);
+		color: var(--color-text-inverse);
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
 		font-weight: 500;
+		font-size: 0.75rem;
 		transition: all 0.2s;
 	}
 
 	.btn-primary:disabled {
-		background: #9ca3af;
+		opacity: 0.4;
 		cursor: not-allowed;
 	}
 
 	.btn-primary:not(:disabled):hover {
-		background: #2563eb;
+		filter: brightness(1.1);
 	}
 </style>

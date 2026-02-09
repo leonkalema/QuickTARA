@@ -1,0 +1,92 @@
+/*
+ * QuickTARA Design System Tokens
+ * Dark-first theme for cybersecurity engineering tooling.
+ * Signature motif: "Threat Radar" — concentric circles, surveillance feel.
+ */
+
+@theme {
+  /* ── Background ── */
+  --color-bg-app: #0f1117;
+  --color-bg-surface: #1a1d27;
+  --color-bg-surface-hover: #22262f;
+  --color-bg-elevated: #252a35;
+  --color-bg-inset: #0c0e14;
+  --color-bg-overlay: rgba(0, 0, 0, 0.6);
+
+  /* ── Borders ── */
+  --color-border-default: #2a2f3a;
+  --color-border-subtle: #1f232d;
+  --color-border-focus: #4f8ff7;
+
+  /* ── Text ── */
+  --color-text-primary: #e4e8f1;
+  --color-text-secondary: #8b91a0;
+  --color-text-tertiary: #5c6170;
+  --color-text-inverse: #0f1117;
+  --color-text-link: #6ba0f9;
+
+  /* ── Accent ── */
+  --color-accent-primary: #4f8ff7;
+  --color-accent-primary-hover: #6ba0f9;
+  --color-accent-secondary: #7c5cfc;
+  --color-accent-secondary-hover: #9278fd;
+
+  /* ── Risk levels ── */
+  --color-risk-critical: #ef4444;
+  --color-risk-critical-bg: rgba(239, 68, 68, 0.15);
+  --color-risk-high: #f97316;
+  --color-risk-high-bg: rgba(249, 115, 22, 0.15);
+  --color-risk-medium: #eab308;
+  --color-risk-medium-bg: rgba(234, 179, 8, 0.15);
+  --color-risk-low: #22c55e;
+  --color-risk-low-bg: rgba(34, 197, 94, 0.15);
+  --color-risk-negligible: #64748b;
+  --color-risk-negligible-bg: rgba(100, 116, 139, 0.15);
+
+  /* ── Workflow states ── */
+  --color-status-draft: #64748b;
+  --color-status-draft-bg: rgba(100, 116, 139, 0.15);
+  --color-status-review: #eab308;
+  --color-status-review-bg: rgba(234, 179, 8, 0.15);
+  --color-status-approved: #22c55e;
+  --color-status-approved-bg: rgba(34, 197, 94, 0.15);
+  --color-status-released: #4f8ff7;
+  --color-status-released-bg: rgba(79, 143, 247, 0.15);
+
+  /* ── CIA triad ── */
+  --color-cia-c: #818cf8;
+  --color-cia-i: #f59e0b;
+  --color-cia-a: #10b981;
+
+  /* ── Semantic ── */
+  --color-success: #22c55e;
+  --color-success-bg: rgba(34, 197, 94, 0.15);
+  --color-warning: #eab308;
+  --color-warning-bg: rgba(234, 179, 8, 0.15);
+  --color-error: #ef4444;
+  --color-error-bg: rgba(239, 68, 68, 0.15);
+  --color-info: #4f8ff7;
+  --color-info-bg: rgba(79, 143, 247, 0.15);
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
+
+  /* ── Shadows (dark theme: subtle) ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow-accent: 0 0 20px rgba(79, 143, 247, 0.15);
+
+  /* ── Sidebar ── */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 56px;
+
+  /* ── Transitions ── */
+  --transition-fast: 100ms ease;
+  --transition-base: 150ms ease;
+  --transition-slow: 250ms ease-out;
+}

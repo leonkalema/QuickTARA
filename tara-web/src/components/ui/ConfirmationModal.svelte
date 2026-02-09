@@ -36,19 +36,10 @@
     }
   }
 
-  $: variantClasses = {
-    danger: {
-      icon: 'text-red-600',
-      button: 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-    },
-    warning: {
-      icon: 'text-yellow-600',
-      button: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
-    },
-    info: {
-      icon: 'text-blue-600',
-      button: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-    }
+  $: variantStyles = {
+    danger: { iconColor: 'var(--color-error)', btnBg: 'var(--color-error)' },
+    warning: { iconColor: 'var(--color-warning)', btnBg: 'var(--color-warning)' },
+    info: { iconColor: 'var(--color-info)', btnBg: 'var(--color-accent-primary)' }
   };
 </script>
 
@@ -56,48 +47,49 @@
 
 {#if isOpen}
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    style="background: rgba(0,0,0,0.6);"
     on:click={handleBackdropClick}
+    on:keydown={handleKeydown}
     role="dialog"
     aria-modal="true"
     aria-labelledby="confirmation-title"
+    tabindex="-1"
   >
     <div
-      class="relative w-full max-w-md bg-white rounded-lg shadow-xl transform transition-all"
+      class="relative w-full max-w-md rounded-lg transform transition-all"
+      style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default); box-shadow: var(--shadow-lg);"
     >
-      <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-gray-200">
+      <div class="flex items-center justify-between p-5" style="border-bottom: 1px solid var(--color-border-subtle);">
         <div class="flex items-center gap-3">
-          <div class="flex-shrink-0">
-            <AlertTriangle size={24} class={variantClasses[variant].icon} />
-          </div>
-          <h2 id="confirmation-title" class="text-lg font-semibold text-gray-900">
+          <AlertTriangle size={20} style="color: {variantStyles[variant].iconColor};" />
+          <h2 id="confirmation-title" class="text-sm font-semibold" style="color: var(--color-text-primary);">
             {title}
           </h2>
         </div>
         <button
           type="button"
-          class="text-gray-400 hover:text-gray-600 transition-colors"
+          class="transition-colors"
+          style="color: var(--color-text-tertiary);"
           on:click={handleCancel}
           aria-label="Close modal"
           disabled={isLoading}
         >
-          <X size={20} />
+          <X size={18} />
         </button>
       </div>
 
-      <!-- Body -->
-      <div class="p-6">
-        <p class="text-gray-700 leading-relaxed">
+      <div class="p-5">
+        <p class="text-sm leading-relaxed" style="color: var(--color-text-secondary);">
           {message}
         </p>
       </div>
 
-      <!-- Footer -->
-      <div class="flex justify-end gap-3 p-6 border-t border-gray-200">
+      <div class="flex justify-end gap-2 p-5" style="border-top: 1px solid var(--color-border-subtle);">
         <button
           type="button"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          class="px-3 py-2 text-sm font-medium rounded-md transition-colors"
+          style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
           on:click={handleCancel}
           disabled={isLoading}
         >
@@ -105,13 +97,14 @@
         </button>
         <button
           type="button"
-          class="px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed {variantClasses[variant].button}"
+          class="px-3 py-2 text-sm font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style="background: {variantStyles[variant].btnBg}; color: var(--color-text-inverse);"
           on:click={handleConfirm}
           disabled={isLoading}
         >
           {#if isLoading}
             <div class="flex items-center gap-2">
-              <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               Loading...
             </div>
           {:else}

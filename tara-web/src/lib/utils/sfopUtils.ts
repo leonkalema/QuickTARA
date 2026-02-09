@@ -31,20 +31,28 @@ export function getOverallSfopRating(scenario: DamageScenario): string {
   return severityOrder[maxSeverity];
 }
 
-export function getSfopBadgeClass(impact: string): string {
+export function getSfopBadgeClass(_impact: string): string {
+  return '';
+}
+
+export function getSfopBadgeStyle(impact: string): string {
   switch (impact) {
-    case 'severe': return 'bg-red-100 text-red-800';
-    case 'major': return 'bg-orange-100 text-orange-800';
-    case 'moderate': return 'bg-yellow-100 text-yellow-800';
-    case 'negligible': return 'bg-green-100 text-green-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'severe': return 'background: var(--color-risk-high-bg); color: var(--color-risk-high);';
+    case 'major': return 'background: var(--color-risk-medium-bg); color: var(--color-risk-medium);';
+    case 'moderate': return 'background: var(--color-risk-low-bg); color: var(--color-risk-low);';
+    case 'negligible': return 'background: color-mix(in srgb, var(--color-status-accepted-text, #10b981) 15%, transparent); color: var(--color-status-accepted-text, #10b981);';
+    default: return 'background: var(--color-bg-elevated); color: var(--color-text-tertiary);';
   }
 }
 
-export function getCIABadgeClass(isActive: boolean): string {
-  return isActive 
-    ? 'bg-red-100 text-red-800 border border-red-200' 
-    : 'bg-gray-100 text-gray-500 border border-gray-200';
+export function getCIABadgeClass(_isActive: boolean): string {
+  return '';
+}
+
+export function getCIABadgeStyle(isActive: boolean): string {
+  return isActive
+    ? 'background: var(--color-risk-high-bg); color: var(--color-risk-high); border: 1px solid color-mix(in srgb, var(--color-risk-high) 30%, transparent);'
+    : 'background: var(--color-bg-elevated); color: var(--color-text-tertiary); border: 1px solid var(--color-border-subtle);';
 }
 
 export function getSfopImpacts(scenario: DamageScenario): SfopRating {

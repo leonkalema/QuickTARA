@@ -28,7 +28,7 @@ class DamageScenarioApi {
   }
 
   async getDamageScenariosByProduct(productId: string): Promise<DamageScenariosResponse> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios?scope_id=${productId}`);
+    const response = await fetch(`${API_BASE_URL}/damage-scenarios?scope_id=${productId}&limit=1000`);
     if (!response.ok) {
       throw new DamageScenarioApiError(`Failed to fetch damage scenarios: ${response.statusText}`);
     }

@@ -30,7 +30,7 @@
   $: hasActiveFilters = selectedType || selectedStatus || searchQuery;
 </script>
 
-<div class="bg-white rounded-lg border border-gray-200 p-4">
+<div class="rounded-lg p-4" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
     <!-- Search and Filters -->
     <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 flex-1">
@@ -45,14 +45,14 @@
           type="text"
           placeholder="Search products..."
           bind:value={searchQuery}
-          class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+          class="block w-full pl-10 pr-3 py-2 rounded-md leading-5 text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
         />
       </div>
 
       <!-- Type Filter -->
       <select
         bind:value={selectedType}
-        class="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+        class="block w-full sm:w-auto px-3 py-2 rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
       >
         <option value="">All Types</option>
         {#each productTypes as type}
@@ -63,7 +63,7 @@
       <!-- Status Filter -->
       <select
         bind:value={selectedStatus}
-        class="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+        class="block w-full sm:w-auto px-3 py-2 rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
       >
         <option value="">All Statuses</option>
         {#each statusOptions as status}
@@ -75,7 +75,7 @@
       {#if hasActiveFilters}
         <button
           on:click={clearFilters}
-          class="text-slate-600 hover:text-slate-800 px-3 py-2 text-sm font-medium transition-colors"
+          class="px-3 py-2 text-xs font-medium transition-colors" style="color: var(--color-accent-primary);"
         >
           Clear filters
         </button>
@@ -83,7 +83,7 @@
     </div>
 
     <!-- Results Count -->
-    <div class="text-sm text-gray-500">
+    <div class="text-xs" style="color: var(--color-text-tertiary);">
       {#if hasActiveFilters}
         Showing {filteredCount} of {totalProducts} products
       {:else}

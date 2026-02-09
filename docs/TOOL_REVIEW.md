@@ -126,16 +126,16 @@ The `ReviewDecision` model exists in `db/base.py` but it's basic — no workflow
 
 ## Priority Roadmap
 
-| Priority | Item | Impact |
-|----------|------|--------|
-| **P0** | Auto-generate damage/threat scenarios from assets | Core value prop ("Quick") |
-| **P1** | Expand automotive threat catalog to 50+ entries | Analysis quality |
-| **P1** | Add ISO/SAE 21434 explicit clause mapping | Compliance credibility |
-| **P2** | Implement proper SFOP impact dimensions in risk calc | Risk accuracy |
-| **P2** | Wire feasibility ratings into risk matrix properly | Risk accuracy |
-| **P3** | Add audit trail and approval workflows | Enterprise readiness |
-| **P3** | Deep compliance traceability and evidence mgmt | Audit readiness |
-| **P4** | Frontend refactor (types, component size, patterns) | Maintainability |
+| Priority | Item | Status | Impact |
+|----------|------|--------|--------|
+| ~~**P0**~~ | ~~Auto-generate damage/threat scenarios from assets~~ | **Done** | Core value prop ("Quick") |
+| ~~**P1**~~ | ~~Expand automotive threat catalog to 50+ entries~~ | **Done** (126 entries) | Analysis quality |
+| ~~**P1**~~ | ~~ISO/SAE 21434 clause mapping per artifact~~ | **Done** | Compliance credibility |
+| ~~**P2**~~ | ~~SFOP impact dimensions in risk calculation~~ | **Done** | Risk accuracy |
+| ~~**P2**~~ | ~~Wire feasibility ratings into risk matrix properly~~ | **Done** | Risk accuracy |
+| ~~**P3**~~ | ~~Add audit trail and approval workflows~~ | **Done** | Enterprise readiness |
+| ~~**P3**~~ | ~~Deep compliance traceability and evidence mgmt~~ | **Done** | Audit readiness |
+| **P4** | Frontend refactor (types, component size, patterns) | Open | Maintainability |
 
 ---
 

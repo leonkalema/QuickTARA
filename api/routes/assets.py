@@ -2,13 +2,14 @@
 Asset API routes for product-centric model
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import logging
 from datetime import datetime
 
 from api.deps.db import get_db
+from core.audit_helpers import get_user_from_request, audit_create, audit_update, audit_delete
 from api.models.asset import Asset, AssetCreate, AssetUpdate, AssetList, AssetHistory
 from api.utils.error_handlers import handle_database_error, create_success_response, NotFoundAPIError
 from db.product_asset_models import Asset as DBAsset, AssetHistory as DBAssetHistory
@@ -97,6 +98,7 @@ async def list_assets(
 @router.post("", response_model=Asset, status_code=status.HTTP_201_CREATED)
 async def create_asset(
     asset: AssetCreate,
+    request: Request,
     db: Session = Depends(get_db),
     user: str = None
 ):
@@ -207,6 +209,8 @@ async def create_asset(
         )
         db.add(asset_history)
         
+        performer = get_user_from_request(request)
+        audit_create(db, "asset", asset.asset_id, performer, scope_id=asset.scope_id)
         db.commit()
         db.refresh(new_asset)
         
@@ -254,6 +258,7 @@ async def get_asset(
 async def update_asset(
     asset_id: str, 
     asset: AssetUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     user: str = None
 ):
@@ -354,6 +359,8 @@ async def update_asset(
         
         # No need to db.add as the object is already attached to the session
         
+        performer = get_user_from_request(request)
+        audit_update(db, "asset", asset_id, performer, scope_id=original_asset.scope_id, summary="Asset updated")
         db.commit()
         db.refresh(original_asset)
         
@@ -373,6 +380,7 @@ async def update_asset(
 @router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_asset(
     asset_id: str, 
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """
@@ -396,6 +404,8 @@ async def delete_asset(
         asset.revision_notes = "Deleted asset"
         db.add(asset)
         
+        performer = get_user_from_request(request)
+        audit_delete(db, "asset", asset_id, performer, scope_id=asset.scope_id)
         db.commit()
         
         return None

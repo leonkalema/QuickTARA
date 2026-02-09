@@ -12,46 +12,43 @@
     }
   }
 
-  function getStyles(type: string) {
-    switch (type) {
-      case 'success': return 'bg-green-50 border-green-200 text-green-800';
-      case 'info': return 'bg-blue-50 border-blue-200 text-blue-800';
-      case 'warning': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-      case 'error': return 'bg-red-50 border-red-200 text-red-800';
-      default: return 'bg-green-50 border-green-200 text-green-800';
-    }
-  }
+  interface NotifStyle { bg: string; border: string; fg: string; icon: string }
 
-  function getIconStyles(type: string) {
+  function getTokenStyles(type: string): NotifStyle {
     switch (type) {
-      case 'success': return 'text-green-600';
-      case 'info': return 'text-blue-600';
-      case 'warning': return 'text-yellow-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-green-600';
+      case 'success': return { bg: 'var(--color-success-bg)', border: 'var(--color-success)', fg: 'var(--color-success)', icon: 'var(--color-success)' };
+      case 'info':    return { bg: 'var(--color-info-bg)',    border: 'var(--color-info)',    fg: 'var(--color-info)',    icon: 'var(--color-info)' };
+      case 'warning': return { bg: 'var(--color-warning-bg)', border: 'var(--color-warning)', fg: 'var(--color-warning)', icon: 'var(--color-warning)' };
+      case 'error':   return { bg: 'var(--color-error-bg)',   border: 'var(--color-error)',   fg: 'var(--color-error)',   icon: 'var(--color-error)' };
+      default:        return { bg: 'var(--color-success-bg)', border: 'var(--color-success)', fg: 'var(--color-success)', icon: 'var(--color-success)' };
     }
   }
 </script>
 
 <div class="fixed top-4 right-4 z-50 space-y-2">
   {#each $notifications as notification (notification.id)}
+    {@const s = getTokenStyles(notification.type)}
     <div class="max-w-sm w-full animate-slide-in">
-      <div class="border rounded-lg p-4 shadow-lg {getStyles(notification.type)}">
+      <div
+        class="rounded-lg p-3.5"
+        style="background: {s.bg}; border: 1px solid {s.border}; box-shadow: var(--shadow-lg);"
+      >
         <div class="flex items-start">
           <div class="flex-shrink-0">
-            <svelte:component this={getIcon(notification.type)} class="w-5 h-5 {getIconStyles(notification.type)}" />
+            <svelte:component this={getIcon(notification.type)} class="w-4 h-4" style="color: {s.icon};" />
           </div>
-          <div class="ml-3 flex-1">
-            <p class="text-sm font-medium">
+          <div class="ml-2.5 flex-1">
+            <p class="text-sm font-medium" style="color: {s.fg};">
               {notification.message}
             </p>
           </div>
-          <div class="ml-4 flex-shrink-0">
+          <div class="ml-3 flex-shrink-0">
             <button
-              class="inline-flex rounded-md p-1.5 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              class="inline-flex rounded-md p-1 transition-colors"
+              style="color: {s.fg};"
               on:click={() => notifications.remove(notification.id)}
             >
-              <XIcon class="w-4 h-4" />
+              <XIcon class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

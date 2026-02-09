@@ -90,10 +90,10 @@
 
 {#if isOpen}
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
       <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-900">Create New Asset</h2>
+      <div class="flex items-center justify-between p-5" style="border-bottom: 1px solid var(--color-border-default);">
+        <h2 class="text-sm font-semibold" style="color: var(--color-text-primary);">Create New Asset</h2>
         <button
           on:click={handleClose}
           class="text-gray-400 hover:text-gray-600 transition-colors"
@@ -108,10 +108,10 @@
       <form on:submit|preventDefault={handleSubmit} class="p-6 space-y-6">
         <!-- Basic Information -->
         <div class="space-y-4">
-          <h3 class="text-lg font-medium text-gray-900">Basic Information</h3>
+          <h3 class="text-xs font-semibold" style="color: var(--color-text-primary);">Basic Information</h3>
           
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="name" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Asset Name *
             </label>
             <input
@@ -119,33 +119,33 @@
               type="text"
               bind:value={formData.name}
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+              class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               placeholder="e.g., ECU Firmware, CAN Bus Interface"
             />
           </div>
 
           <div>
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="description" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Description
             </label>
             <textarea
               id="description"
               bind:value={formData.description}
               rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+              class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               placeholder="Detailed description of the asset..."
             ></textarea>
           </div>
 
           <div>
-            <label for="asset_type" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="asset_type" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Asset Type *
             </label>
             <select
               id="asset_type"
               bind:value={formData.asset_type}
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+              class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
             >
               {#each Object.values(AssetType) as type}
                 <option value={type}>{type}</option>
@@ -154,14 +154,14 @@
           </div>
 
           <div>
-            <label for="storage_location" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="storage_location" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Storage Location
             </label>
             <input
               id="storage_location"
               type="text"
               bind:value={formData.storage_location}
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+              class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               placeholder="e.g., Internal Flash, External EEPROM, Cloud Storage"
             />
           </div>
@@ -169,10 +169,10 @@
 
         <!-- Data Types -->
         <div class="space-y-4">
-          <h3 class="text-lg font-medium text-gray-900">Data Types</h3>
+          <h3 class="text-xs font-semibold" style="color: var(--color-text-primary);">Data Types</h3>
           
           <div>
-            <label for="data_type_input" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="data_type_input" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
               Add Data Types
             </label>
             <div class="flex space-x-2">
@@ -181,13 +181,13 @@
                 type="text"
                 bind:value={dataTypeInput}
                 on:keypress={handleKeyPress}
-                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+                class="flex-1 px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                 placeholder="e.g., Personal Data, Diagnostic Data, Configuration Data"
               />
               <button
                 type="button"
                 on:click={addDataType}
-                class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+                class="px-4 py-2 text-xs rounded-md transition-colors" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
               >
                 Add
               </button>
@@ -216,17 +216,17 @@
 
         <!-- Security Properties -->
         <div class="space-y-4">
-          <h3 class="text-lg font-medium text-gray-900">Security Properties (CIA)</h3>
+          <h3 class="text-xs font-semibold" style="color: var(--color-text-primary);">Security Properties (CIA)</h3>
           
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label for="confidentiality" class="block text-sm font-medium text-gray-700 mb-1">
+              <label for="confidentiality" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
                 Confidentiality
               </label>
               <select
                 id="confidentiality"
                 bind:value={formData.confidentiality}
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+                class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 {#each Object.values(SecurityLevel) as level}
                   <option value={level}>{level}</option>
@@ -235,13 +235,13 @@
             </div>
 
             <div>
-              <label for="integrity" class="block text-sm font-medium text-gray-700 mb-1">
+              <label for="integrity" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
                 Integrity
               </label>
               <select
                 id="integrity"
                 bind:value={formData.integrity}
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+                class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 {#each Object.values(SecurityLevel) as level}
                   <option value={level}>{level}</option>
@@ -250,13 +250,13 @@
             </div>
 
             <div>
-              <label for="availability" class="block text-sm font-medium text-gray-700 mb-1">
+              <label for="availability" class="block text-xs font-medium mb-1" style="color: var(--color-text-secondary);">
                 Availability
               </label>
               <select
                 id="availability"
                 bind:value={formData.availability}
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
+                class="w-full px-3 py-2 text-xs rounded-md" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 {#each Object.values(SecurityLevel) as level}
                   <option value={level}>{level}</option>
@@ -272,9 +272,9 @@
                 id="authenticity_required"
                 type="checkbox"
                 bind:checked={formData.authenticity_required}
-                class="h-4 w-4 text-slate-600 focus:ring-slate-500 border-gray-300 rounded"
+                class="h-4 w-4 rounded"
               />
-              <label for="authenticity_required" class="ml-2 block text-sm text-gray-700">
+              <label for="authenticity_required" class="ml-2 block text-xs" style="color: var(--color-text-secondary);">
                 Authenticity Required
               </label>
             </div>
@@ -284,9 +284,9 @@
                 id="authorization_required"
                 type="checkbox"
                 bind:checked={formData.authorization_required}
-                class="h-4 w-4 text-slate-600 focus:ring-slate-500 border-gray-300 rounded"
+                class="h-4 w-4 rounded"
               />
-              <label for="authorization_required" class="ml-2 block text-sm text-gray-700">
+              <label for="authorization_required" class="ml-2 block text-xs" style="color: var(--color-text-secondary);">
                 Authorization Required
               </label>
             </div>
@@ -294,18 +294,18 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <div class="flex justify-end space-x-3 pt-5" style="border-top: 1px solid var(--color-border-default);">
           <button
             type="button"
             on:click={handleClose}
-            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+            class="px-4 py-2 text-xs rounded-md transition-colors" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
+            class="px-4 py-2 text-xs rounded-md disabled:opacity-50 transition-colors flex items-center space-x-2" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
           >
             {#if isLoading}
               <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

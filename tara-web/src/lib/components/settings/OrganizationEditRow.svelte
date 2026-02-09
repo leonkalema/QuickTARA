@@ -15,20 +15,20 @@
 	};
 </script>
 
-<tr class="bg-amber-50">
+<tr style="background: var(--color-bg-elevated);">
 	<td colspan="4" class="px-4 py-4">
 		<div class="flex items-end space-x-4">
 			<div class="flex-1">
-				<label for="edit-name" class="block text-xs font-medium text-slate-600 mb-1">Name</label>
-				<input id="edit-name" type="text" bind:value={name} class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+				<label for="edit-name" class="block text-[10px] font-medium mb-1" style="color: var(--color-text-tertiary);">Name</label>
+				<input id="edit-name" type="text" bind:value={name} class="w-full px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" />
 			</div>
 			<div class="flex-1">
-				<label for="edit-description" class="block text-xs font-medium text-slate-600 mb-1">Description</label>
-				<input id="edit-description" type="text" bind:value={description} class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+				<label for="edit-description" class="block text-[10px] font-medium mb-1" style="color: var(--color-text-tertiary);">Description</label>
+				<input id="edit-description" type="text" bind:value={description} class="w-full px-3 py-2 text-xs rounded-lg" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" />
 			</div>
 			<div class="flex space-x-2">
-				<button class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors" on:click={cancel}>Cancel</button>
-				<button class="px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors" on:click={save}>Save</button>
+				<button class="px-3 py-2 text-xs font-medium transition-colors" style="color: var(--color-text-secondary);" on:click={cancel}>Cancel</button>
+				<button class="px-3 py-2 text-xs font-medium rounded-lg transition-colors" style="background: var(--color-accent-primary); color: var(--color-text-inverse);" on:click={save}>Save</button>
 			</div>
 		</div>
 	</td>

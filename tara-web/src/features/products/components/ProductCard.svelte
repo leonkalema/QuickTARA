@@ -34,13 +34,13 @@
     showMenu = false;
   }
 
-  function getStatusColor(status: string) {
+  function getStatusStyle(status: string): { bg: string; fg: string } {
     switch (status) {
-      case 'production': return 'bg-green-100 text-green-800';
-      case 'testing': return 'bg-yellow-100 text-yellow-800';
-      case 'development': return 'bg-blue-100 text-blue-800';
-      case 'deprecated': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'production': return { bg: 'var(--color-success-bg)', fg: 'var(--color-success)' };
+      case 'testing': return { bg: 'var(--color-warning-bg)', fg: 'var(--color-warning)' };
+      case 'development': return { bg: 'var(--color-info-bg)', fg: 'var(--color-info)' };
+      case 'deprecated': return { bg: 'var(--color-error-bg)', fg: 'var(--color-error)' };
+      default: return { bg: 'var(--color-bg-elevated)', fg: 'var(--color-text-tertiary)' };
     }
   }
 
@@ -55,68 +55,58 @@
     }
   }
 
-  function formatDate(dateString?: string) {
+  function formatDate(dateString?: string): string {
     if (!dateString) return 'Unknown';
     return new Date(dateString).toLocaleDateString();
   }
-</script>
 
+  $: ss = getStatusStyle(product.status ?? 'development');
+</script>
 <div 
-  class="bg-white rounded-lg border border-gray-200 hover:border-slate-300 transition-all duration-200 cursor-pointer group relative {isSelected ? 'ring-2 ring-slate-500 border-slate-500' : ''}"
+  class="rounded-lg transition-all duration-200 cursor-pointer group relative"
+  style="background: var(--color-bg-surface); border: 1px solid {isSelected ? 'var(--color-accent-primary)' : 'var(--color-border-default)'};"
   on:click={handleSelect}
   role="button"
   tabindex="0"
   on:keydown={(e) => e.key === 'Enter' && handleSelect()}
 >
-  <!-- Card Header -->
-  <div class="p-4 border-b border-gray-100">
+  <div class="p-4" style="border-bottom: 1px solid var(--color-border-subtle);">
     <div class="flex items-start justify-between">
       <div class="flex items-center space-x-3">
-        <div class="text-2xl">{getTypeIcon(product.product_type)}</div>
+        <div class="text-xl">{getTypeIcon(product.product_type)}</div>
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 group-hover:text-slate-700">
+          <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">
             {product.name}
           </h3>
-          <p class="text-sm text-gray-500 capitalize">
-            {product.product_type} • v{product.version}
+          <p class="text-xs capitalize" style="color: var(--color-text-tertiary);">
+            {product.product_type} · v{product.version}
           </p>
         </div>
       </div>
-
-      <!-- Status Badge & Actions -->
       <div class="flex items-center space-x-2">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getStatusColor(product.status)}">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: {ss.bg}; color: {ss.fg};">
           {product.status}
         </span>
-        
         {#if permissions?.can_edit || permissions?.can_delete}
           <div class="relative">
             <button
-              class="p-1 rounded hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
+              class="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              style="color: var(--color-text-tertiary);"
               on:click|stopPropagation={() => showMenu = !showMenu}
               aria-label="Product actions"
             >
-              <MoreVertical class="w-4 h-4 text-gray-500" />
+              <MoreVertical class="w-4 h-4" />
             </button>
-            
             {#if showMenu}
-              <div class="absolute right-0 mt-1 w-36 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+              <div class="absolute right-0 mt-1 w-36 rounded-md z-10" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default); box-shadow: var(--shadow-lg);">
                 {#if permissions?.can_edit}
-                  <button
-                    class="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                    on:click|stopPropagation={handleEdit}
-                  >
-                    <Edit class="w-4 h-4" />
-                    <span>Edit</span>
+                  <button class="w-full px-3 py-2 text-left text-xs flex items-center space-x-2 transition-colors" style="color: var(--color-text-secondary);" on:click|stopPropagation={handleEdit}>
+                    <Edit class="w-3.5 h-3.5" /><span>Edit</span>
                   </button>
                 {/if}
                 {#if permissions?.can_delete}
-                  <button
-                    class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-                    on:click|stopPropagation={handleDelete}
-                  >
-                    <Trash2 class="w-4 h-4" />
-                    <span>Delete</span>
+                  <button class="w-full px-3 py-2 text-left text-xs flex items-center space-x-2 transition-colors" style="color: var(--color-error);" on:click|stopPropagation={handleDelete}>
+                    <Trash2 class="w-3.5 h-3.5" /><span>Delete</span>
                   </button>
                 {/if}
               </div>
@@ -127,50 +117,31 @@
     </div>
   </div>
 
-  <!-- Card Body -->
-  <div class="p-4 space-y-3">
-    <!-- Description -->
+  <div class="p-4 space-y-2.5">
     {#if product.description}
-      <p class="text-sm text-gray-600 line-clamp-2">
-        {product.description}
-      </p>
+      <p class="text-xs line-clamp-2" style="color: var(--color-text-secondary);">{product.description}</p>
     {/if}
-
-    <!-- Team -->
     {#if product.owner_team}
-      <div class="flex items-center">
-        <span class="text-xs text-gray-500">
-          Team: {product.owner_team}
-        </span>
-      </div>
+      <span class="text-[11px]" style="color: var(--color-text-tertiary);">Team: {product.owner_team}</span>
     {/if}
-
-    <!-- Compliance Standards -->
     {#if product.compliance_standards && product.compliance_standards.length > 0}
       <div class="flex flex-wrap gap-1">
         {#each product.compliance_standards.slice(0, 3) as standard}
-          <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">
-            {standard}
-          </span>
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-medium" style="background: var(--color-bg-elevated); color: var(--color-text-tertiary);">{standard}</span>
         {/each}
         {#if product.compliance_standards.length > 3}
-          <span class="text-xs text-gray-500">
-            +{product.compliance_standards.length - 3} more
-          </span>
+          <span class="text-[10px]" style="color: var(--color-text-tertiary);">+{product.compliance_standards.length - 3} more</span>
         {/if}
       </div>
     {/if}
-
-    <!-- Footer -->
-    <div class="text-xs text-gray-400 pt-2 border-t border-gray-100">
+    <div class="text-[11px] pt-2" style="border-top: 1px solid var(--color-border-subtle); color: var(--color-text-tertiary);">
       Created: {formatDate(product.created_at)}
     </div>
   </div>
 
-  <!-- Selected Indicator -->
   {#if isSelected}
     <div class="absolute top-3 right-3">
-      <div class="w-3 h-3 bg-slate-600 rounded-full"></div>
+      <div class="w-2.5 h-2.5 rounded-full" style="background: var(--color-accent-primary);"></div>
     </div>
   {/if}
 </div>

@@ -199,14 +199,17 @@ def get_default_criteria(component_type: str, safety_level: str) -> Dict[RiskSev
     return adjusted_criteria
 
 def calculate_risk_severity(impact_scores: Dict[str, int], likelihood: int) -> RiskSeverity:
-    """Calculate overall risk severity based on impact scores and likelihood"""
-    # Get the maximum impact score
+    """Calculate overall risk severity based on impact scores and likelihood.
+
+    If impact_scores contains SFOP keys (safety, financial, operational, privacy)
+    the SFOP-aware calculator is used. Otherwise falls back to max-based scoring.
+    """
+    sfop_keys = {"safety", "financial", "operational", "privacy"}
+    if sfop_keys.issubset(impact_scores.keys()):
+        return calculate_risk_severity_sfop(impact_scores, likelihood)
+    # Legacy fallback: max-based scoring
     max_impact = max(impact_scores.values()) if impact_scores else 0
-    
-    # Calculate risk score (1-25 scale)
     risk_score = max_impact * likelihood
-    
-    # Map to severity levels
     if risk_score <= 4:
         return RiskSeverity.NEGLIGIBLE
     elif risk_score <= 8:
@@ -217,6 +220,35 @@ def calculate_risk_severity(impact_scores: Dict[str, int], likelihood: int) -> R
         return RiskSeverity.HIGH
     else:
         return RiskSeverity.CRITICAL
+
+
+def calculate_risk_severity_sfop(
+    impact_scores: Dict[str, int], likelihood: int
+) -> RiskSeverity:
+    """SFOP-aware risk severity using core.sfop_risk_calculator.
+
+    Maps SFOP integer scores (1-5) to ImpactLevel strings, derives overall
+    impact via worst-case, then combines with likelihood via the ISO 21434
+    risk matrix.
+    """
+    from core.sfop_risk_calculator import calculate_risk, RiskLevel
+    score_to_level = {0: "negligible", 1: "negligible", 2: "moderate", 3: "major", 4: "severe", 5: "severe"}
+    likelihood_to_feas = {1: "very_low", 2: "low", 3: "medium", 4: "high", 5: "very_high"}
+    result = calculate_risk(
+        safety=score_to_level.get(impact_scores.get("safety", 0), "negligible"),
+        financial=score_to_level.get(impact_scores.get("financial", 0), "negligible"),
+        operational=score_to_level.get(impact_scores.get("operational", 0), "negligible"),
+        privacy=score_to_level.get(impact_scores.get("privacy", 0), "negligible"),
+        feasibility=likelihood_to_feas.get(likelihood, "medium"),
+    )
+    risk_map = {
+        RiskLevel.NEGLIGIBLE: RiskSeverity.NEGLIGIBLE,
+        RiskLevel.LOW: RiskSeverity.LOW,
+        RiskLevel.MEDIUM: RiskSeverity.MEDIUM,
+        RiskLevel.HIGH: RiskSeverity.HIGH,
+        RiskLevel.CRITICAL: RiskSeverity.CRITICAL,
+    }
+    return risk_map.get(result.risk_level, RiskSeverity.MEDIUM)
 
 def calculate_residual_risk(impact_scores: Dict[str, int], likelihood: int, controls_count: int) -> float:
     """Calculate residual risk after controls (0.0-1.0 scale)"""

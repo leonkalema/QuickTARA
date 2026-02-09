@@ -155,12 +155,12 @@
     isAddingNew = false;
   }
 
-  function getSecurityLevelColor(level: SecurityLevel): string {
+  function getSecurityLevelStyle(level: SecurityLevel): string {
     switch (level) {
-      case SecurityLevel.HIGH: return 'text-red-600 bg-red-50';
-      case SecurityLevel.MEDIUM: return 'text-yellow-600 bg-yellow-50';
-      case SecurityLevel.LOW: return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case SecurityLevel.HIGH: return 'background: var(--color-risk-high-bg); color: var(--color-risk-high);';
+      case SecurityLevel.MEDIUM: return 'background: var(--color-risk-medium-bg); color: var(--color-risk-medium);';
+      case SecurityLevel.LOW: return 'background: var(--color-risk-low-bg); color: var(--color-risk-low);';
+      default: return 'background: var(--color-bg-elevated); color: var(--color-text-tertiary);';
     }
   }
 
@@ -209,60 +209,36 @@
   }
 </script>
 
-<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-  <!-- Table Header -->
-  <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-medium text-gray-900">Assets</h3>
-      {#if canManageAssets}
-        <button
-          on:click={() => isAddingNew = true}
-          class="px-3 py-1.5 bg-slate-600 text-white text-sm rounded-md hover:bg-slate-700 transition-colors"
-        >
-          + Add Asset
-        </button>
-      {/if}
-    </div>
+<div class="rounded-lg overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+  <div class="px-4 py-3 flex items-center justify-between" style="background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-border-subtle);">
+    <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Assets</h3>
+    {#if canManageAssets}
+      <button on:click={() => isAddingNew = true} class="px-3 py-1.5 text-xs font-medium rounded-md" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">
+        + Add Asset
+      </button>
+    {/if}
   </div>
 
   <!-- Table -->
   <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+    <table class="min-w-full">
+      <thead style="background: var(--color-bg-elevated);">
         <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">
-            Type
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-48">
-            Name
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-32">
-            Asset Type
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-24">
-            C
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-24">
-            I
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-24">
-            A
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-40">
-            Storage Location
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-64">
-            Description
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-            Actions
-          </th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider w-8" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Type</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-48" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Name</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-32" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Asset Type</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-24" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">C</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-24" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">I</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-24" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">A</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-40" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Storage</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider min-w-64" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Description</th>
+          <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider w-20" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Actions</th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody>
         <!-- Existing Assets -->
         {#each assets as asset (asset.asset_id)}
-          <tr class="hover:bg-gray-50">
+          <tr style="border-bottom: 1px solid var(--color-border-subtle);">
             <!-- Type Icon -->
             <td class="px-4 py-3 text-center">
               <span class="text-lg">{getAssetTypeIcon(asset.asset_type)}</span>
@@ -276,7 +252,7 @@
                   bind:value={editingValue}
                   on:keydown={(e) => handleKeyPress(e, asset, 'name')}
                   on:blur={() => saveEdit(asset, 'name')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 />
@@ -284,12 +260,12 @@
                 {#if canManageAssets}
                   <button
                     on:click={() => startEdit(asset, 'name')}
-                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors font-medium text-gray-900"
+                    class="text-left w-full px-2 py-1 rounded transition-colors text-xs font-medium" style="color: var(--color-text-primary);"
                   >
                     {asset.name}
                   </button>
                 {:else}
-                  <div class="px-2 py-1 font-medium text-gray-900">{asset.name}</div>
+                  <div class="px-2 py-1 text-xs font-medium" style="color: var(--color-text-primary);">{asset.name}</div>
                 {/if}
               {/if}
             </td>
@@ -301,7 +277,7 @@
                   bind:value={editingValue}
                   on:change={() => saveEdit(asset, 'asset_type')}
                   on:blur={() => saveEdit(asset, 'asset_type')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 >
@@ -313,12 +289,12 @@
                 {#if canManageAssets}
                   <button
                     on:click={() => startEdit(asset, 'asset_type')}
-                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm"
+                    class="text-left w-full px-2 py-1 rounded transition-colors text-xs" style="color: var(--color-text-secondary);"
                   >
                     {asset.asset_type}
                   </button>
                 {:else}
-                  <div class="px-2 py-1 text-sm">{asset.asset_type}</div>
+                  <div class="px-2 py-1 text-xs" style="color: var(--color-text-secondary);">{asset.asset_type}</div>
                 {/if}
               {/if}
             </td>
@@ -330,7 +306,7 @@
                   bind:value={editingValue}
                   on:change={() => saveEdit(asset, 'confidentiality')}
                   on:blur={() => saveEdit(asset, 'confidentiality')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 >
@@ -342,14 +318,14 @@
                 {#if canManageAssets}
                   <button
                     on:click={() => startEdit(asset, 'confidentiality')}
-                    class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                    class="w-full px-2 py-1 rounded transition-colors"
                   >
-                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.confidentiality)}">
+                    <span class="inline-flex px-2 py-1 text-[10px] font-medium rounded-full" style="{getSecurityLevelStyle(asset.confidentiality)}">
                       {asset.confidentiality}
                     </span>
                   </button>
                 {:else}
-                  <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.confidentiality)}">
+                  <span class="inline-flex px-2 py-1 text-[10px] font-medium rounded-full" style="{getSecurityLevelStyle(asset.confidentiality)}">
                     {asset.confidentiality}
                   </span>
                 {/if}
@@ -363,7 +339,7 @@
                   bind:value={editingValue}
                   on:change={() => saveEdit(asset, 'integrity')}
                   on:blur={() => saveEdit(asset, 'integrity')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 >
@@ -375,14 +351,14 @@
                 {#if canManageAssets}
                   <button
                     on:click={() => startEdit(asset, 'integrity')}
-                    class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                    class="w-full px-2 py-1 rounded transition-colors"
                   >
-                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.integrity)}">
+                    <span class="inline-flex px-2 py-1 text-[10px] font-medium rounded-full" style="{getSecurityLevelStyle(asset.integrity)}">
                       {asset.integrity}
                     </span>
                   </button>
                 {:else}
-                  <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.integrity)}">
+                  <span class="inline-flex px-2 py-1 text-[10px] font-medium rounded-full" style="{getSecurityLevelStyle(asset.integrity)}">
                     {asset.integrity}
                   </span>
                 {/if}
@@ -396,7 +372,7 @@
                   bind:value={editingValue}
                   on:change={() => saveEdit(asset, 'availability')}
                   on:blur={() => saveEdit(asset, 'availability')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 >
@@ -408,14 +384,14 @@
                 {#if canManageAssets}
                   <button
                     on:click={() => startEdit(asset, 'availability')}
-                    class="w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors"
+                    class="w-full px-2 py-1 rounded transition-colors"
                   >
-                    <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.availability)}">
+                    <span class="inline-flex px-2 py-1 text-[10px] font-medium rounded-full" style="{getSecurityLevelStyle(asset.availability)}">
                       {asset.availability}
                     </span>
                   </button>
                 {:else}
-                  <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {getSecurityLevelColor(asset.availability)}">
+                  <span class="inline-flex px-2 py-1 text-[10px] font-medium rounded-full" style="{getSecurityLevelStyle(asset.availability)}">
                     {asset.availability}
                   </span>
                 {/if}
@@ -430,7 +406,7 @@
                   bind:value={editingValue}
                   on:keydown={(e) => handleKeyPress(e, asset, 'storage_location')}
                   on:blur={() => saveEdit(asset, 'storage_location')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   disabled={isSaving}
                   autofocus
                 />
@@ -438,12 +414,12 @@
                 {#if canManageAssets}
                   <button
                     on:click={() => startEdit(asset, 'storage_location')}
-                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
+                    class="text-left w-full px-2 py-1 rounded transition-colors text-xs" style="color: var(--color-text-secondary);"
                   >
                     {asset.storage_location || 'Click to add...'}
                   </button>
                 {:else}
-                  <div class="text-sm text-gray-600 px-2 py-1">{asset.storage_location || '-'}</div>
+                  <div class="text-xs px-2 py-1" style="color: var(--color-text-secondary);">{asset.storage_location || '-'}</div>
                 {/if}
               {/if}
             </td>
@@ -455,7 +431,7 @@
                   bind:value={editingValue}
                   on:keydown={(e) => e.key === 'Enter' && e.ctrlKey && saveEdit(asset, 'description')}
                   on:blur={() => saveEdit(asset, 'description')}
-                  class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  class="w-full px-2 py-1 rounded text-xs resize-none" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);"
                   rows="2"
                   disabled={isSaving}
                   autofocus
@@ -464,12 +440,12 @@
                 {#if canManageAssets}
                   <button
                     on:click={() => startEdit(asset, 'description')}
-                    class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded transition-colors text-sm text-gray-600"
+                    class="text-left w-full px-2 py-1 rounded transition-colors text-xs" style="color: var(--color-text-secondary);"
                   >
                     {asset.description || 'Click to add...'}
                   </button>
                 {:else}
-                  <div class="text-sm text-gray-600 px-2 py-1">{asset.description || '-'}</div>
+                  <div class="text-xs px-2 py-1" style="color: var(--color-text-secondary);">{asset.description || '-'}</div>
                 {/if}
               {/if}
             </td>
@@ -479,7 +455,7 @@
               {#if canManageAssets}
                 <button
                     on:click={() => confirmDelete(asset)}
-                  class="text-red-600 hover:text-red-900 text-sm font-medium"
+                  class="text-xs font-medium" style="color: var(--color-error);"
                   disabled={isSaving}
                 >
                   Delete
@@ -491,7 +467,7 @@
 
         <!-- Add New Asset Row -->
         {#if isAddingNew && canManageAssets}
-          <tr class="bg-blue-50 border-2 border-blue-200">
+          <tr style="background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-border-default);">
             <!-- Type Icon -->
             <td class="px-4 py-3 text-center">
               <span class="text-lg">{getAssetTypeIcon(newAsset.asset_type || AssetType.SOFTWARE)}</span>
@@ -503,7 +479,7 @@
                 type="text"
                 bind:value={newAsset.name}
                 placeholder="Asset name..."
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                 autofocus
               />
             </td>
@@ -512,7 +488,7 @@
             <td class="px-4 py-3">
               <select
                 bind:value={newAsset.asset_type}
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 {#each Object.values(AssetType) as type}
                   <option value={type}>{type}</option>
@@ -524,7 +500,7 @@
             <td class="px-4 py-3">
               <select
                 bind:value={newAsset.confidentiality}
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 {#each Object.values(SecurityLevel) as level}
                   <option value={level}>{level}</option>
@@ -536,7 +512,7 @@
             <td class="px-4 py-3">
               <select
                 bind:value={newAsset.integrity}
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 {#each Object.values(SecurityLevel) as level}
                   <option value={level}>{level}</option>
@@ -548,7 +524,7 @@
             <td class="px-4 py-3">
               <select
                 bind:value={newAsset.availability}
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               >
                 {#each Object.values(SecurityLevel) as level}
                   <option value={level}>{level}</option>
@@ -562,7 +538,7 @@
                 type="text"
                 bind:value={newAsset.storage_location}
                 placeholder="Storage location..."
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
               />
             </td>
 
@@ -571,7 +547,7 @@
               <textarea
                 bind:value={newAsset.description}
                 placeholder="Description..."
-                class="w-full px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                class="w-full px-2 py-1 rounded text-xs resize-none" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);"
                 rows="2"
               ></textarea>
             </td>
@@ -581,12 +557,12 @@
           </tr>
           
           <!-- Action Row -->
-          <tr class="bg-blue-50">
+          <tr style="background: var(--color-bg-elevated);">
             <td colspan="9" class="px-4 py-3">
               <div class="flex justify-end space-x-2">
                 <button
                   on:click={cancelNewAsset}
-                  class="px-3 py-1.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                  class="px-3 py-1.5 rounded text-xs transition-colors" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);"
                   disabled={isSaving}
                 >
                   Cancel
@@ -594,7 +570,7 @@
                 <button
                   on:click={addNewAsset}
                   disabled={isSaving || !newAsset.name?.trim()}
-                  class="px-3 py-1.5 bg-slate-600 text-white rounded text-sm hover:bg-slate-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
+                  class="px-3 py-1.5 rounded text-xs disabled:opacity-50 transition-colors flex items-center space-x-2" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
                 >
                   {#if isSaving}
                     <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
@@ -627,13 +603,13 @@
   <!-- Empty State -->
   {#if assets.length === 0 && !isAddingNew}
     <div class="text-center py-12">
-      <div class="text-gray-400 text-6xl mb-4">📦</div>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">No assets yet</h3>
-      <p class="text-gray-500 mb-4">Start by adding your first asset to this product.</p>
+      <div class="text-4xl mb-3">📦</div>
+      <h3 class="text-sm font-semibold mb-1" style="color: var(--color-text-primary);">No assets yet</h3>
+      <p class="text-xs mb-4" style="color: var(--color-text-tertiary);">Add your first asset to this product.</p>
       {#if canManageAssets}
         <button
           on:click={() => isAddingNew = true}
-          class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+          class="px-3 py-2 rounded-md text-xs font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
         >
           Add First Asset
         </button>

@@ -61,47 +61,48 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: #f9fafb;
+		background: #030712;
 		padding: 1rem;
 	}
 
 	.unauthorized-container {
-		max-width: 500px;
+		max-width: 440px;
 		text-align: center;
-		background: white;
-		padding: 3rem 2rem;
+		background: #111827;
+		padding: 2.5rem 2rem;
 		border-radius: 12px;
-		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+		border: 1px solid #1e293b;
+		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 	}
 
 	.icon-container {
-		margin-bottom: 2rem;
+		margin-bottom: 1.5rem;
 	}
 
 	h1 {
-		font-size: 2rem;
+		font-size: 1.5rem;
 		font-weight: 700;
-		color: #1f2937;
-		margin: 0 0 1rem 0;
+		color: #f1f5f9;
+		margin: 0 0 0.75rem 0;
 	}
 
 	.message {
-		color: #6b7280;
-		font-size: 1.1rem;
+		color: #94a3b8;
+		font-size: 0.9rem;
 		line-height: 1.6;
 		margin: 0 0 2rem 0;
 	}
 
 	.actions {
 		display: flex;
-		gap: 1rem;
+		gap: 0.75rem;
 		justify-content: center;
 		margin-bottom: 2rem;
 	}
 
 	.btn-primary, .btn-secondary {
-		padding: 0.75rem 1.5rem;
-		border-radius: 6px;
+		padding: 0.625rem 1.25rem;
+		border-radius: 8px;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.2s;
@@ -110,7 +111,7 @@
 		gap: 0.5rem;
 		text-decoration: none;
 		border: none;
-		font-size: 1rem;
+		font-size: 0.875rem;
 	}
 
 	.btn-primary {
@@ -123,21 +124,23 @@
 	}
 
 	.btn-secondary {
-		background: #f3f4f6;
-		color: #374151;
-		border: 1px solid #d1d5db;
+		background: #1e293b;
+		color: #cbd5e1;
+		border: 1px solid #334155;
 	}
 
 	.btn-secondary:hover {
-		background: #e5e7eb;
+		background: #334155;
 	}
 
 	.user-info {
-		padding-top: 2rem;
-		border-top: 1px solid #e5e7eb;
+		padding-top: 1.5rem;
+		border-top: 1px solid #1e293b;
 	}
 
 	.user-info p {
 		margin: 0.5rem 0;
+		color: #64748b;
+		font-size: 0.8rem;
 	}
 </style>

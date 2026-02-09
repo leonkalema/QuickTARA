@@ -54,6 +54,9 @@ class DamageScenario(Base):
     sfop_rating_last_edited_at = Column(DateTime, nullable=True)  # When ratings were last modified
     sfop_rating_override_reason = Column(Text, nullable=True)  # Reason for overriding auto-ratings
     
+    # Review status: draft (auto-generated) or accepted (reviewed by analyst)
+    status = Column(String, default="accepted", nullable=False)
+    
     # Versioning and audit
     version = Column(Integer, default=1)
     revision_notes = Column(Text, nullable=True)

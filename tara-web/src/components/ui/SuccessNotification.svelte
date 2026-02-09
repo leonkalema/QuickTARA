@@ -54,7 +54,7 @@
         </div>
         <div class="ml-4 flex-shrink-0">
           <button
-            class="inline-flex rounded-md p-1.5 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600"
+            class="inline-flex rounded-md p-1.5 hover:opacity-80 focus:outline-none"
             on:click={close}
           >
             <X class="w-4 h-4" />

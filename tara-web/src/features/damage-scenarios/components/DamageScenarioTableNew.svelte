@@ -4,9 +4,10 @@
   import { damageScenarioApi } from '$lib/api/damageScenarioApi';
   import { selectedProduct } from '$lib/stores/productStore';
   import { onMount, createEventDispatcher } from 'svelte';
-  import { getOverallSfopRating, getSfopBadgeClass, getCIABadgeClass, getSfopImpacts } from '$lib/utils/sfopUtils';
+  import { getOverallSfopRating, getSfopBadgeStyle, getCIABadgeStyle, getSfopImpacts } from '$lib/utils/sfopUtils';
   import ConfirmDialog from '../../../components/ConfirmDialog.svelte';
   import { authStore } from '$lib/stores/auth';
+  import WorkflowBadge from '../../audit/components/WorkflowBadge.svelte';
 
   export let damageScenarios: DamageScenario[] = [];
   export let assets: any[] = [];
@@ -254,38 +255,38 @@
 <div class="space-y-6">
 
   {#if isAddingNew}
-    <form on:submit|preventDefault={addNewScenario} class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mb-6">
+    <form on:submit|preventDefault={addNewScenario} class="p-5 rounded-lg mb-6" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
       <div class="grid grid-cols-2 gap-3 mb-3">
-        <input bind:value={newScenario.name} placeholder="Scenario name *" class="px-3 py-2 border rounded-md" required />
-        <select bind:value={newScenario.primary_component_id} class="px-3 py-2 border rounded-md" required>
+        <input bind:value={newScenario.name} placeholder="Scenario name *" class="px-3 py-2 rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" required />
+        <select bind:value={newScenario.primary_component_id} class="px-3 py-2 rounded-md text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" required>
           <option value="">Select asset... *</option>
           {#each assets as asset}<option value={asset.asset_id}>{asset.name}</option>{/each}
         </select>
       </div>
-      <textarea bind:value={newScenario.description} placeholder="Description *" class="w-full px-3 py-2 border rounded-md mb-3" rows="2" required></textarea>
+      <textarea bind:value={newScenario.description} placeholder="Description *" class="w-full px-3 py-2 rounded-md mb-3 text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" rows="2" required></textarea>
       <div class="grid grid-cols-4 gap-2 mb-3">
-        <select bind:value={safety_impact} class="px-2 py-1 border rounded text-sm" required>
+        <select bind:value={safety_impact} class="px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" required>
           <option value="">Safety *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
           <option value="major">Major</option>
           <option value="severe">Severe</option>
         </select>
-        <select bind:value={financial_impact} class="px-2 py-1 border rounded text-sm" required>
+        <select bind:value={financial_impact} class="px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" required>
           <option value="">Financial *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
           <option value="major">Major</option>
           <option value="severe">Severe</option>
         </select>
-        <select bind:value={operational_impact} class="px-2 py-1 border rounded text-sm" required>
+        <select bind:value={operational_impact} class="px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" required>
           <option value="">Operational *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
           <option value="major">Major</option>
           <option value="severe">Severe</option>
         </select>
-        <select bind:value={privacy_impact} class="px-2 py-1 border rounded text-sm" required>
+        <select bind:value={privacy_impact} class="px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" required>
           <option value="">Privacy *</option>
           <option value="negligible">Negligible</option>
           <option value="moderate">Moderate</option>
@@ -294,105 +295,110 @@
         </select>
       </div>
       <div class="flex space-x-4 mb-3">
-        <label class="flex items-center text-sm">
+        <label class="flex items-center text-xs" style="color: var(--color-text-secondary);">
           <input type="checkbox" bind:checked={newScenario.confidentiality_impact} class="mr-1" />C
         </label>
-        <label class="flex items-center text-sm">
+        <label class="flex items-center text-xs" style="color: var(--color-text-secondary);">
           <input type="checkbox" bind:checked={newScenario.integrity_impact} class="mr-1" />I
         </label>
-        <label class="flex items-center text-sm">
+        <label class="flex items-center text-xs" style="color: var(--color-text-secondary);">
           <input type="checkbox" bind:checked={newScenario.availability_impact} class="mr-1" />A
         </label>
       </div>
       <div class="flex justify-end space-x-2">
-        <button type="button" on:click={resetForm} class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Cancel</button>
-        <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!formValid}>Create</button>
+        <button type="button" on:click={resetForm} class="px-3 py-1 rounded text-xs" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);">Cancel</button>
+        <button type="submit" class="px-3 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed" style="background: var(--color-accent-primary); color: var(--color-text-inverse);" disabled={!formValid}>Create</button>
       </div>
     </form>
   {/if}
 
   {#if damageScenarios.length === 0}
-    <div class="text-center py-8 text-gray-500">
+    <div class="text-center py-8 text-xs" style="color: var(--color-text-tertiary);">
       No damage scenarios created yet.
     </div>
   {:else}
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+      <table class="min-w-full">
+        <thead style="background: var(--color-bg-elevated);">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Asset</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CIA</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SFOP</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Overall</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Name</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Asset</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">CIA</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">SFOP</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Overall</th>
+            <th class="px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-subtle);">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody>
           {#each damageScenarios as scenario}
-            <tr>
+            <tr style="border-bottom: 1px solid var(--color-border-subtle);">
               <td class="px-4 py-3">
                 {#if editingCell?.scenarioId === scenario.scenario_id && editingCell?.field === 'name'}
-                  <input bind:value={editingValue} on:keydown={(e) => handleKeyPress(e, scenario, 'name')} on:blur={() => saveEdit(scenario, 'name')} class="w-full px-2 py-1 border border-blue-300 rounded" disabled={isSaving} autofocus />
+                  <input bind:value={editingValue} on:keydown={(e) => handleKeyPress(e, scenario, 'name')} on:blur={() => saveEdit(scenario, 'name')} class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);" disabled={isSaving} autofocus />
                 {:else}
-                  <button on:click={() => startEdit(scenario, 'name')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded">
-                    <div class="text-sm font-medium text-gray-900 flex items-center gap-2">
+                  <button on:click={() => startEdit(scenario, 'name')} class="text-left w-full px-2 py-1 rounded transition-colors">
+                    <div class="text-xs font-medium flex items-center gap-2" style="color: var(--color-text-primary);">
                       {scenario.name}
                       {#if scenario.status === 'draft'}
-                        <span class="px-1.5 py-0.5 text-xs rounded bg-amber-100 text-amber-700 font-normal">Draft</span>
+                        <span class="px-1.5 py-0.5 text-[10px] rounded font-normal" style="background: color-mix(in srgb, var(--color-status-draft-text, #f59e0b) 15%, transparent); color: var(--color-status-draft-text, #f59e0b);">Draft</span>
                       {/if}
                     </div>
                   </button>
                 {/if}
                 {#if editingCell?.scenarioId === scenario.scenario_id && editingCell?.field === 'description'}
-                  <textarea bind:value={editingValue} on:keydown={(e) => e.key === 'Enter' && e.ctrlKey && saveEdit(scenario, 'description')} on:blur={() => saveEdit(scenario, 'description')} class="w-full px-2 py-1 border border-blue-300 rounded resize-none mt-1" rows="2" disabled={isSaving}></textarea>
+                  <textarea bind:value={editingValue} on:keydown={(e) => e.key === 'Enter' && e.ctrlKey && saveEdit(scenario, 'description')} on:blur={() => saveEdit(scenario, 'description')} class="w-full px-2 py-1 rounded resize-none mt-1 text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);" rows="2" disabled={isSaving}></textarea>
                 {:else if scenario.description}
-                  <button on:click={() => startEdit(scenario, 'description')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded mt-1">
-                    <div class="text-sm text-gray-500 max-w-xs break-words">{scenario.description}</div>
+                  <button on:click={() => startEdit(scenario, 'description')} class="text-left w-full px-2 py-1 rounded mt-1 transition-colors">
+                    <div class="text-xs max-w-xs break-words" style="color: var(--color-text-tertiary);">{scenario.description}</div>
                   </button>
                 {:else}
-                  <button on:click={() => startEdit(scenario, 'description')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded mt-1 text-gray-400 italic">Add description...</button>
+                  <button on:click={() => startEdit(scenario, 'description')} class="text-left w-full px-2 py-1 rounded mt-1 italic text-xs transition-colors" style="color: var(--color-text-tertiary);">Add description...</button>
                 {/if}
               </td>
               <td class="px-4 py-3 text-sm">
                 {#if editingCell?.scenarioId === scenario.scenario_id && editingCell?.field === 'primary_component_id'}
-                  <select bind:value={editingValue} on:change={() => saveEdit(scenario, 'primary_component_id')} on:blur={() => saveEdit(scenario, 'primary_component_id')} class="w-full px-2 py-1 border border-blue-300 rounded" disabled={isSaving} autofocus>
+                  <select bind:value={editingValue} on:change={() => saveEdit(scenario, 'primary_component_id')} on:blur={() => saveEdit(scenario, 'primary_component_id')} class="w-full px-2 py-1 rounded text-xs" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);" disabled={isSaving} autofocus>
                     <option value="">No asset</option>
                     {#each assets as asset}<option value={asset.asset_id}>{asset.name}</option>{/each}
                   </select>
                 {:else}
-                  <button on:click={() => startEdit(scenario, 'primary_component_id')} class="text-left w-full px-2 py-1 hover:bg-blue-50 rounded">
+                  <button on:click={() => startEdit(scenario, 'primary_component_id')} class="text-left w-full px-2 py-1 rounded text-xs transition-colors" style="color: var(--color-text-secondary);">
                     {scenario.primary_component_id ? getAssetName(scenario.primary_component_id) : 'No asset'}
                   </button>
                 {/if}
               </td>
               <td class="px-4 py-3">
                 <div class="flex space-x-1">
-                  <span class="px-2 py-1 text-xs rounded {getCIABadgeClass(scenario.confidentiality_impact)}">C</span>
-                  <span class="px-2 py-1 text-xs rounded {getCIABadgeClass(scenario.integrity_impact)}">I</span>
-                  <span class="px-2 py-1 text-xs rounded {getCIABadgeClass(scenario.availability_impact)}">A</span>
+                  <span class="px-2 py-1 text-[10px] rounded" style="{getCIABadgeStyle(scenario.confidentiality_impact)}">C</span>
+                  <span class="px-2 py-1 text-[10px] rounded" style="{getCIABadgeStyle(scenario.integrity_impact)}">I</span>
+                  <span class="px-2 py-1 text-[10px] rounded" style="{getCIABadgeStyle(scenario.availability_impact)}">A</span>
                 </div>
               </td>
               <td class="px-4 py-3">
                 <div class="space-y-1">
                   {#each Object.entries(getSfopImpacts(scenario)) as [key, value]}
                     <div class="flex items-center space-x-1">
-                      <span class="text-xs w-6">{key.charAt(0).toUpperCase()}</span>
-                      <span class="px-1 py-0.5 text-xs rounded {getSfopBadgeClass(value)}">{value}</span>
+                      <span class="text-[10px] w-5" style="color: var(--color-text-tertiary);">{key.charAt(0).toUpperCase()}</span>
+                      <span class="px-1 py-0.5 text-[10px] rounded" style="{getSfopBadgeStyle(value)}">{value}</span>
                     </div>
                   {/each}
                 </div>
               </td>
               <td class="px-4 py-3">
-                <span class="px-2 py-1 text-xs rounded {getSfopBadgeClass(getOverallSfopRating(scenario))}">{getOverallSfopRating(scenario)}</span>
+                <span class="px-2 py-1 text-[10px] font-medium rounded" style="{getSfopBadgeStyle(getOverallSfopRating(scenario))}">{getOverallSfopRating(scenario)}</span>
               </td>
               <td class="px-4 py-3">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <WorkflowBadge
+                    artifactType="damage_scenario"
+                    artifactId={scenario.scenario_id}
+                    scopeId={$selectedProduct?.scope_id || ''}
+                  />
                   {#if scenario.status === 'draft'}
-                    <button on:click={() => acceptScenario(scenario)} class="text-green-600 hover:text-green-800 text-sm font-medium">Accept</button>
+                    <button on:click={() => acceptScenario(scenario)} class="text-xs font-medium" style="color: var(--color-status-accepted-text, #10b981);">Accept</button>
                   {/if}
                   {#if canDelete}
-                    <button on:click={() => confirmDelete(scenario)} class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                    <button on:click={() => confirmDelete(scenario)} class="text-xs" style="color: var(--color-error);">Delete</button>
                   {/if}
                 </div>
               </td>

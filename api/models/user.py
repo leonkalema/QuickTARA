@@ -131,7 +131,8 @@ ROLE_PERMISSIONS = {
         "users:create", "users:read", "users:update", "users:delete",
         "organizations:create", "organizations:read", "organizations:update", "organizations:delete",
         "system:configure", "system:backup", "system:monitor",
-        "audit_trail:read", "templates:*"
+        "audit_trail:read", "templates:*",
+        "workflows:*",
     ],
     UserRole.ORG_ADMIN: [
         # User management within org
@@ -146,7 +147,10 @@ ROLE_PERMISSIONS = {
         "risk_treatments:create", "risk_treatments:read", "risk_treatments:update", "risk_treatments:delete",
         # Reports and settings
         "reports:generate", "reports:read",
-        "org_settings:update"
+        "org_settings:update",
+        # Workflow: full lifecycle
+        "workflows:create", "workflows:submit", "workflows:approve", "workflows:release", "workflows:read",
+        "workflows:signoff",
     ],
     UserRole.ANALYST: [
         # Asset management
@@ -159,7 +163,9 @@ ROLE_PERMISSIONS = {
         # Read access to products
         "products:read",
         # Reports access
-        "reports:read", "reports:generate"
+        "reports:read", "reports:generate",
+        # Workflow: create and submit for review only
+        "workflows:create", "workflows:submit", "workflows:read",
     ],
     UserRole.RISK_MANAGER: [
         # Risk approvals
@@ -169,19 +175,25 @@ ROLE_PERMISSIONS = {
         "damage_scenarios:read", "threat_scenarios:read", "attack_paths:read",
         "products:read", "assets:read",
         # Reports
-        "reports:generate", "reports:read"
+        "reports:generate", "reports:read",
+        # Workflow: approve and sign-off
+        "workflows:read", "workflows:approve", "workflows:signoff",
     ],
     UserRole.AUDITOR: [
         # Read-only access to everything + compliance
         "products:read", "assets:read",
         "damage_scenarios:read", "threat_scenarios:read", "attack_paths:read",
         "risk_treatments:read", "reports:read", "audit_trail:read",
-        "compliance:review", "compliance:audit"
+        "compliance:review", "compliance:audit",
+        # Workflow: read + sign-off only
+        "workflows:read", "workflows:signoff",
     ],
     UserRole.VIEWER: [
         # Read-only access to assigned products
         "products:read", "assets:read",
         "damage_scenarios:read", "threat_scenarios:read",
-        "reports:read"
+        "reports:read",
+        # Workflow: read only
+        "workflows:read",
     ]
 }

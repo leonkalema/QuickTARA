@@ -208,87 +208,43 @@
   }
 </script>
 
-<!-- Modal Backdrop -->
-<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-6 border-b border-gray-200">
-      <h2 class="text-xl font-semibold text-gray-900">Create New Product</h2>
-      <button
-        on:click={closeModal}
-        class="text-gray-400 hover:text-gray-600 transition-colors"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
+<div class="fixed inset-0 flex items-center justify-center p-4 z-50" style="background: rgba(0,0,0,0.6);">
+  <div class="rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default); box-shadow: var(--shadow-lg);">
+    <div class="flex items-center justify-between p-5" style="border-bottom: 1px solid var(--color-border-subtle);">
+      <h2 class="text-sm font-semibold" style="color: var(--color-text-primary);">Create New Product</h2>
+      <button on:click={closeModal} style="color: var(--color-text-tertiary);">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
 
-    <!-- Form -->
-    <form on:submit|preventDefault={handleSubmit} class="p-6 space-y-6">
-      <!-- Basic Information -->
-      <div class="space-y-4">
-        <h3 class="text-lg font-medium text-gray-900">Basic Information</h3>
-
+    <form on:submit|preventDefault={handleSubmit} class="p-5 space-y-5">
+      <div class="space-y-3">
+        <h3 class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-tertiary);">Basic Information</h3>
         <div>
-          <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
-            Department *
-          </label>
-          <select
-            id="department"
-            bind:value={selectedOrganizationId}
-            required
-            disabled={isLoadingOrganizations}
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="">{isLoadingOrganizations ? 'Loading departments...' : 'Select department'}</option>
+          <label for="department" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Department *</label>
+          <select id="department" bind:value={selectedOrganizationId} required disabled={isLoadingOrganizations}
+            class="w-full px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);">
+            <option value="">{isLoadingOrganizations ? 'Loading...' : 'Select department'}</option>
             {#each organizations as org (org.organizationId)}
               <option value={org.organizationId}>{org.name}</option>
             {/each}
           </select>
         </div>
-        
-        <!-- Product Name -->
         <div>
-          <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-            Product Name *
-          </label>
-          <input
-            id="name"
-            type="text"
-            bind:value={formData.name}
-            placeholder="e.g., Vehicle Gateway ECU, Industrial Controller v2"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-            required
-          />
+          <label for="name" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Product Name *</label>
+          <input id="name" type="text" bind:value={formData.name} placeholder="e.g., Vehicle Gateway ECU" required
+            class="w-full px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);" />
         </div>
-
-        <!-- Description -->
         <div>
-          <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <textarea
-            id="description"
-            bind:value={formData.description}
-            placeholder="Brief description of the product's purpose and key features..."
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-          ></textarea>
+          <label for="description" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Description</label>
+          <textarea id="description" bind:value={formData.description} placeholder="Brief description..." rows="3"
+            class="w-full px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);"></textarea>
         </div>
-
-        <!-- Product Type -->
         <div>
-          <label for="type" class="block text-sm font-medium text-gray-700 mb-1">
-            Product Type *
-          </label>
-          <select
-            id="type"
-            bind:value={formData.product_type}
-            required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="">Select product type</option>
+          <label for="type" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Product Type *</label>
+          <select id="type" bind:value={formData.product_type} required
+            class="w-full px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);">
+            <option value="">Select type</option>
             <option value="ECU">ECU</option>
             <option value="Gateway">Gateway</option>
             <option value="Sensor">Sensor</option>
@@ -298,137 +254,72 @@
             <option value="Other">Other</option>
           </select>
         </div>
-
-        <!-- Version and Status -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label for="version" class="block text-sm font-medium text-gray-700 mb-1">
-              Version *
-            </label>
-            <input
-              id="version"
-              type="text"
-              bind:value={formData.version}
-              placeholder="1.0.0"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-              required
-            />
+            <label for="version" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Version *</label>
+            <input id="version" type="text" bind:value={formData.version} placeholder="1.0.0" required
+              class="w-full px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);" />
           </div>
-
           <div>
-            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
-              Status *
-            </label>
-            <select
-              id="status"
-              bind:value={formData.status}
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-            >
+            <label for="status" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Status *</label>
+            <select id="status" bind:value={formData.status}
+              class="w-full px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);">
               {#each statusOptions as status}
-                <option value={status.value}>{status.label} - {status.description}</option>
+                <option value={status.value}>{status.label}</option>
               {/each}
             </select>
           </div>
         </div>
-
-        <!-- Owner Team -->
         <div>
-          <label for="team" class="block text-sm font-medium text-gray-700 mb-1">
-            Owner Team
-          </label>
-          <input
-            id="team"
-            type="text"
-            bind:value={formData.owner_team}
-            placeholder="e.g., Security Engineering, Platform Team"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-          />
+          <label for="team" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Owner Team</label>
+          <input id="team" type="text" bind:value={formData.owner_team} placeholder="e.g., Security Engineering"
+            class="w-full px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);" />
         </div>
       </div>
 
-      <!-- Compliance Standards -->
-      <div class="space-y-4">
-        <h3 class="text-lg font-medium text-gray-900">Compliance Standards</h3>
-        
-        <!-- Add Custom Standard -->
-        <div class="flex space-x-2">
-          <input
-            type="text"
-            bind:value={complianceInput}
-            placeholder="Add compliance standard..."
-            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-            on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addComplianceStandard())}
-          />
-          <button
-            type="button"
-            on:click={addComplianceStandard}
-            class="px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition-colors"
-          >
-            Add
-          </button>
+      <div class="space-y-3">
+        <h3 class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-tertiary);">Compliance Standards</h3>
+        <div class="flex gap-2">
+          <input type="text" bind:value={complianceInput} placeholder="Add standard..."
+            class="flex-1 px-3 py-2 rounded-md text-sm border-0" style="background: var(--color-bg-inset); color: var(--color-text-primary);"
+            on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addComplianceStandard())} />
+          <button type="button" on:click={addComplianceStandard}
+            class="px-3 py-2 rounded-md text-xs font-medium" style="background: var(--color-bg-elevated); color: var(--color-text-secondary); border: 1px solid var(--color-border-default);">Add</button>
         </div>
-
-        <!-- Common Standards -->
         <div>
-          <p class="text-sm text-gray-600 mb-2">Common standards:</p>
-          <div class="flex flex-wrap gap-2">
+          <p class="text-[11px] mb-1.5" style="color: var(--color-text-tertiary);">Common:</p>
+          <div class="flex flex-wrap gap-1.5">
             {#each commonStandards as standard}
-              <button
-                type="button"
-                on:click={() => addPresetStandard(standard)}
-                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                disabled={formData.compliance_standards?.includes(standard)}
-              >
-                {standard}
-              </button>
+              <button type="button" on:click={() => addPresetStandard(standard)}
+                class="px-2 py-1 text-[11px] rounded transition-colors disabled:opacity-30"
+                style="background: var(--color-bg-inset); color: var(--color-text-secondary);"
+                disabled={formData.compliance_standards?.includes(standard)}>{standard}</button>
             {/each}
           </div>
         </div>
-
-        <!-- Selected Standards -->
         {#if formData.compliance_standards && formData.compliance_standards.length > 0}
-          <div>
-            <p class="text-sm text-gray-600 mb-2">Selected standards:</p>
-            <div class="flex flex-wrap gap-2">
-              {#each formData.compliance_standards as standard}
-                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-slate-100 text-slate-700">
-                  {standard}
-                  <button
-                    type="button"
-                    on:click={() => removeComplianceStandard(standard)}
-                    class="ml-2 text-slate-500 hover:text-slate-700"
-                  >
-                    ×
-                  </button>
-                </span>
-              {/each}
-            </div>
+          <div class="flex flex-wrap gap-1.5">
+            {#each formData.compliance_standards as standard}
+              <span class="inline-flex items-center px-2 py-1 rounded text-[11px] font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">
+                {standard}
+                <button type="button" on:click={() => removeComplianceStandard(standard)} class="ml-1.5 opacity-70 hover:opacity-100">×</button>
+              </span>
+            {/each}
           </div>
         {/if}
       </div>
 
-      <!-- Error Message -->
       {#if error}
-        <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-600">{error}</p>
+        <div class="rounded-md p-3" style="background: var(--color-error-bg); border: 1px solid var(--color-error);">
+          <p class="text-xs" style="color: var(--color-error);">{error}</p>
         </div>
       {/if}
 
-      <!-- Actions -->
-      <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-        <button
-          type="button"
-          on:click={closeModal}
-          class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-          disabled={isLoading}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors disabled:opacity-50"
-          disabled={isLoading}
-        >
+      <div class="flex justify-end gap-2 pt-4" style="border-top: 1px solid var(--color-border-subtle);">
+        <button type="button" on:click={closeModal} disabled={isLoading}
+          class="px-3 py-2 text-sm font-medium rounded-md" style="color: var(--color-text-secondary); border: 1px solid var(--color-border-default);">Cancel</button>
+        <button type="submit" disabled={isLoading}
+          class="px-3 py-2 text-sm font-medium rounded-md disabled:opacity-50" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">
           {isLoading ? 'Creating...' : 'Create Product'}
         </button>
       </div>

@@ -80,7 +80,7 @@
 
 <div class="settings-section">
 	<div class="section-header">
-		<ShieldAlert class="w-5 h-5 text-red-600" />
+		<ShieldAlert class="w-4 h-4" style="color: var(--color-error);" />
 		<h3>Threat Catalog (MITRE ATT&CK® ICS)</h3>
 	</div>
 
@@ -92,20 +92,32 @@
 	{:else if stats}
 		<div class="stats-grid">
 			<div class="stat-card">
-				<div class="stat-value">{stats.total}</div>
-				<div class="stat-label">Total Threats</div>
+				<div class="stat-indicator total"></div>
+				<div class="stat-content">
+					<div class="stat-label">Total Threats</div>
+					<div class="stat-value">{stats.total}</div>
+				</div>
 			</div>
-			<div class="stat-card mitre">
-				<div class="stat-value">{stats.mitre_attack_ics}</div>
-				<div class="stat-label">MITRE ATT&CK ICS</div>
+			<div class="stat-card">
+				<div class="stat-indicator mitre"></div>
+				<div class="stat-content">
+					<div class="stat-label">MITRE ATT&CK ICS</div>
+					<div class="stat-value">{stats.mitre_attack_ics}</div>
+				</div>
 			</div>
-			<div class="stat-card custom">
-				<div class="stat-value">{stats.custom}</div>
-				<div class="stat-label">Custom</div>
+			<div class="stat-card">
+				<div class="stat-indicator custom"></div>
+				<div class="stat-content">
+					<div class="stat-label">Custom</div>
+					<div class="stat-value">{stats.custom}</div>
+				</div>
 			</div>
-			<div class="stat-card modified">
-				<div class="stat-value">{stats.user_modified}</div>
-				<div class="stat-label">User Modified</div>
+			<div class="stat-card">
+				<div class="stat-indicator modified"></div>
+				<div class="stat-content">
+					<div class="stat-label">User Modified</div>
+					<div class="stat-value">{stats.user_modified}</div>
+				</div>
 			</div>
 		</div>
 
@@ -169,8 +181,8 @@
 
 <style>
 	.settings-section {
-		background: #f9fafb;
-		border: 1px solid #e5e7eb;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
 		border-radius: 8px;
 		padding: 1.5rem;
 	}
@@ -182,37 +194,51 @@
 	}
 	.section-header h3 {
 		margin: 0;
-		font-size: 1.125rem;
+		font-size: 0.75rem;
 		font-weight: 600;
-		color: #1f2937;
+		color: var(--color-text-primary);
 	}
 	.stats-grid {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		gap: 1rem;
+		gap: 0.75rem;
 		margin-bottom: 1.5rem;
 	}
 	.stat-card {
-		background: white;
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		padding: 1rem;
-		text-align: center;
+		background: var(--color-bg-inset);
+		border: 1px solid var(--color-border-subtle);
+		border-radius: 6px;
+		padding: 0.75rem;
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
 	}
-	.stat-card.mitre { border-left: 3px solid #3b82f6; }
-	.stat-card.custom { border-left: 3px solid #10b981; }
-	.stat-card.modified { border-left: 3px solid #f59e0b; }
+	.stat-indicator {
+		width: 3px;
+		height: 28px;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+	.stat-indicator.total { background: var(--color-text-secondary); }
+	.stat-indicator.mitre { background: var(--color-accent-primary); }
+	.stat-indicator.custom { background: var(--color-status-accepted-text, #10b981); }
+	.stat-indicator.modified { background: var(--color-status-draft-text, #f59e0b); }
+	.stat-content {
+		display: flex;
+		flex-direction: column;
+	}
 	.stat-value {
-		font-size: 1.75rem;
+		font-size: 1rem;
 		font-weight: 700;
-		color: #1f2937;
+		color: var(--color-text-primary);
+		line-height: 1.2;
 	}
 	.stat-label {
-		font-size: 0.75rem;
-		color: #6b7280;
-		margin-top: 0.25rem;
+		font-size: 0.5625rem;
+		color: var(--color-text-tertiary);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+		line-height: 1.2;
 	}
 	.actions {
 		display: flex;
@@ -223,84 +249,85 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.625rem 1.25rem;
-		background: #3b82f6;
-		color: white;
+		padding: 0.5rem 1rem;
+		background: var(--color-accent-primary);
+		color: var(--color-text-inverse);
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
 		font-weight: 500;
-		font-size: 0.875rem;
-		transition: background 0.2s;
+		font-size: 0.75rem;
+		transition: all 0.2s;
 	}
-	.btn-seed:hover:not(:disabled) { background: #2563eb; }
-	.btn-seed:disabled { background: #9ca3af; cursor: not-allowed; }
+	.btn-seed:hover:not(:disabled) { filter: brightness(1.1); }
+	.btn-seed:disabled { opacity: 0.4; cursor: not-allowed; }
 	.btn-force {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.625rem 1.25rem;
-		background: white;
-		color: #dc2626;
-		border: 1px solid #dc2626;
+		padding: 0.5rem 1rem;
+		background: transparent;
+		color: var(--color-error);
+		border: 1px solid var(--color-error);
 		border-radius: 6px;
 		cursor: pointer;
 		font-weight: 500;
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		transition: all 0.2s;
 	}
-	.btn-force:hover:not(:disabled) { background: #fef2f2; }
-	.btn-force:disabled { opacity: 0.5; cursor: not-allowed; }
+	.btn-force:hover:not(:disabled) { background: color-mix(in srgb, var(--color-error) 10%, transparent); }
+	.btn-force:disabled { opacity: 0.4; cursor: not-allowed; }
 	.btn-refresh {
 		display: flex;
 		align-items: center;
-		padding: 0.625rem;
-		background: white;
-		color: #6b7280;
-		border: 1px solid #d1d5db;
+		padding: 0.5rem;
+		background: var(--color-bg-elevated);
+		color: var(--color-text-tertiary);
+		border: 1px solid var(--color-border-default);
 		border-radius: 6px;
 		cursor: pointer;
 		transition: all 0.2s;
 	}
-	.btn-refresh:hover { background: #f3f4f6; }
+	.btn-refresh:hover { filter: brightness(1.1); }
 	.seed-result {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 0.75rem 1rem;
+		padding: 0.625rem 1rem;
 		border-radius: 6px;
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		margin-bottom: 1rem;
 	}
 	.seed-result.success {
-		background: #f0fdf4;
-		color: #166534;
-		border: 1px solid #bbf7d0;
+		background: color-mix(in srgb, var(--color-status-accepted-text, #10b981) 10%, transparent);
+		color: var(--color-status-accepted-text, #10b981);
+		border: 1px solid color-mix(in srgb, var(--color-status-accepted-text, #10b981) 30%, transparent);
 	}
 	.seed-result.error-msg {
-		background: #fef2f2;
-		color: #991b1b;
-		border: 1px solid #fecaca;
+		background: color-mix(in srgb, var(--color-error) 10%, transparent);
+		color: var(--color-error);
+		border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
 	}
 	.loading-state {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
 		padding: 1rem;
-		color: #6b7280;
+		color: var(--color-text-tertiary);
+		font-size: 0.75rem;
 	}
 	.spinner {
 		width: 1.25rem;
 		height: 1.25rem;
-		border: 2px solid #e5e7eb;
-		border-top-color: #3b82f6;
+		border: 2px solid var(--color-border-default);
+		border-top-color: var(--color-accent-primary);
 		border-radius: 50%;
 		animation: spin 0.6s linear infinite;
 	}
 	.attribution {
 		margin: 0;
-		font-size: 0.7rem;
-		color: #9ca3af;
+		font-size: 0.625rem;
+		color: var(--color-text-tertiary);
 		font-style: italic;
 	}
 	:global(.spinning) { animation: spin 1s linear infinite; }

@@ -799,7 +799,8 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             sfop_rating_auto_generated=True,
             sfop_rating_last_edited_by=None,
             sfop_rating_last_edited_at=None,
-            sfop_rating_override_reason=None
+            sfop_rating_override_reason=None,
+            status=getattr(db_scenario, 'status', 'accepted'),
         )
     else:
         # Handle legacy DBDamageScenario
@@ -850,4 +851,5 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
             sfop_rating_last_edited_by=db_scenario.sfop_rating_last_edited_by,
             sfop_rating_last_edited_at=db_scenario.sfop_rating_last_edited_at,
             sfop_rating_override_reason=db_scenario.sfop_rating_override_reason,
+            status=getattr(db_scenario, 'status', 'accepted'),
         )

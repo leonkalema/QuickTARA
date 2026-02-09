@@ -129,19 +129,19 @@
 	.user-button {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.5rem;
-		background: white;
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
+		gap: 0.5rem;
+		padding: 0.375rem 0.5rem;
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: 6px;
 		cursor: pointer;
-		transition: all 0.2s;
-		min-width: 200px;
+		transition: all 0.15s;
+		min-width: 160px;
 	}
 
 	.user-button:hover {
-		background: #f9fafb;
-		border-color: #d1d5db;
+		background: var(--color-bg-surface-hover);
+		border-color: var(--color-border-default);
 	}
 
 	.user-button:disabled {
@@ -150,17 +150,18 @@
 	}
 
 	.user-avatar {
-		width: 2.5rem;
-		height: 2.5rem;
-		background: #3b82f6;
-		color: white;
+		width: 1.75rem;
+		height: 1.75rem;
+		background: var(--color-accent-primary);
+		color: var(--color-text-inverse);
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-weight: 600;
-		font-size: 0.875rem;
+		font-size: 0.6875rem;
 		text-transform: uppercase;
+		flex-shrink: 0;
 	}
 
 	.user-info {
@@ -173,28 +174,30 @@
 
 	.user-name {
 		font-weight: 500;
-		color: #1f2937;
-		font-size: 0.875rem;
+		color: var(--color-text-primary);
+		font-size: 0.8125rem;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		width: 100%;
+		line-height: 1.2;
 	}
 
 	.user-email {
-		color: #6b7280;
-		font-size: 0.75rem;
+		color: var(--color-text-tertiary);
+		font-size: 0.6875rem;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		width: 100%;
+		line-height: 1.2;
 	}
 
 	.dropdown-arrow {
-		width: 1.25rem;
-		height: 1.25rem;
-		color: #6b7280;
-		transition: transform 0.2s;
+		width: 1rem;
+		height: 1rem;
+		color: var(--color-text-tertiary);
+		transition: transform 0.15s;
 		flex-shrink: 0;
 	}
 
@@ -206,109 +209,105 @@
 		position: absolute;
 		top: 100%;
 		right: 0;
-		margin-top: 0.5rem;
-		background: white;
-		border: 1px solid #e5e7eb;
+		margin-top: 0.375rem;
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
 		border-radius: 8px;
-		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-		min-width: 280px;
+		box-shadow: var(--shadow-lg);
+		min-width: 260px;
 		z-index: 50;
-		animation: dropdownSlide 0.2s ease-out;
+		animation: dropdownSlide 0.15s ease-out;
 	}
 
 	@keyframes dropdownSlide {
-		from {
-			opacity: 0;
-			transform: translateY(-10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
+		from { opacity: 0; transform: translateY(-6px); }
+		to { opacity: 1; transform: translateY(0); }
 	}
 
 	.dropdown-header {
-		padding: 1rem;
+		padding: 0.75rem;
 	}
 
 	.user-details {
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.125rem;
 	}
 
 	.user-full-name {
 		margin: 0;
 		font-weight: 600;
-		color: #1f2937;
-		font-size: 1rem;
+		color: var(--color-text-primary);
+		font-size: 0.875rem;
 	}
 
 	.user-username {
 		margin: 0;
-		color: #6b7280;
-		font-size: 0.875rem;
+		color: var(--color-text-secondary);
+		font-size: 0.8125rem;
 	}
 
 	.user-status {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin-top: 0.5rem;
+		margin-top: 0.375rem;
 	}
 
 	.status-badge {
-		padding: 0.25rem 0.5rem;
+		padding: 0.125rem 0.375rem;
 		border-radius: 4px;
-		font-size: 0.75rem;
-		font-weight: 500;
+		font-size: 0.6875rem;
+		font-weight: 600;
 		text-transform: uppercase;
+		letter-spacing: 0.025em;
 	}
 
 	.status-badge.active {
-		background: #d1fae5;
-		color: #065f46;
+		background: var(--color-success-bg);
+		color: var(--color-success);
 	}
 
 	.status-badge.pending {
-		background: #fef3c7;
-		color: #92400e;
+		background: var(--color-warning-bg);
+		color: var(--color-warning);
 	}
 
 	.verified-badge {
-		color: #059669;
-		font-size: 0.75rem;
+		color: var(--color-success);
+		font-size: 0.6875rem;
 		font-weight: 500;
 	}
 
 	.dropdown-divider {
 		height: 1px;
-		background: #e5e7eb;
+		background: var(--color-border-subtle);
 		margin: 0;
 	}
 
 	.dropdown-actions {
-		padding: 0.5rem;
+		padding: 0.375rem;
 	}
 
 	.dropdown-item {
 		width: 100%;
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.75rem;
+		gap: 0.625rem;
+		padding: 0.5rem 0.625rem;
 		background: none;
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
-		font-size: 0.875rem;
-		color: #374151;
-		transition: background-color 0.2s;
+		font-size: 0.8125rem;
+		color: var(--color-text-secondary);
+		transition: all 0.15s;
 		text-align: left;
 	}
 
 	.dropdown-item:hover {
-		background: #f3f4f6;
+		background: var(--color-bg-surface-hover);
+		color: var(--color-text-primary);
 	}
 
 	.dropdown-item:disabled {
@@ -317,22 +316,23 @@
 	}
 
 	.logout-item {
-		color: #dc2626;
+		color: var(--color-error);
 	}
 
 	.logout-item:hover {
-		background: #fef2f2;
+		background: var(--color-error-bg);
+		color: var(--color-error);
 	}
 
 	.item-icon {
-		width: 1.25rem;
-		height: 1.25rem;
+		width: 1.125rem;
+		height: 1.125rem;
 		flex-shrink: 0;
 	}
 
 	.logout-spinner {
-		width: 1.25rem;
-		height: 1.25rem;
+		width: 1.125rem;
+		height: 1.125rem;
 		border: 2px solid transparent;
 		border-top: 2px solid currentColor;
 		border-radius: 50%;
@@ -341,8 +341,6 @@
 	}
 
 	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
+		to { transform: rotate(360deg); }
 	}
 </style>

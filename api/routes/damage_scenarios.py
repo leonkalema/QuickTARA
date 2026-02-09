@@ -2,11 +2,12 @@
 Damage Scenario API routes
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 import logging
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from api.deps.db import get_db
+from core.audit_helpers import get_user_from_request, audit_create, audit_update, audit_delete, audit_status_change
 from ..models.damage_scenario import (
     DamageScenario, 
     DamageScenarioCreate, 
@@ -71,6 +72,7 @@ def generate_damage_scenario_id(db: Session, scope_id: str) -> str:
 
 @router.post("", response_model=DamageScenario, status_code=status.HTTP_201_CREATED)
 async def create_damage_scenario(
+    request: Request,
     damage_scenario: DamageScenarioCreate,
     db: Session = Depends(get_db)
 ):
@@ -82,7 +84,11 @@ async def create_damage_scenario(
         if not damage_scenario.damage_scenario_id:
             damage_scenario.damage_scenario_id = generate_damage_scenario_id(db, damage_scenario.scope_id)
         
-        return service_create_scenario(db, damage_scenario)
+        result = service_create_scenario(db, damage_scenario)
+        user = get_user_from_request(request)
+        audit_create(db, "damage_scenario", damage_scenario.damage_scenario_id, user, scope_id=damage_scenario.scope_id)
+        db.commit()
+        return result
     except Exception as e:
         logger.error(f"Error creating damage scenario: {e}")
         raise HTTPException(
@@ -112,6 +118,7 @@ async def get_damage_scenario(
 async def update_damage_scenario(
     scenario_id: str, 
     scenario: DamageScenarioUpdate,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """
@@ -124,6 +131,9 @@ async def update_damage_scenario(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Damage scenario with ID {scenario_id} not found"
             )
+        user = get_user_from_request(request)
+        audit_update(db, "damage_scenario", scenario_id, user, summary="Damage scenario updated")
+        db.commit()
         return updated
     except ValueError as e:
         raise HTTPException(
@@ -135,11 +145,14 @@ async def update_damage_scenario(
 @router.delete("/{scenario_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_damage_scenario(
     scenario_id: str, 
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """
     Delete a damage scenario
     """
+    user = get_user_from_request(request)
+    audit_delete(db, "damage_scenario", scenario_id, user)
     success = service_delete_scenario(db, scenario_id)
     if not success:
         raise HTTPException(
@@ -161,7 +174,10 @@ async def accept_damage_scenario(
     ).first()
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
+    old_status = scenario.status or "draft"
     scenario.status = "accepted"
+    from core.audit_helpers import audit_status_change as _asc
+    _asc(db, "damage_scenario", scenario_id, "system", old_status, "accepted", scope_id=getattr(scenario, 'scope_id', None))
     db.commit()
     db.refresh(scenario)
     return scenario

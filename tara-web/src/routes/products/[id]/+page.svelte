@@ -214,7 +214,7 @@
     </div>
   {:else if product}
     <!-- Product Header -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+    <div class="rounded-lg p-6 mb-6" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
       <div class="flex items-start justify-between">
         <div class="flex-1">
           <div class="flex items-center space-x-3 mb-2">

@@ -33,17 +33,17 @@
   }
 </script>
 
-<div class="bg-white rounded-lg border border-gray-200 hover:border-slate-300 transition-all duration-200 group">
+<div class="rounded-lg transition-all duration-200 group" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
   <!-- Card Header -->
-  <div class="p-4 border-b border-gray-100">
+  <div class="p-4" style="border-bottom: 1px solid var(--color-border-subtle);">
     <div class="flex items-start justify-between">
       <div class="flex items-center space-x-3">
         <div class="text-2xl">{getTypeIcon(asset.asset_type)}</div>
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 group-hover:text-slate-700">
+          <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">
             {asset.name}
           </h3>
-          <p class="text-sm text-gray-500">
+          <p class="text-xs" style="color: var(--color-text-tertiary);">
             {asset.asset_type} • v{asset.version}
           </p>
         </div>
@@ -55,29 +55,29 @@
   <div class="p-4 space-y-3">
     <!-- Description -->
     {#if asset.description}
-      <p class="text-sm text-gray-600 line-clamp-2">
+      <p class="text-xs line-clamp-2" style="color: var(--color-text-secondary);">
         {asset.description}
       </p>
     {/if}
 
     <!-- Security Properties (CIA) -->
     <div class="space-y-2">
-      <h4 class="text-xs font-medium text-gray-700 uppercase tracking-wide">Security Properties</h4>
+      <h4 class="text-[10px] font-medium uppercase tracking-wide" style="color: var(--color-text-tertiary);">Security Properties</h4>
       <div class="grid grid-cols-3 gap-2">
         <div class="text-center">
-          <div class="text-xs text-gray-500 mb-1">Confidentiality</div>
+          <div class="text-[10px] mb-1" style="color: var(--color-text-tertiary);">Confidentiality</div>
           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium {getSecurityColor(asset.confidentiality)}">
             {asset.confidentiality}
           </span>
         </div>
         <div class="text-center">
-          <div class="text-xs text-gray-500 mb-1">Integrity</div>
+          <div class="text-[10px] mb-1" style="color: var(--color-text-tertiary);">Integrity</div>
           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium {getSecurityColor(asset.integrity)}">
             {asset.integrity}
           </span>
         </div>
         <div class="text-center">
-          <div class="text-xs text-gray-500 mb-1">Availability</div>
+          <div class="text-[10px] mb-1" style="color: var(--color-text-tertiary);">Availability</div>
           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium {getSecurityColor(asset.availability)}">
             {asset.availability}
           </span>
@@ -104,7 +104,7 @@
     <!-- Data Types -->
     {#if asset.data_types && asset.data_types.length > 0}
       <div>
-        <h4 class="text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Data Types</h4>
+        <h4 class="text-[10px] font-medium uppercase tracking-wide mb-1" style="color: var(--color-text-tertiary);">Data Types</h4>
         <div class="flex flex-wrap gap-1">
           {#each asset.data_types.slice(0, 3) as dataType}
             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">
@@ -112,7 +112,7 @@
             </span>
           {/each}
           {#if asset.data_types.length > 3}
-            <span class="text-xs text-gray-500">
+            <span class="text-[10px]" style="color: var(--color-text-tertiary);">
               +{asset.data_types.length - 3} more
             </span>
           {/if}
@@ -123,13 +123,13 @@
     <!-- Storage Location -->
     {#if asset.storage_location}
       <div>
-        <h4 class="text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Storage Location</h4>
-        <p class="text-sm text-gray-600">{asset.storage_location}</p>
+        <h4 class="text-[10px] font-medium uppercase tracking-wide mb-1" style="color: var(--color-text-tertiary);">Storage Location</h4>
+        <p class="text-xs" style="color: var(--color-text-secondary);">{asset.storage_location}</p>
       </div>
     {/if}
 
     <!-- Footer -->
-    <div class="text-xs text-gray-400 pt-2 border-t border-gray-100">
+    <div class="text-[10px] pt-2" style="color: var(--color-text-tertiary); border-top: 1px solid var(--color-border-subtle);">
       Created: {formatDate(asset.created_at)}
     </div>
   </div>

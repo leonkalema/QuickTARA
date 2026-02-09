@@ -184,88 +184,53 @@
   <title>Products - QuickTARA</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-5">
   <!-- Header -->
-  <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0">
+  <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Product Portfolio</h1>
-      <p class="mt-2 text-gray-600 max-w-2xl">
-        Manage your product ecosystem and threat analysis scope. Select a product to begin your security assessment workflow.
+      <h1 class="text-xl font-bold tracking-tight" style="color: var(--color-text-primary);">Product Portfolio</h1>
+      <p class="text-sm mt-1" style="color: var(--color-text-secondary);">
+        Select a product to begin your TARA workflow.
       </p>
     </div>
     {#if canManageProducts}
       <button
-        class="bg-slate-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors flex items-center space-x-2 self-start"
+        class="px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 self-start"
+        style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
         on:click={() => showCreateModal = true}
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        <span>New Product</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        New Product
       </button>
     {/if}
   </div>
 
-  <!-- Filters and Controls -->
-  <div class="bg-white rounded-lg border border-gray-200 p-4">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-      <!-- Search and Filters -->
-      <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 flex-1">
-        <!-- Search -->
-        <div class="relative flex-1 max-w-md">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </div>
-          <input
-            type="text"
-            placeholder="Search products..."
-            bind:value={searchQuery}
-            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-slate-500 focus:border-slate-500"
-          />
+  <!-- Filters -->
+  <div class="rounded-lg p-3" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div class="relative flex-1 max-w-md">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
-
-
-        <!-- Clear Filters -->
-        {#if hasActiveFilters}
-          <button
-            on:click={clearFilters}
-            class="text-slate-600 hover:text-slate-800 px-3 py-2 text-sm font-medium transition-colors"
-          >
-            Clear filters
-          </button>
-        {/if}
+        <input
+          type="text" placeholder="Search products..." bind:value={searchQuery}
+          class="block w-full pl-9 pr-3 py-2 rounded-md text-sm border-0 focus:ring-1 focus:outline-none"
+          style="background: var(--color-bg-inset); color: var(--color-text-primary); --tw-ring-color: var(--color-border-focus);"
+        />
       </div>
-
-      <!-- View Controls and Count -->
-      <div class="flex items-center space-x-4">
-        <!-- Results Count -->
-        <div class="text-sm text-gray-500">
-          {#if hasActiveFilters}
-            Showing {filteredProducts.length} of {products.length} products
-          {:else}
-            {products.length} products total
-          {/if}
-        </div>
-
-        <!-- View Mode Toggle -->
-        <div class="flex items-center border border-gray-300 rounded-md">
-          <button
-            class="p-2 {viewMode === 'grid' ? 'bg-slate-100 text-slate-700' : 'text-gray-500 hover:text-gray-700'} transition-colors"
-            on:click={() => viewMode = 'grid'}
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-            </svg>
+      <div class="flex items-center gap-3">
+        <span class="text-xs" style="color: var(--color-text-tertiary);">
+          {#if hasActiveFilters}{filteredProducts.length} of {products.length}{:else}{products.length} total{/if}
+        </span>
+        {#if hasActiveFilters}
+          <button on:click={clearFilters} class="text-xs font-medium" style="color: var(--color-text-link);">Clear</button>
+        {/if}
+        <div class="flex rounded-md overflow-hidden" style="border: 1px solid var(--color-border-default);">
+          <button class="p-1.5 transition-colors" style="background: {viewMode === 'grid' ? 'var(--color-bg-elevated)' : 'transparent'}; color: var(--color-text-secondary);" on:click={() => viewMode = 'grid'}>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
           </button>
-          <button
-            class="p-2 {viewMode === 'list' ? 'bg-slate-100 text-slate-700' : 'text-gray-500 hover:text-gray-700'} transition-colors"
-            on:click={() => viewMode = 'list'}
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-            </svg>
+          <button class="p-1.5 transition-colors" style="background: {viewMode === 'list' ? 'var(--color-bg-elevated)' : 'transparent'}; color: var(--color-text-secondary);" on:click={() => viewMode = 'list'}>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
           </button>
         </div>
       </div>
@@ -274,145 +239,77 @@
 
   <!-- Content -->
   {#if isLoading}
-    <div class="flex flex-col justify-center items-center py-16">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600 mb-4"></div>
-      <p class="text-gray-500">Loading products...</p>
+    <div class="flex flex-col items-center py-16">
+      <div class="animate-spin rounded-full h-7 w-7 border-2 border-t-transparent mb-3" style="border-color: var(--color-accent-primary); border-top-color: transparent;"></div>
+      <p class="text-sm" style="color: var(--color-text-tertiary);">Loading products...</p>
     </div>
   {:else if error}
-    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-      <div class="flex items-start">
-        <svg class="w-6 h-6 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800">Error loading products</h3>
-          <p class="text-sm text-red-700 mt-1">{error}</p>
-          <button
-            on:click={loadProducts}
-            class="mt-3 bg-red-100 text-red-800 px-3 py-1 rounded text-sm hover:bg-red-200 transition-colors"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
+    <div class="rounded-lg p-4" style="background: var(--color-error-bg); border: 1px solid var(--color-error);">
+      <h3 class="text-sm font-medium" style="color: var(--color-error);">Error loading products</h3>
+      <p class="text-sm mt-1" style="color: var(--color-text-secondary);">{error}</p>
+      <button on:click={loadProducts} class="mt-2 px-3 py-1 rounded text-xs font-medium transition-colors" style="background: var(--color-error-bg); color: var(--color-error);">Try again</button>
     </div>
   {:else if filteredProducts.length === 0}
-    <div class="text-center py-16">
-      {#if products.length === 0}
-        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-        </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-        <p class="text-gray-500 mb-6 max-w-md mx-auto">
-          Get started by creating your first product to analyze. Define your system boundaries and begin your security assessment.
-        </p>
-        <button
-          class="bg-slate-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-700 transition-colors inline-flex items-center space-x-2"
-          on:click={() => showCreateModal = true}
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          <span>Create Your First Product</span>
-        </button>
-      {:else}
-        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No products match your filters</h3>
-        <p class="text-gray-500 mb-6">
-          Try adjusting your search criteria or clearing filters to see more results.
-        </p>
-        <button
-          on:click={clearFilters}
-          class="text-slate-600 hover:text-slate-800 font-medium"
-        >
-          Clear all filters
-        </button>
-      {/if}
-    </div>
-  {:else}
-    <!-- Grid View -->
-    {#if viewMode === 'grid'}
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {#each filteredProducts as product (product.scope_id)}
-          <ProductCard
-            {product}
-            isSelected={$selectedProduct?.scope_id === product.scope_id}
-            on:select={() => selectedProduct.set(product)}
-          />
-        {/each}
-      </div>
-    {:else}
-      <!-- List View -->
-      <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div class="divide-y divide-gray-200">
-          {#each filteredProducts as product (product.scope_id)}
-            <div 
-              class="p-4 hover:bg-gray-50 cursor-pointer transition-colors {$selectedProduct?.scope_id === product.scope_id ? 'bg-slate-50 border-l-4 border-slate-500' : ''}"
-              on:click={() => selectedProduct.set(product)}
-              role="button"
-              tabindex="0"
-              on:keydown={(e) => e.key === 'Enter' && selectedProduct.set(product)}
-            >
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4 flex-1">
-                  <div class="flex-shrink-0">
-                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center space-x-3">
-                      <h3 class="text-lg font-medium text-gray-900 truncate">
-                        {product.name}
-                      </h3>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                        v{product.version}
-                      </span>
-                    </div>
-                    <div class="flex items-center space-x-4 mt-1">
-                      <span class="text-sm text-gray-500 capitalize">
-                        {product.product_type}
-                      </span>
-                      {#if product.owner_team}
-                        <span class="text-sm text-gray-500 flex items-center">
-                          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                          </svg>
-                          {product.owner_team}
-                        </span>
-                      {/if}
-                      {#if product.created_at}
-                        <span class="text-sm text-gray-500 flex items-center">
-                          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                          </svg>
-                          {new Date(product.created_at).toLocaleDateString()}
-                        </span>
-                      {/if}
-                    </div>
-                    {#if product.description}
-                      <p class="text-sm text-gray-600 mt-2 line-clamp-2">
-                        {product.description}
-                      </p>
-                    {/if}
-                  </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {product.status === 'production' ? 'bg-green-100 text-green-800' : product.status === 'testing' ? 'bg-yellow-100 text-yellow-800' : product.status === 'development' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}">
-                    {product.status}
-                  </span>
-                  {#if $selectedProduct?.scope_id === product.scope_id}
-                    <div class="w-3 h-3 bg-slate-600 rounded-full"></div>
-                  {/if}
-                </div>
-              </div>
-            </div>
-          {/each}
+    {#if products.length === 0}
+      <div class="relative flex flex-col items-center py-16 text-center">
+        <div class="absolute inset-0 radar-bg pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col items-center max-w-md">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+          </div>
+          <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No products yet</h3>
+          <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Define your first product scope to begin threat analysis.</p>
+          <button class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);" on:click={() => showCreateModal = true}>Create Your First Product</button>
         </div>
       </div>
+    {:else}
+      <div class="text-center py-12">
+        <h3 class="text-sm font-medium mb-1" style="color: var(--color-text-primary);">No products match your search</h3>
+        <button on:click={clearFilters} class="text-xs font-medium" style="color: var(--color-text-link);">Clear filters</button>
+      </div>
     {/if}
+  {:else if viewMode === 'grid'}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {#each filteredProducts as product (product.scope_id)}
+        <ProductCard {product} isSelected={$selectedProduct?.scope_id === product.scope_id} on:select={() => selectedProduct.set(product)} />
+      {/each}
+    </div>
+  {:else}
+    <div class="rounded-lg overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+      {#each filteredProducts as product, i (product.scope_id)}
+        <div
+          class="flex items-center justify-between px-4 py-3 cursor-pointer transition-colors"
+          style="border-top: {i > 0 ? '1px solid var(--color-border-subtle)' : 'none'}; background: {$selectedProduct?.scope_id === product.scope_id ? 'var(--color-info-bg)' : 'transparent'};"
+          on:click={() => selectedProduct.set(product)}
+          on:keydown={(e) => e.key === 'Enter' && selectedProduct.set(product)}
+          role="button" tabindex="0"
+        >
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div class="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style="background: var(--color-bg-elevated);">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-accent-primary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium truncate" style="color: var(--color-text-primary);">{product.name}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium" style="background: var(--color-bg-elevated); color: var(--color-text-tertiary);">v{product.version}</span>
+              </div>
+              <div class="text-xs" style="color: var(--color-text-tertiary);">
+                {product.product_type}{#if product.owner_team} · {product.owner_team}{/if}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+              style="background: {product.status === 'production' ? 'var(--color-success-bg)' : product.status === 'development' ? 'var(--color-info-bg)' : 'var(--color-warning-bg)'}; color: {product.status === 'production' ? 'var(--color-success)' : product.status === 'development' ? 'var(--color-info)' : 'var(--color-warning)'};">
+              {product.status}
+            </span>
+            {#if $selectedProduct?.scope_id === product.scope_id}
+              <div class="w-2 h-2 rounded-full" style="background: var(--color-accent-primary);"></div>
+            {/if}
+          </div>
+        </div>
+      {/each}
+    </div>
   {/if}
 </div>
 

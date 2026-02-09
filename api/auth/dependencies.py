@@ -100,13 +100,35 @@ def require_permissions(required_permissions: List[str], organization_id: Option
     return decorator
 
 def get_user_roles(user: User, organization_id: Optional[str] = None) -> List[UserRole]:
-    """Get user's roles, optionally filtered by organization"""
+    """Get user's roles from user_organizations table."""
     if user.is_superuser:
         return [UserRole.TOOL_ADMIN]
-    
-    # This would query the user_organizations table to get roles
-    # For now, returning a placeholder
-    return [UserRole.TARA_ANALYST]  # Default role
+    from sqlalchemy import select
+    from ..deps.db import SessionLocal
+    db = SessionLocal()
+    try:
+        stmt = select(user_organizations.c.role)
+        if organization_id:
+            stmt = stmt.where(
+                user_organizations.c.user_id == user.user_id,
+                user_organizations.c.organization_id == organization_id,
+            )
+        else:
+            stmt = stmt.where(user_organizations.c.user_id == user.user_id)
+        rows = db.execute(stmt).fetchall()
+        roles = []
+        for row in rows:
+            raw = row[0]
+            if isinstance(raw, UserRole):
+                roles.append(raw)
+            else:
+                try:
+                    roles.append(UserRole(str(raw)))
+                except ValueError:
+                    pass
+        return roles if roles else [UserRole.VIEWER]
+    finally:
+        db.close()
 
 def check_user_permissions(user: User, required_permissions: List[str], organization_id: Optional[str] = None) -> bool:
     """Check if user has required permissions"""
