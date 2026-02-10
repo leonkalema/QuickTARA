@@ -22,9 +22,16 @@ from api.models.cra import (
     CraAssessmentListItem,
     ClassifyRequest,
     ClassificationResponse,
+    ConformityModuleResponse,
     RequirementStatusUpdate,
     CraRequirementStatusResponse,
     CraRequirementDefinition,
+    RequirementGuidanceResponse,
+    SubRequirementResponse,
+    RemediationActionResponse,
+    DataProfileUpdate,
+    DataProfileResponse,
+    ApplicabilityResultResponse,
     CompensatingControlCreate,
     CompensatingControlUpdate,
     CompensatingControlResponse,
@@ -43,11 +50,18 @@ from db.cra_models import (
 )
 from db.product_asset_models import ProductScope
 from core.cra_classifier import classify_product, CRA_CLASSIFICATION_QUESTIONS
+from core.cra_product_categories import get_all_categories as get_product_categories
 from core.cra_auto_mapper import (
     auto_map_tara_to_cra,
     CRA_REQUIREMENTS,
     get_requirement_by_id,
     REQUIREMENT_TO_CONTROLS,
+)
+import core.cra_requirement_guidance_part2  # noqa: F401 — registers Part II guidance
+from core.cra_requirement_guidance import get_guidance, get_all_guidance
+from core.cra_data_classifier import (
+    compute_applicability,
+    get_questions as get_data_questions,
 )
 
 router = APIRouter()
@@ -86,6 +100,8 @@ def _enrich_requirement_status(
         data["requirement_name"] = req_def["name"]
         data["requirement_article"] = req_def["article"]
         data["requirement_category"] = req_def["category"]
+        data["annex_part"] = req_def.get("annex_part", "Part I")
+        data["obligation_type"] = req_def.get("obligation_type", "risk_based")
     return data
 
 
@@ -175,10 +191,13 @@ def _build_assessment_response(
         "assessor_id": assessment.assessor_id,
         "status": assessment.status,
         "overall_compliance_pct": assessment.overall_compliance_pct or 0,
+        "support_period_years": getattr(assessment, 'support_period_years', None),
+        "support_period_justification": getattr(assessment, 'support_period_justification', None),
         "support_period_end": assessment.support_period_end,
         "eoss_date": assessment.eoss_date,
         "notes": assessment.notes,
         "automotive_exception": bool(assessment.automotive_exception),
+        "data_profile": assessment.data_profile or {},
         "created_at": assessment.created_at,
         "updated_at": assessment.updated_at,
         "requirement_statuses": enriched_reqs,
@@ -334,14 +353,25 @@ async def update_assessment(
     ).first()
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
-
     update_data = payload.model_dump(exclude_unset=True)
+    sp_years = update_data.get("support_period_years")
+    if sp_years is not None and sp_years < 5:
+        justification = update_data.get("support_period_justification", "")
+        if not justification or len(justification.strip()) < 10:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "CRA requires a minimum 5-year support period. "
+                    "A support period shorter than 5 years requires a "
+                    "documented justification (e.g. product expected to "
+                    "be in use less than 5 years)."
+                ),
+            )
     for key, value in update_data.items():
         if hasattr(value, "value"):
             value = value.value
         setattr(assessment, key, value)
     assessment.updated_at = datetime.now()
-
     db.commit()
     db.refresh(assessment)
     product = db.query(ProductScope).filter(
@@ -370,6 +400,26 @@ async def delete_assessment(
     logger.info("Deleted CRA assessment %s", assessment_id)
 
 
+# ──────────────────────── Product Categories ────────────────────────
+
+
+@router.get("/product-categories")
+async def list_product_categories():
+    """Return all CRA product categories from Annexes III/IV for classification UI."""
+    categories = get_product_categories()
+    return [
+        {
+            "id": cat.id,
+            "name": cat.name,
+            "classification": cat.classification,
+            "description": cat.description,
+            "examples": cat.examples,
+            "annex_ref": cat.annex_ref,
+        }
+        for cat in categories
+    ]
+
+
 # ──────────────────────── Classification ────────────────────────
 
 
@@ -383,33 +433,52 @@ async def classify_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Run classification questionnaire and save results."""
+    """Classify product by core functionality category per EU 2025/2392."""
     assessment = db.query(CraAssessment).filter(
         CraAssessment.id == assessment_id
     ).first()
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
-
     result = classify_product(
         answers=payload.answers,
         automotive_exception=payload.automotive_exception,
+        category_id=payload.category_id,
+        uses_harmonised_standard=payload.uses_harmonised_standard,
+        is_open_source_public=payload.is_open_source_public,
     )
+    classification_data = {
+        "category_id": payload.category_id,
+        "uses_harmonised_standard": payload.uses_harmonised_standard,
+        "is_open_source_public": payload.is_open_source_public,
+        **payload.answers,
+    }
     assessment.classification = result.classification
-    assessment.classification_answers = payload.answers
+    assessment.classification_answers = classification_data
     assessment.compliance_deadline = result.compliance_deadline
     assessment.automotive_exception = result.automotive_exception
     assessment.status = "in_progress"
     assessment.updated_at = datetime.now()
-
     db.commit()
     logger.info(
-        "Classified assessment %s as %s",
-        assessment_id, result.classification,
+        "Classified assessment %s as %s (category: %s)",
+        assessment_id, result.classification, result.category_name,
     )
+    cm = result.conformity_module
     return ClassificationResponse(
         classification=result.classification,
+        category_id=result.category_id,
+        category_name=result.category_name,
         conformity_assessment=result.conformity_assessment,
+        conformity_module=ConformityModuleResponse(
+            module_id=cm.module_id,
+            name=cm.name,
+            description=cm.description,
+            mandatory=cm.mandatory,
+            alternatives=list(cm.alternatives),
+            rationale=cm.rationale,
+        ),
         compliance_deadline=result.compliance_deadline,
+        reporting_deadline=result.reporting_deadline,
         cost_estimate_min=result.cost_estimate_min,
         cost_estimate_max=result.cost_estimate_max,
         automotive_exception=result.automotive_exception,
@@ -471,6 +540,102 @@ async def auto_map_assessment(
     return {"mapped_count": len(mappings), "mappings": mapping_dicts}
 
 
+# ──────────────────────── Data Classification ────────────────────────
+
+
+@router.get("/data-classification-questions")
+async def get_data_classification_questions():
+    """Return the list of data profile questions for the UI."""
+    return get_data_questions()
+
+
+@router.get(
+    "/assessments/{assessment_id}/data-profile",
+    response_model=DataProfileResponse,
+)
+async def get_data_profile(
+    assessment_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get the current data profile and computed applicability."""
+    assessment = db.query(CraAssessment).filter(
+        CraAssessment.id == assessment_id
+    ).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    profile = assessment.data_profile or {}
+    results = compute_applicability(profile)
+    na_count = sum(1 for r in results if not r.applicable)
+    return DataProfileResponse(
+        profile=profile,
+        applicability=[
+            ApplicabilityResultResponse(
+                requirement_id=r.requirement_id,
+                applicable=r.applicable,
+                justification=r.justification,
+            )
+            for r in results
+        ],
+        auto_resolved_count=na_count,
+    )
+
+
+@router.put(
+    "/assessments/{assessment_id}/data-profile",
+    response_model=DataProfileResponse,
+)
+async def update_data_profile(
+    assessment_id: str,
+    payload: DataProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Save data profile and auto-resolve non-applicable requirements."""
+    assessment = db.query(CraAssessment).filter(
+        CraAssessment.id == assessment_id
+    ).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    profile = payload.model_dump(exclude_unset=False)
+    profile = {k: bool(v) for k, v in profile.items() if v is not None}
+    assessment.data_profile = profile
+    assessment.updated_at = datetime.now()
+    results = compute_applicability(profile)
+    na_count = 0
+    for r in results:
+        if not r.applicable:
+            req_status = db.query(CraRequirementStatusRecord).filter(
+                CraRequirementStatusRecord.assessment_id == assessment_id,
+                CraRequirementStatusRecord.requirement_id == r.requirement_id,
+            ).first()
+            if req_status and req_status.status != "not_applicable":
+                req_status.status = "not_applicable"
+                req_status.evidence_notes = r.justification
+                req_status.updated_at = datetime.now()
+            na_count += 1
+    db.flush()
+    db.expire(assessment, ["requirement_statuses"])
+    assessment.overall_compliance_pct = _compute_compliance_pct(assessment)
+    db.commit()
+    logger.info(
+        "Data profile saved for %s — %d requirements auto-resolved as N/A",
+        assessment_id, na_count,
+    )
+    return DataProfileResponse(
+        profile=profile,
+        applicability=[
+            ApplicabilityResultResponse(
+                requirement_id=r.requirement_id,
+                applicable=r.applicable,
+                justification=r.justification,
+            )
+            for r in results
+        ],
+        auto_resolved_count=na_count,
+    )
+
+
 # ──────────────────────── Requirement Statuses ────────────────────────
 
 
@@ -481,6 +646,64 @@ async def get_requirements():
         CraRequirementDefinition(**req)
         for req in CRA_REQUIREMENTS
     ]
+
+
+def _serialize_guidance(g) -> RequirementGuidanceResponse:
+    """Convert a RequirementGuidance dataclass to Pydantic response."""
+    return RequirementGuidanceResponse(
+        requirement_id=g.requirement_id,
+        annex_section=g.annex_section,
+        cra_article=g.cra_article,
+        priority=g.priority,
+        deadline_note=g.deadline_note,
+        explanation=g.explanation,
+        regulatory_text=g.regulatory_text,
+        sub_requirements=[
+            SubRequirementResponse(
+                description=s.description,
+                check_evidence=s.check_evidence,
+                typical_gap=s.typical_gap,
+            )
+            for s in g.sub_requirements
+        ],
+        evidence_checklist=list(g.evidence_checklist),
+        investigation_prompts=list(g.investigation_prompts),
+        common_gaps=list(g.common_gaps),
+        remediation_actions=[
+            RemediationActionResponse(
+                action=a.action,
+                owner_hint=a.owner_hint,
+                effort_days=a.effort_days,
+            )
+            for a in g.remediation_actions
+        ],
+        effort_estimate=g.effort_estimate,
+        mapped_controls=list(g.mapped_controls),
+        mapped_standards=list(g.mapped_standards),
+        tara_link=g.tara_link,
+    )
+
+
+@router.get(
+    "/guidance",
+    response_model=List[RequirementGuidanceResponse],
+)
+async def get_all_requirement_guidance():
+    """Return coaching guidance for all 18 CRA requirements."""
+    all_guidance = get_all_guidance()
+    return [_serialize_guidance(g) for g in all_guidance.values()]
+
+
+@router.get(
+    "/guidance/{requirement_id}",
+    response_model=RequirementGuidanceResponse,
+)
+async def get_requirement_guidance(requirement_id: str):
+    """Return coaching guidance for a single CRA requirement."""
+    g = get_guidance(requirement_id)
+    if not g:
+        raise HTTPException(status_code=404, detail=f"No guidance for {requirement_id}")
+    return _serialize_guidance(g)
 
 
 @router.put(
@@ -507,11 +730,14 @@ async def update_requirement_status(
         setattr(record, key, value)
     record.updated_at = datetime.now()
 
+    # Flush so the updated record is visible through relationships
+    db.flush()
     # Recalculate overall compliance
     assessment = db.query(CraAssessment).filter(
         CraAssessment.id == record.assessment_id
     ).first()
     if assessment:
+        db.expire(assessment, ["requirement_statuses"])
         assessment.overall_compliance_pct = _compute_compliance_pct(assessment)
         assessment.updated_at = datetime.now()
 
@@ -746,12 +972,17 @@ async def get_gap_analysis(
                 "count": req_status.mapped_artifact_count or 0,
                 "notes": req_status.evidence_notes or "",
             })
-        gaps.append({
+        guidance = get_guidance(req_status.requirement_id)
+        annex_part = req_def.get("annex_part", "Part I")
+        obligation_type = req_def.get("obligation_type", "risk_based")
+        gap_item: dict = {
             "requirement_status_id": req_status.id,
             "requirement_id": req_status.requirement_id,
             "requirement_name": req_def.get("name", req_status.requirement_id),
             "category": req_def.get("category", "technical"),
             "article": req_def.get("article", ""),
+            "annex_part": annex_part,
+            "obligation_type": obligation_type,
             "status": req_status.status,
             "is_gap": not is_compliant,
             "risk_level": risk_level,
@@ -761,8 +992,52 @@ async def get_gap_analysis(
             "owner": req_status.owner,
             "target_date": req_status.target_date,
             "evidence_notes": req_status.evidence_notes or "",
-        })
+        }
+        if guidance:
+            gap_item["guidance"] = {
+                "priority": guidance.priority,
+                "deadline_note": guidance.deadline_note,
+                "effort_estimate": guidance.effort_estimate,
+                "cra_article": guidance.cra_article,
+                "explanation": guidance.explanation,
+                "common_gaps": list(guidance.common_gaps),
+                "sub_requirements": [
+                    {
+                        "description": s.description,
+                        "check_evidence": s.check_evidence,
+                        "typical_gap": s.typical_gap,
+                    }
+                    for s in guidance.sub_requirements
+                ],
+                "remediation_actions": [
+                    {
+                        "action": a.action,
+                        "owner_hint": a.owner_hint,
+                        "effort_days": a.effort_days,
+                    }
+                    for a in guidance.remediation_actions
+                ],
+                "mapped_standards": list(guidance.mapped_standards),
+            }
+        gaps.append(gap_item)
     gap_items = [g for g in gaps if g["is_gap"]]
+    mitigated = sum(
+        1 for g in gap_items
+        if g["applied_controls"] and g["risk_level"] in ("low", "none")
+    )
+    unmitigated = sum(
+        1 for g in gap_items
+        if g["risk_level"] in ("high", "critical") and not g["applied_controls"]
+    )
+    total_effort = sum(
+        a["effort_days"]
+        for g in gap_items
+        if g.get("guidance")
+        for a in g["guidance"].get("remediation_actions", [])
+    )
+    risk_reduction_pct = (
+        int((mitigated / len(gap_items)) * 100) if gap_items else 0
+    )
     return {
         "assessment_id": assessment_id,
         "product_id": assessment.product_id,
@@ -777,6 +1052,10 @@ async def get_gap_analysis(
             "critical_risk": sum(1 for g in gap_items if g["risk_level"] == "critical"),
             "high_risk": sum(1 for g in gap_items if g["risk_level"] == "high"),
             "with_controls": sum(1 for g in gap_items if g["applied_controls"]),
+            "mitigated": mitigated,
+            "unmitigated": unmitigated,
+            "total_remediation_effort_days": total_effort,
+            "risk_reduction_pct": risk_reduction_pct,
         },
     }
 

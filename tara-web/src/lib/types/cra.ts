@@ -44,27 +44,108 @@ export interface InventorySummary {
   readonly oems: string[];
 }
 
+export interface DataProfileQuestion {
+  readonly key: string;
+  readonly label: string;
+  readonly help_text: string;
+  readonly category: string;
+}
+
+export interface DataProfile {
+  readonly [key: string]: boolean;
+}
+
+export interface ApplicabilityResult {
+  readonly requirement_id: string;
+  readonly applicable: boolean;
+  readonly justification: string;
+}
+
+export interface DataProfileResponse {
+  readonly profile: DataProfile;
+  readonly applicability: readonly ApplicabilityResult[];
+  readonly auto_resolved_count: number;
+}
+
 export interface ClassificationQuestion {
   readonly id: string;
   readonly text: string;
   readonly hint: string;
 }
 
+export interface ConformityModule {
+  readonly module_id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly mandatory: boolean;
+  readonly alternatives: readonly string[];
+  readonly rationale: string;
+}
+
 export interface ClassificationResult {
   readonly classification: CraClassification;
+  readonly category_id?: string;
+  readonly category_name: string;
   readonly conformity_assessment: string;
+  readonly conformity_module: ConformityModule;
   readonly compliance_deadline: string;
+  readonly reporting_deadline: string;
   readonly cost_estimate_min: number;
   readonly cost_estimate_max: number;
   readonly automotive_exception: boolean;
   readonly rationale: string;
 }
 
+export interface ProductCategory {
+  readonly id: string;
+  readonly name: string;
+  readonly classification: CraClassification;
+  readonly description: string;
+  readonly examples: string;
+  readonly annex_ref: string;
+}
+
+export type AnnexPart = 'Part I' | 'Part II' | 'Documentation';
+export type ObligationType = 'risk_based' | 'mandatory';
+
 export interface CraRequirementDefinition {
   readonly id: string;
   readonly name: string;
   readonly article: string;
   readonly category: string;
+  readonly annex_part: AnnexPart;
+  readonly obligation_type: ObligationType;
+}
+
+export interface SubRequirement {
+  readonly description: string;
+  readonly check_evidence: string;
+  readonly typical_gap: string;
+}
+
+export interface RemediationAction {
+  readonly action: string;
+  readonly owner_hint: string;
+  readonly effort_days: number;
+}
+
+export interface RequirementGuidance {
+  readonly requirement_id: string;
+  readonly annex_section: string;
+  readonly cra_article: string;
+  readonly priority: string;
+  readonly deadline_note: string;
+  readonly explanation: string;
+  readonly regulatory_text: string;
+  readonly sub_requirements: readonly SubRequirement[];
+  readonly evidence_checklist: readonly string[];
+  readonly investigation_prompts: readonly string[];
+  readonly common_gaps: readonly string[];
+  readonly remediation_actions: readonly RemediationAction[];
+  readonly effort_estimate: string;
+  readonly mapped_controls: readonly string[];
+  readonly mapped_standards: readonly string[];
+  readonly tara_link: string;
 }
 
 export interface CraRequirementStatusRecord {
@@ -124,6 +205,8 @@ export interface CraAssessment {
   readonly assessor_id?: string;
   readonly status: CraAssessmentStatus;
   readonly overall_compliance_pct: number;
+  readonly support_period_years?: number;
+  readonly support_period_justification?: string;
   readonly support_period_end?: string;
   readonly eoss_date?: string;
   readonly notes?: string;
@@ -160,14 +243,19 @@ export interface CreateAssessmentRequest {
 export interface UpdateAssessmentRequest {
   readonly status?: CraAssessmentStatus;
   readonly product_type?: CraProductType;
+  readonly support_period_years?: number;
+  readonly support_period_justification?: string;
   readonly support_period_end?: string;
   readonly eoss_date?: string;
   readonly notes?: string;
 }
 
 export interface ClassifyRequest {
-  readonly answers: Record<string, boolean>;
+  readonly category_id?: string;
+  readonly uses_harmonised_standard: boolean;
+  readonly is_open_source_public: boolean;
   readonly automotive_exception: boolean;
+  readonly answers?: Record<string, boolean>;
 }
 
 export interface UpdateRequirementRequest {
@@ -231,12 +319,26 @@ export interface CompensatingControlCatalogItem {
 
 export type RiskLevel = 'none' | 'low' | 'medium' | 'high' | 'critical';
 
+export interface GapGuidance {
+  readonly priority: string;
+  readonly deadline_note: string;
+  readonly effort_estimate: string;
+  readonly cra_article: string;
+  readonly explanation: string;
+  readonly common_gaps: readonly string[];
+  readonly sub_requirements: readonly SubRequirement[];
+  readonly remediation_actions: readonly RemediationAction[];
+  readonly mapped_standards: readonly string[];
+}
+
 export interface GapRequirementItem {
   readonly requirement_status_id: string;
   readonly requirement_id: string;
   readonly requirement_name: string;
   readonly category: string;
   readonly article: string;
+  readonly annex_part: AnnexPart;
+  readonly obligation_type: ObligationType;
   readonly status: CraRequirementStatus;
   readonly is_gap: boolean;
   readonly risk_level: RiskLevel;
@@ -254,6 +356,7 @@ export interface GapRequirementItem {
   readonly owner?: string;
   readonly target_date?: string;
   readonly evidence_notes?: string;
+  readonly guidance?: GapGuidance;
 }
 
 export interface GapAnalysisSummary {
@@ -263,6 +366,10 @@ export interface GapAnalysisSummary {
   readonly critical_risk: number;
   readonly high_risk: number;
   readonly with_controls: number;
+  readonly mitigated: number;
+  readonly unmitigated: number;
+  readonly total_remediation_effort_days: number;
+  readonly risk_reduction_pct: number;
 }
 
 export interface GapAnalysisResponse {

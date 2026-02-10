@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { CraRequirementStatusRecord, UpdateRequirementRequest } from '$lib/types/cra';
+  import type { CraRequirementStatusRecord, UpdateRequirementRequest, RequirementGuidance } from '$lib/types/cra';
   import { craApi } from '$lib/api/craApi';
   import { userApi, type User } from '$lib/api/userApi';
   import { ChevronDown, ChevronRight, Check, Circle, AlertTriangle, Minus } from '@lucide/svelte';
+  import CraRequirementGuidancePanel from './CraRequirementGuidance.svelte';
 
   interface Props {
     requirements: CraRequirementStatusRecord[];
@@ -18,12 +19,20 @@
   let saving = $state(false);
   let validationError: string | null = $state(null);
   let orgUsers: User[] = $state([]);
+  let guidanceMap: Record<string, RequirementGuidance> = $state({});
 
   onMount(async () => {
     try {
-      orgUsers = await userApi.getUsers();
+      const [users, guidanceList] = await Promise.all([
+        userApi.getUsers(),
+        craApi.getAllGuidance(),
+      ]);
+      orgUsers = users;
+      for (const g of guidanceList) {
+        guidanceMap[g.requirement_id] = g;
+      }
     } catch (err) {
-      console.error('Failed to load users:', err);
+      console.error('Failed to load data:', err);
     }
   });
 
@@ -185,8 +194,11 @@
                 </div>
               {/if}
             </div>
+            {#if guidanceMap[req.requirement_id]}
+              <CraRequirementGuidancePanel guidance={guidanceMap[req.requirement_id]} />
+            {/if}
             <button
-              class="px-3 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer"
+              class="mt-3 px-3 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer"
               style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
               onclick={() => startEdit(req)}
             >

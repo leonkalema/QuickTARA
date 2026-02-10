@@ -97,10 +97,13 @@ class CraAssessment(Base):
         nullable=False
     )
     overall_compliance_pct = Column(Integer, default=0)
+    support_period_years = Column(Integer, nullable=True)
+    support_period_justification = Column(Text, nullable=True)
     support_period_end = Column(String, nullable=True)
     eoss_date = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     automotive_exception = Column(Boolean, default=False)
+    data_profile = Column(JSON, default=lambda: {})
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(
         DateTime, default=datetime.now, onupdate=datetime.now

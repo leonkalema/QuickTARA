@@ -11,9 +11,14 @@ import type {
   UpdateAssessmentRequest,
   ClassifyRequest,
   ClassificationResult,
+  ProductCategory,
   UpdateRequirementRequest,
   CraRequirementStatusRecord,
   CraRequirementDefinition,
+  RequirementGuidance,
+  DataProfileQuestion,
+  DataProfile,
+  DataProfileResponse,
   CreateCompensatingControlRequest,
   UpdateCompensatingControlRequest,
   CompensatingControl,
@@ -101,7 +106,12 @@ export const craApi = {
     if (!res.ok) throw new CraApiError(`Failed to delete assessment: ${res.status}`, res.status);
   },
 
-  // ── Classification ───────────────────────────────────────────
+  // ── Product Categories & Classification ─────────────────────
+
+  async getProductCategories(): Promise<ProductCategory[]> {
+    const res = await fetch(`${API_BASE_URL}/cra/product-categories`, { headers: getAuthHeaders() });
+    return handleResponse<ProductCategory[]>(res);
+  },
 
   async classify(assessmentId: string, payload: ClassifyRequest): Promise<ClassificationResult> {
     const res = await fetch(`${API_BASE_URL}/cra/assessments/${assessmentId}/classify`, {
@@ -141,6 +151,37 @@ export const craApi = {
       body: JSON.stringify(payload),
     });
     return handleResponse<CraRequirementStatusRecord>(res);
+  },
+
+  async getAllGuidance(): Promise<RequirementGuidance[]> {
+    const res = await fetch(`${API_BASE_URL}/cra/guidance`, { headers: getAuthHeaders() });
+    return handleResponse<RequirementGuidance[]>(res);
+  },
+
+  async getGuidance(requirementId: string): Promise<RequirementGuidance> {
+    const res = await fetch(`${API_BASE_URL}/cra/guidance/${requirementId}`, { headers: getAuthHeaders() });
+    return handleResponse<RequirementGuidance>(res);
+  },
+
+  // ── Data Classification ────────────────────────────────────
+
+  async getDataClassificationQuestions(): Promise<DataProfileQuestion[]> {
+    const res = await fetch(`${API_BASE_URL}/cra/data-classification-questions`, { headers: getAuthHeaders() });
+    return handleResponse<DataProfileQuestion[]>(res);
+  },
+
+  async getDataProfile(assessmentId: string): Promise<DataProfileResponse> {
+    const res = await fetch(`${API_BASE_URL}/cra/assessments/${assessmentId}/data-profile`, { headers: getAuthHeaders() });
+    return handleResponse<DataProfileResponse>(res);
+  },
+
+  async updateDataProfile(assessmentId: string, profile: DataProfile): Promise<DataProfileResponse> {
+    const res = await fetch(`${API_BASE_URL}/cra/assessments/${assessmentId}/data-profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profile),
+    });
+    return handleResponse<DataProfileResponse>(res);
   },
 
   // ── Compensating Controls ────────────────────────────────────

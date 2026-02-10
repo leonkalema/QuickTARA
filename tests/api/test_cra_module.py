@@ -38,65 +38,72 @@ class TestClassificationLogic:
     """Test the CRA classification questionnaire scoring."""
 
     def test_default_classification(self) -> None:
-        """0-1 yes answers -> Default category."""
-        answers = {f"q{i}": False for i in range(1, 7)}
-        result = classify_product(answers)
+        """No category_id -> Default category."""
+        result = classify_product({})
         assert result.classification == "default"
         assert result.compliance_deadline == "2027-12-11"
         assert result.cost_estimate_max <= 5000
 
     def test_class_i_classification(self) -> None:
-        """2-3 yes answers -> Class I."""
-        answers = {"q1": True, "q2": True, "q3": False, "q4": False, "q5": False, "q6": False}
-        result = classify_product(answers)
+        """Class I category without harmonised standard -> Module B+C."""
+        result = classify_product({}, category_id="CI-01")
         assert result.classification == "class_i"
-        assert result.compliance_deadline == "2026-08-30"
+        assert result.compliance_deadline == "2027-12-11"
+        assert "B+C" in result.conformity_module.name or "Module B" in result.conformity_module.name
+
+    def test_class_i_with_harmonised_standard(self) -> None:
+        """Class I + harmonised standard -> Module A."""
+        result = classify_product({}, category_id="CI-01", uses_harmonised_standard=True)
+        assert result.classification == "class_i"
+        assert "Module A" in result.conformity_module.name
 
     def test_class_ii_classification(self) -> None:
-        """4+ yes answers -> Class II."""
-        answers = {"q1": True, "q2": True, "q3": True, "q4": True, "q5": False, "q6": False}
-        result = classify_product(answers)
+        """Class II category -> Module B+C mandatory."""
+        result = classify_product({}, category_id="CII-01")
         assert result.classification == "class_ii"
-        assert result.compliance_deadline == "2026-10-30"
-
-    def test_class_ii_with_tamper_resistance(self) -> None:
-        """3 yes + tamper-resistant -> Class II."""
-        answers = {"q1": True, "q2": True, "q3": True, "q4": False, "q5": False, "q6": False}
-        result = classify_product(answers)
-        assert result.classification == "class_ii"
+        assert result.compliance_deadline == "2027-12-11"
+        assert result.conformity_module.mandatory is True
 
     def test_critical_classification(self) -> None:
-        """All 6 yes + HSM -> Critical."""
-        answers = {f"q{i}": True for i in range(1, 7)}
-        result = classify_product(answers)
+        """Critical category -> Module B+C mandatory."""
+        result = classify_product({}, category_id="CR-01")
         assert result.classification == "critical"
-        assert result.compliance_deadline == "2026-10-30"
+        assert result.compliance_deadline == "2027-12-11"
         assert result.cost_estimate_min >= 50000
 
     def test_automotive_exception_flag(self) -> None:
         """Automotive exception passes through."""
-        answers = {"q1": True, "q2": True, "q3": False, "q4": False, "q5": False, "q6": False}
-        result = classify_product(answers, automotive_exception=True)
+        result = classify_product({}, category_id="CI-01", automotive_exception=True)
         assert result.automotive_exception is True
 
     def test_result_is_frozen_dataclass(self) -> None:
         """ClassificationResult is immutable."""
-        answers = {f"q{i}": False for i in range(1, 7)}
-        result = classify_product(answers)
+        result = classify_product({})
         assert isinstance(result, ClassificationResult)
         with pytest.raises(AttributeError):
             result.classification = "critical"  # type: ignore
 
-    def test_missing_answers_default_to_false(self) -> None:
-        """Missing question IDs default to False."""
+    def test_missing_category_defaults_to_default(self) -> None:
+        """No category_id -> Default."""
         result = classify_product({})
         assert result.classification == "default"
 
-    def test_questions_list_has_six_items(self) -> None:
-        """Classification questionnaire has exactly 6 questions."""
-        assert len(CRA_CLASSIFICATION_QUESTIONS) == 6
+    def test_questions_list_has_three_items(self) -> None:
+        """Classification questionnaire has exactly 3 questions."""
+        assert len(CRA_CLASSIFICATION_QUESTIONS) == 3
         ids = {q["id"] for q in CRA_CLASSIFICATION_QUESTIONS}
-        assert ids == {"q1", "q2", "q3", "q4", "q5", "q6"}
+        assert ids == {"q_category", "q_harmonised_standard", "q_open_source"}
+
+    def test_open_source_class_ii_gets_module_a(self) -> None:
+        """Open-source Class II with public docs -> Module A."""
+        result = classify_product({}, category_id="CII-01", is_open_source_public=True)
+        assert result.classification == "class_ii"
+        assert "Module A" in result.conformity_module.name
+
+    def test_reporting_deadline(self) -> None:
+        """All products have 11 Sep 2026 reporting deadline."""
+        result = classify_product({})
+        assert result.reporting_deadline == "2026-09-11"
 
 
 class TestCraRequirements:
@@ -193,15 +200,27 @@ class TestPydanticModels:
         """ClassificationResponse validation."""
         data = {
             "classification": "class_i",
-            "conformity_assessment": "Internal assessment",
-            "compliance_deadline": "2026-08-30",
+            "category_name": "Identity management systems",
+            "conformity_assessment": "Module B+C",
+            "conformity_module": {
+                "module_id": "module_bc",
+                "name": "Module B+C",
+                "description": "EU-type examination",
+                "mandatory": True,
+                "alternatives": ["Module H"],
+                "rationale": "Class I without harmonised standard",
+            },
+            "compliance_deadline": "2027-12-11",
+            "reporting_deadline": "2026-09-11",
             "cost_estimate_min": 5000,
             "cost_estimate_max": 20000,
             "automotive_exception": False,
-            "rationale": "2/6 criteria met",
+            "rationale": "Category CI-01 matched",
         }
         resp = ClassificationResponse(**data)
         assert resp.classification == "class_i"
+        assert resp.conformity_module.mandatory is True
+        assert resp.reporting_deadline == "2026-09-11"
 
 
 class TestRouteImports:

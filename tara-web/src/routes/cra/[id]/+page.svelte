@@ -10,21 +10,27 @@
   import CraClassificationWizard from '../../../features/cra/components/CraClassificationWizard.svelte';
   import CraGapAnalysis from '../../../features/cra/components/CraGapAnalysis.svelte';
   import CraClassificationImpact from '../../../features/cra/components/CraClassificationImpact.svelte';
+  import CraDataClassification from '../../../features/cra/components/CraDataClassification.svelte';
   import {
     ArrowLeft, Shield, Calendar, Wand2, Trash2,
-    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package
+    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package, Database
   } from '@lucide/svelte';
 
   let assessment: CraAssessment | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
-  let activeTab: 'overview' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' = $state('overview');
+  let activeTab: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' = $state('overview');
   let showClassifyWizard = $state(false);
   let autoMapping = $state(false);
   let deleting = $state(false);
   let showDeleteConfirm = $state(false);
   let autoMapResult: { mapped: number; total: number } | null = $state(null);
   let nextStepsDismissed = $state(false);
+  let spYears: number | null = $state(null);
+  let spJustification: string = $state('');
+  let spSaving: boolean = $state(false);
+  let spError: string | null = $state(null);
+  let spSuccess: boolean = $state(false);
 
   const assessmentId: string = $derived($page.params.id ?? '');
 
@@ -50,11 +56,36 @@
     loading = true;
     error = null;
     try {
-      if (assessmentId) assessment = await craApi.getAssessment(assessmentId);
+      if (assessmentId) {
+        assessment = await craApi.getAssessment(assessmentId);
+        spYears = assessment.support_period_years ?? null;
+        spJustification = assessment.support_period_justification ?? '';
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to load assessment';
     } finally {
       loading = false;
+    }
+  }
+
+  async function saveSupportPeriod(): Promise<void> {
+    if (!assessmentId || spYears === null) return;
+    spSaving = true;
+    spError = null;
+    spSuccess = false;
+    try {
+      await craApi.updateAssessment(assessmentId, {
+        support_period_years: spYears,
+        support_period_justification: spYears < 5 ? spJustification : undefined,
+      });
+      spSuccess = true;
+      setTimeout(() => { spSuccess = false; }, 2000);
+      await loadAssessment();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      spError = msg.includes('5-year') ? msg : 'Failed to save support period.';
+    } finally {
+      spSaving = false;
     }
   }
 
@@ -128,8 +159,9 @@
     draft: 'Draft', in_progress: 'In Progress', complete: 'Complete',
   };
 
-  const tabs: Array<{ id: 'overview' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory'; label: string; icon: any }> = $derived([
+  const tabs: Array<{ id: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory'; label: string; icon: any }> = $derived([
     { id: 'overview' as const, label: 'Overview', icon: FileText },
+    { id: 'data_profile' as const, label: 'Data Profile', icon: Database },
     { id: 'requirements' as const, label: 'Requirements', icon: ShieldCheck },
     { id: 'gap_analysis' as const, label: 'Gap Analysis', icon: BarChart3 },
     ...(isLegacyProduct() ? [{ id: 'controls' as const, label: 'Compensating Controls', icon: Settings2 }] : []),
@@ -251,10 +283,18 @@
       <div class="grid grid-cols-4 gap-4">
         <div>
           <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Compliance</div>
-          <div class="flex items-center gap-2">
-            <div class="flex-1 h-2 rounded-full" style="background: var(--color-bg-surface-hover);">
-              <div class="h-2 rounded-full transition-all" style="width: {assessment.overall_compliance_pct}%; background: {getComplianceColor(assessment.overall_compliance_pct)};"></div>
-            </div>
+          <div class="flex items-center gap-3">
+            <svg width="40" height="40" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" fill="none" style="stroke: var(--color-bg-surface-hover);" stroke-width="4" />
+              <circle
+                cx="20" cy="20" r="16" fill="none"
+                style="stroke: {getComplianceColor(assessment.overall_compliance_pct)};"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-dasharray={`${(assessment.overall_compliance_pct / 100) * 100.53} 100.53`}
+                transform="rotate(-90 20 20)"
+              />
+            </svg>
             <span class="text-sm font-bold" style="color: {getComplianceColor(assessment.overall_compliance_pct)};">
               {assessment.overall_compliance_pct}%
             </span>
@@ -440,6 +480,57 @@
         </div>
       </div>
 
+      <!-- Support Period -->
+      <div class="rounded-lg border p-4" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+        <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--color-text-tertiary);">
+          Support Period (CRA min. 5 years)
+        </div>
+        <div class="flex items-end gap-3">
+          <div class="flex-1 max-w-[140px]">
+            <label for="sp-years" class="block text-xs mb-1" style="color: var(--color-text-secondary);">Years</label>
+            <input
+              id="sp-years"
+              type="number"
+              min="1"
+              max="30"
+              class="w-full rounded border px-2.5 py-1.5 text-sm"
+              style="background: var(--color-bg-surface); border-color: var(--color-border-default); color: var(--color-text-primary);"
+              bind:value={spYears}
+              placeholder="e.g. 10"
+            />
+          </div>
+          {#if spYears !== null && spYears < 5}
+            <div class="flex-1">
+              <label for="sp-justification" class="block text-xs mb-1" style="color: var(--color-status-error);">Justification required *</label>
+              <input
+                id="sp-justification"
+                type="text"
+                class="w-full rounded border px-2.5 py-1.5 text-sm"
+                style="background: var(--color-bg-surface); border-color: var(--color-status-error); color: var(--color-text-primary);"
+                bind:value={spJustification}
+                placeholder="e.g. Subscription software, 2-year lifecycle"
+              />
+            </div>
+          {/if}
+          <button
+            class="px-3 py-1.5 rounded text-xs font-medium cursor-pointer shrink-0"
+            style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
+            onclick={saveSupportPeriod}
+            disabled={spSaving || spYears === null}
+          >
+            {spSaving ? 'Saving...' : spSuccess ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+        {#if spError}
+          <p class="text-xs mt-2" style="color: var(--color-status-error);">{spError}</p>
+        {/if}
+        {#if spYears !== null && spYears >= 5}
+          <p class="text-xs mt-2" style="color: var(--color-status-success);">✓ Meets CRA minimum (5 years)</p>
+        {:else if spYears !== null && spYears < 5}
+          <p class="text-xs mt-2" style="color: var(--color-status-warning);">Below 5-year minimum — justification required in technical documentation</p>
+        {/if}
+      </div>
+
       <!-- Notes -->
       {#if assessment.notes}
         <div class="rounded-lg border p-4" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
@@ -469,6 +560,11 @@
           </button>
         </div>
       {/if}
+    {:else if activeTab === 'data_profile'}
+      <CraDataClassification
+        assessmentId={assessment.id ?? ''}
+        onupdate={loadAssessment}
+      />
     {:else if activeTab === 'requirements'}
       <CraRequirementsTable
         requirements={assessment.requirement_statuses}

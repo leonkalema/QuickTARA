@@ -76,24 +76,74 @@ class CraAssessmentCreate(BaseModel):
     notes: Optional[str] = Field(None, description="Assessment notes")
 
 
+MIN_SUPPORT_PERIOD_YEARS: int = 5
+
+
 class CraAssessmentUpdate(BaseModel):
     """Update an existing CRA assessment"""
     status: Optional[CraAssessmentStatusEnum] = None
     product_type: Optional[CraProductTypeEnum] = None
+    support_period_years: Optional[int] = Field(
+        None,
+        description="Support period in years. CRA minimum is 5 years."
+    )
+    support_period_justification: Optional[str] = Field(
+        None,
+        description="Required if support_period_years < 5. Must justify shorter period."
+    )
     support_period_end: Optional[str] = None
     eoss_date: Optional[str] = None
     notes: Optional[str] = None
 
 
+class DataProfileUpdate(BaseModel):
+    """Product data classification profile — boolean flags"""
+    stores_data_at_rest: Optional[bool] = None
+    stores_personal_data: Optional[bool] = None
+    collects_telemetry: Optional[bool] = None
+    has_network_interfaces: Optional[bool] = None
+    has_user_authentication: Optional[bool] = None
+    has_physical_interfaces: Optional[bool] = None
+    has_updateable_software: Optional[bool] = None
+    uses_third_party_components: Optional[bool] = None
+    has_crypto_keys: Optional[bool] = None
+
+
+class ApplicabilityResultResponse(BaseModel):
+    """Whether a CRA requirement applies based on data profile"""
+    requirement_id: str
+    applicable: bool
+    justification: str
+
+
+class DataProfileResponse(BaseModel):
+    """Full data profile with computed applicability"""
+    profile: Dict[str, bool]
+    applicability: List[ApplicabilityResultResponse]
+    auto_resolved_count: int
+
+
 class ClassifyRequest(BaseModel):
-    """Classification questionnaire answers"""
-    answers: Dict[str, bool] = Field(
-        ...,
-        description="Map of question IDs (q1-q6) to boolean answers"
+    """Classification based on core functionality category selection."""
+    category_id: Optional[str] = Field(
+        None,
+        description="Product category ID from CRA Annexes III/IV catalog. None = Default."
+    )
+    uses_harmonised_standard: bool = Field(
+        default=False,
+        description="Whether a harmonised standard will be applied (affects Module A eligibility)"
+    )
+    is_open_source_public: bool = Field(
+        default=False,
+        description="Whether product is free/open-source with public technical docs"
     )
     automotive_exception: bool = Field(
         default=False,
         description="Whether UN R155 lex specialis applies"
+    )
+    answers: Dict[str, bool] = Field(
+        default={},
+        description="Legacy field — kept for backward compatibility"
     )
 
 
@@ -146,6 +196,42 @@ class CraRequirementDefinition(BaseModel):
     name: str
     article: str
     category: str
+    annex_part: str = "Part I"
+    obligation_type: str = "risk_based"
+
+
+class SubRequirementResponse(BaseModel):
+    """One checkable sub-item within a CRA requirement"""
+    description: str
+    check_evidence: str
+    typical_gap: str
+
+
+class RemediationActionResponse(BaseModel):
+    """One concrete step to close a gap"""
+    action: str
+    owner_hint: str
+    effort_days: int
+
+
+class RequirementGuidanceResponse(BaseModel):
+    """Per-requirement coaching data — coach AND doer"""
+    requirement_id: str
+    annex_section: str
+    cra_article: str
+    priority: str
+    deadline_note: str
+    explanation: str
+    regulatory_text: str
+    sub_requirements: List[SubRequirementResponse]
+    evidence_checklist: List[str]
+    investigation_prompts: List[str]
+    common_gaps: List[str]
+    remediation_actions: List[RemediationActionResponse]
+    effort_estimate: str
+    mapped_controls: List[str]
+    mapped_standards: List[str]
+    tara_link: str
 
 
 class CraRequirementStatusResponse(BaseModel):
@@ -201,11 +287,25 @@ class CompensatingControlResponse(BaseModel):
         from_attributes = True
 
 
+class ConformityModuleResponse(BaseModel):
+    """Conformity assessment module recommendation per CRA Art. 32."""
+    module_id: str
+    name: str
+    description: str
+    mandatory: bool
+    alternatives: List[str]
+    rationale: str
+
+
 class ClassificationResponse(BaseModel):
-    """Classification questionnaire result"""
+    """Classification result based on core functionality."""
     classification: str
+    category_id: Optional[str] = None
+    category_name: str
     conformity_assessment: str
+    conformity_module: ConformityModuleResponse
     compliance_deadline: str
+    reporting_deadline: str
     cost_estimate_min: int
     cost_estimate_max: int
     automotive_exception: bool
@@ -226,6 +326,8 @@ class CraAssessmentResponse(BaseModel):
     assessor_id: Optional[str] = None
     status: str
     overall_compliance_pct: int = 0
+    support_period_years: Optional[int] = None
+    support_period_justification: Optional[str] = None
     support_period_end: Optional[str] = None
     eoss_date: Optional[str] = None
     notes: Optional[str] = None

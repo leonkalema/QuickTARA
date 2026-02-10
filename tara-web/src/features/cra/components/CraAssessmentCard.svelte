@@ -80,19 +80,32 @@
     {/if}
   </div>
 
-  <!-- Compliance bar -->
-  <div class="mb-3">
-    <div class="flex items-center justify-between mb-1">
-      <span class="text-xs" style="color: var(--color-text-secondary);">Compliance</span>
-      <span class="text-xs font-medium" style="color: {getComplianceColor(assessment.overall_compliance_pct)};">
-        {assessment.overall_compliance_pct}%
-      </span>
-    </div>
-    <div class="w-full h-1.5 rounded-full" style="background: var(--color-bg-surface-hover);">
-      <div
-        class="h-1.5 rounded-full transition-all duration-300"
-        style="width: {assessment.overall_compliance_pct}%; background: {getComplianceColor(assessment.overall_compliance_pct)};"
-      ></div>
+  <!-- Compliance -->
+  <div class="mb-3 flex items-center gap-3">
+    <svg width="36" height="36" viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="14" fill="none" style="stroke: var(--color-bg-surface-hover);" stroke-width="3" />
+      <circle
+        cx="18" cy="18" r="14" fill="none"
+        style="stroke: {getComplianceColor(assessment.overall_compliance_pct)};"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-dasharray="{(assessment.overall_compliance_pct / 100) * 87.96} 87.96"
+        transform="rotate(-90 18 18)"
+      />
+    </svg>
+    <div class="flex-1">
+      <div class="flex items-center justify-between">
+        <span class="text-xs" style="color: var(--color-text-secondary);">Compliance</span>
+        <span class="text-xs font-bold" style="color: {getComplianceColor(assessment.overall_compliance_pct)};">
+          {assessment.overall_compliance_pct}%
+        </span>
+      </div>
+      <div class="w-full h-1.5 rounded-full mt-1" style="background: var(--color-bg-surface-hover);">
+        <div
+          class="h-1.5 rounded-full transition-all duration-300"
+          style="width: {Math.max(assessment.overall_compliance_pct, 2)}%; background: {getComplianceColor(assessment.overall_compliance_pct)};"
+        ></div>
+      </div>
     </div>
   </div>
 

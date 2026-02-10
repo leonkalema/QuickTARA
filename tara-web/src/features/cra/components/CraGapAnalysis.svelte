@@ -2,9 +2,10 @@
   import { onMount } from 'svelte';
   import { craApi } from '$lib/api/craApi';
   import type { GapAnalysisResponse, GapRequirementItem, CompensatingControlCatalogItem, CraClassification } from '$lib/types/cra';
-  import { ShieldCheck, AlertTriangle, ChevronDown, ChevronRight, Plus, Shield, Check, Loader2, FileText, Users } from '@lucide/svelte';
+  import { ShieldCheck, AlertTriangle, ChevronDown, ChevronRight, FileText, Users } from '@lucide/svelte';
   import CraTraceabilityReport from './CraTraceabilityReport.svelte';
   import CraCustomerSummary from './CraCustomerSummary.svelte';
+  import CraGapDetail from './CraGapDetail.svelte';
 
   interface Props {
     assessmentId: string;
@@ -62,14 +63,6 @@
 
   function getCatalogItem(controlId: string): CompensatingControlCatalogItem | undefined {
     return catalog.find((c: CompensatingControlCatalogItem) => c.control_id === controlId);
-  }
-
-  function getControlName(controlId: string): string {
-    return getCatalogItem(controlId)?.name ?? controlId;
-  }
-
-  function isAlreadyApplied(gap: GapRequirementItem, controlId: string): boolean {
-    return gap.applied_controls.some(c => c.control_id === controlId);
   }
 
   async function applyControl(gap: GapRequirementItem, controlId: string): Promise<void> {
@@ -162,28 +155,48 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-4 gap-4">
-      <div class="rounded-lg border p-4 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+    <div class="grid grid-cols-3 gap-3">
+      <div class="rounded-lg border p-3 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
         <div class="text-2xl font-bold" style="color: var(--color-text-primary);">{analysis.summary.total}</div>
         <div class="text-xs" style="color: var(--color-text-tertiary);">Total Requirements</div>
       </div>
-      <div class="rounded-lg border p-4 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+      <div class="rounded-lg border p-3 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
         <div class="text-2xl font-bold" style="color: var(--color-status-success);">{analysis.summary.compliant}</div>
         <div class="text-xs" style="color: var(--color-text-tertiary);">Compliant / N/A</div>
       </div>
-      <div class="rounded-lg border p-4 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+      <div class="rounded-lg border p-3 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
         <div class="text-2xl font-bold" style="color: var(--color-status-error);">{analysis.summary.gaps}</div>
         <div class="text-xs" style="color: var(--color-text-tertiary);">Open Gaps</div>
       </div>
-      <div class="rounded-lg border p-4 text-center" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
-        <div class="text-2xl font-bold" style="color: var(--color-accent-primary);">{analysis.summary.with_controls}</div>
-        <div class="text-xs" style="color: var(--color-text-tertiary);">Gaps with Controls</div>
-      </div>
     </div>
 
-    <!-- Risk context banner -->
+    <!-- Risk Reduction Metrics -->
     {#if analysis.summary.gaps > 0}
-      <div class="rounded-lg border p-4" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+      <div class="grid grid-cols-3 gap-3">
+        <div class="rounded-lg border p-3" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-lg font-bold" style="color: var(--color-accent-primary);">{analysis.summary.mitigated}</div>
+              <div class="text-[10px]" style="color: var(--color-text-tertiary);">Mitigated by Controls</div>
+            </div>
+            {#if analysis.summary.risk_reduction_pct > 0}
+              <span class="text-xs font-semibold px-1.5 py-0.5 rounded" style="background: var(--color-status-success)15; color: var(--color-status-success);">
+                -{analysis.summary.risk_reduction_pct}% risk
+              </span>
+            {/if}
+          </div>
+        </div>
+        <div class="rounded-lg border p-3" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+          <div class="text-lg font-bold" style="color: {analysis.summary.unmitigated > 0 ? '#dc2626' : 'var(--color-text-tertiary)'};">{analysis.summary.unmitigated}</div>
+          <div class="text-[10px]" style="color: var(--color-text-tertiary);">Unmitigated High/Critical</div>
+        </div>
+        <div class="rounded-lg border p-3" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+          <div class="text-lg font-bold" style="color: var(--color-text-primary);">{analysis.summary.total_remediation_effort_days}d</div>
+          <div class="text-[10px]" style="color: var(--color-text-tertiary);">Est. Remediation Effort</div>
+        </div>
+      </div>
+
+      <div class="rounded-lg border p-3" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
         <p class="text-xs" style="color: var(--color-text-secondary);">
           Risk levels are based on product classification
           (<strong style="color: var(--color-text-primary);">{analysis.classification?.replace('_', ' ').toUpperCase()}</strong>).
@@ -192,7 +205,7 @@
           {:else}
             Requirements with TARA evidence are shown under compliant.
           {/if}
-          Applying and verifying controls reduces the risk level.
+          Applying a control and verifying it reduces the risk from <strong>base</strong> → <strong>low</strong>.
         </p>
       </div>
     {/if}
@@ -232,9 +245,14 @@
                   {:else}
                     <ChevronRight class="w-4 h-4" style="color: var(--color-text-tertiary);" />
                   {/if}
-                  <div>
+                  <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-mono" style="color: var(--color-text-tertiary);">{gap.requirement_id}</span>
-                    <span class="text-sm font-medium ml-2" style="color: var(--color-text-primary);">{gap.requirement_name}</span>
+                    <span class="text-sm font-medium" style="color: var(--color-text-primary);">{gap.requirement_name}</span>
+                    {#if gap.obligation_type === 'mandatory'}
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style="background: var(--color-status-error)12; color: var(--color-status-error);">{gap.annex_part} · Mandatory</span>
+                    {:else}
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style="background: var(--color-accent-primary)12; color: var(--color-accent-primary);">{gap.annex_part} · Risk-based</span>
+                    {/if}
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -247,78 +265,15 @@
                 </div>
               </button>
               {#if isExpanded}
-                <div class="px-4 pb-4 pt-2 ml-7 space-y-3 border-l-2" style="border-color: {riskCfg.color};">
-                  <!-- Info row -->
-                  <div class="flex gap-4 text-xs" style="color: var(--color-text-secondary);">
-                    <span><strong>Article:</strong> {gap.article}</span>
-                    <span><strong>Category:</strong> {gap.category}</span>
-                    {#if gap.owner}
-                      <span><strong>Owner:</strong> {gap.owner}</span>
-                    {/if}
-                    {#if gap.target_date}
-                      <span><strong>Target:</strong> {gap.target_date}</span>
-                    {/if}
-                  </div>
-                  <!-- Applied controls -->
-                  {#if gap.applied_controls.length > 0}
-                    <div>
-                      <div class="text-xs font-medium mb-1" style="color: var(--color-accent-primary);">Applied Controls</div>
-                      <div class="flex flex-wrap gap-2">
-                        {#each gap.applied_controls as ctrl}
-                          <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs" style="background: var(--color-accent-primary)15; color: var(--color-accent-primary);">
-                            <Shield class="w-3 h-3" />
-                            {ctrl.name}
-                            <span style="color: var(--color-text-tertiary);">({ctrl.status})</span>
-                          </span>
-                        {/each}
-                      </div>
-                    </div>
-                  {/if}
-                  <!-- Suggested controls (legacy only) -->
-                  {#if gap.suggested_controls.length > 0 && analysis.is_legacy}
-                    {@const unapplied = gap.suggested_controls.filter(cid => !isAlreadyApplied(gap, cid))}
-                    {#if unapplied.length > 0}
-                      <div>
-                        <div class="text-xs font-medium mb-1" style="color: var(--color-text-tertiary);">Apply a Control to Reduce Risk</div>
-                        <div class="flex flex-wrap gap-2">
-                          {#each unapplied as controlId}
-                            {@const key = `${gap.requirement_id}:${controlId}`}
-                            {@const isApplying = applyingControlId === key}
-                            {@const justApplied = appliedFlash === key}
-                            <button
-                              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium cursor-pointer transition-all"
-                              style="background: {justApplied ? 'var(--color-status-success)15' : 'var(--color-bg-surface-hover)'}; color: {justApplied ? 'var(--color-status-success)' : 'var(--color-accent-primary)'}; border: 1px solid {justApplied ? 'var(--color-status-success)' : 'var(--color-accent-primary)30'};"
-                              onclick={() => applyControl(gap, controlId)}
-                              disabled={isApplying}
-                            >
-                              {#if isApplying}
-                                <Loader2 class="w-3 h-3 animate-spin" />
-                                Applying...
-                              {:else if justApplied}
-                                <Check class="w-3 h-3" />
-                                Applied!
-                              {:else}
-                                <Plus class="w-3 h-3" />
-                                {getControlName(controlId)}
-                              {/if}
-                            </button>
-                          {/each}
-                        </div>
-                      </div>
-                    {/if}
-                  {:else if !analysis.is_legacy && gap.applied_controls.length === 0}
-                    <div class="flex items-center gap-2 text-xs" style="color: var(--color-text-tertiary);">
-                      <AlertTriangle class="w-3 h-3" />
-                      <span>Requires direct implementation — update status in Requirements tab when done</span>
-                    </div>
-                  {/if}
-                  <!-- TARA evidence -->
-                  {#if gap.tara_evidence.length > 0}
-                    <div class="text-xs" style="color: var(--color-text-tertiary);">
-                      TARA: {gap.tara_evidence[0].count} {gap.tara_evidence[0].type}(s) linked
-                    </div>
-                  {/if}
-                </div>
+                <CraGapDetail
+                  {gap}
+                  riskColor={riskCfg.color}
+                  isLegacy={analysis.is_legacy}
+                  {catalog}
+                  onapplycontrol={applyControl}
+                  {applyingControlId}
+                  {appliedFlash}
+                />
               {/if}
             </div>
           {/each}
@@ -337,9 +292,14 @@
         <div class="divide-y" style="border-color: var(--color-border-subtle);">
           {#each getCompliant() as req (req.requirement_id)}
             <div class="px-4 py-3 flex items-center justify-between" style="background: var(--color-bg-surface);">
-              <div>
+              <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-mono" style="color: var(--color-text-tertiary);">{req.requirement_id}</span>
-                <span class="text-sm ml-2" style="color: var(--color-text-primary);">{req.requirement_name}</span>
+                <span class="text-sm" style="color: var(--color-text-primary);">{req.requirement_name}</span>
+                {#if req.obligation_type === 'mandatory'}
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style="background: var(--color-status-error)12; color: var(--color-status-error);">{req.annex_part}</span>
+                {:else}
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" style="background: var(--color-accent-primary)12; color: var(--color-accent-primary);">{req.annex_part}</span>
+                {/if}
               </div>
               <div class="flex items-center gap-2">
                 <ShieldCheck class="w-4 h-4" style="color: var(--color-status-success);" />
