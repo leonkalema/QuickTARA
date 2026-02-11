@@ -12,11 +12,12 @@ email-validator>=2.0.0
 sqlalchemy>=1.4.23
 alembic>=1.7.3
 pymysql>=1.1.0
-python-multipart>=0.0.5
+python-multipart>=0.0.22
 pyyaml>=6.0
 # Authentication dependencies
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
-python-multipart>=0.0.5
+python-multipart>=0.0.22
 # PDF generation
 reportlab>=3.6.0
+pyasn1>=0.6.2 # not directly required, pinned by Snyk to avoid a vulnerability
