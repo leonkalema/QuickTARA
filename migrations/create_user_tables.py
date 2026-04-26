@@ -3,9 +3,45 @@ Create user authentication tables
 Migration for user management and RBAC system
 """
 
+import os
+import secrets
 import sqlite3
+import stat
 import uuid
 from datetime import datetime
+from pathlib import Path
+
+import bcrypt
+
+CREDENTIALS_FILENAME = "quicktara-initial-credentials.txt"
+
+
+def _generate_admin_password() -> str:
+    return secrets.token_urlsafe(18)
+
+
+def _hash_admin_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+
+
+def _write_admin_credentials_file(email: str, password: str) -> Path:
+    target = Path(os.getcwd()) / CREDENTIALS_FILENAME
+    target.write_text(
+        "QuickTARA — initial bootstrap credentials\n"
+        "==========================================\n"
+        f"Email:    {email}\n"
+        f"Password: {password}\n"
+        "\n"
+        "Sign in at the URL printed by the deploy script and change this\n"
+        "password immediately under Settings -> My Account, then DELETE\n"
+        "this file.\n",
+        encoding="utf-8",
+    )
+    try:
+        os.chmod(target, stat.S_IRUSR | stat.S_IWUSR)
+    except OSError:
+        pass
+    return target
 
 def create_user_tables(db_path: str):
     """Create all user-related tables"""
@@ -190,32 +226,39 @@ def create_user_tables(db_path: str):
                 VALUES (?, ?, ?, ?, ?)
             """, (perm_id, perm_name, description, resource, action))
         
-        # Create default admin user
-        admin_user_id = str(uuid.uuid4())
-        # Default password: "admin123" (should be changed immediately)
-        # This is bcrypt hash of "admin123"
-        admin_password_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBdXwtO5S7ZOvG"
-        
-        cursor.execute("""
-            INSERT OR IGNORE INTO users (
-                user_id, email, username, first_name, last_name, 
-                hashed_password, status, is_verified, is_superuser
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            admin_user_id, "admin@quicktara.local", "admin", "System", "Administrator",
-            admin_password_hash, "active", 1, 1
-        ))
-        
-        # Assign admin to default organization
-        cursor.execute("""
-            INSERT OR IGNORE INTO user_organizations (user_id, organization_id, role)
-            VALUES (?, ?, ?)
-        """, (admin_user_id, default_org_id, "tool_admin"))
-        
-        conn.commit()
-        print("✅ User authentication tables created successfully")
-        print("📧 Default admin user: admin@quicktara.local")
-        print("🔑 Default password: admin123 (CHANGE IMMEDIATELY)")
+        # Create initial admin user with a randomly generated password.
+        admin_email = "admin@quicktara.local"
+        cursor.execute("SELECT user_id FROM users WHERE email = ?", (admin_email,))
+        existing = cursor.fetchone()
+
+        if existing is None:
+            admin_user_id = str(uuid.uuid4())
+            admin_password = _generate_admin_password()
+            admin_password_hash = _hash_admin_password(admin_password)
+
+            cursor.execute("""
+                INSERT INTO users (
+                    user_id, email, username, first_name, last_name,
+                    hashed_password, status, is_verified, is_superuser
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                admin_user_id, admin_email, "admin", "System", "Administrator",
+                admin_password_hash, "active", 1, 1,
+            ))
+            cursor.execute("""
+                INSERT OR IGNORE INTO user_organizations (user_id, organization_id, role)
+                VALUES (?, ?, ?)
+            """, (admin_user_id, default_org_id, "tool_admin"))
+
+            creds_path = _write_admin_credentials_file(admin_email, admin_password)
+            conn.commit()
+            print("✅ User authentication tables created successfully")
+            print("📧 Initial admin user: %s" % admin_email)
+            print("🔑 Credentials written to: %s (mode 0600)" % creds_path)
+            print("⚠️  Sign in once, change the password, then DELETE this file.")
+        else:
+            conn.commit()
+            print("✅ User authentication tables verified — admin user already exists.")
         
     except Exception as e:
         conn.rollback()

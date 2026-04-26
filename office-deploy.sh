@@ -154,6 +154,14 @@ _FE_SCHEME="http"
 if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then _FE_SCHEME="https"; fi
 export QUICKTARA_CORS_ORIGINS="${_FE_SCHEME}://localhost:${FRONTEND_PORT},${_FE_SCHEME}://${LAN_IP}:${FRONTEND_PORT}"
 
+if [ -f "./quicktara-initial-credentials.txt" ]; then
+  echo ""
+  echo "🔐 Initial admin credentials written to:"
+  echo "   $(pwd)/quicktara-initial-credentials.txt (mode 0600)"
+  echo "   ⚠️  Sign in once, change the password, then DELETE this file."
+  echo ""
+fi
+
 echo "🎉 Setup complete!"
 echo ""
 echo "🚀 QuickTARA is starting..."

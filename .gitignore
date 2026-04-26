@@ -51,3 +51,9 @@ config/database.json
 .idea/
 .vscode/
 quicktara.db
+
+# --------------------------------
+# Secrets — never commit
+# --------------------------------
+quicktara-initial-credentials.txt
+certs/
