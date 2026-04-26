@@ -83,7 +83,7 @@
       await loadAssessment();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      spError = msg.includes('5-year') ? msg : 'Failed to save support period.';
+      spError = msg.includes('5-year') || msg.includes('support') ? 'short_period' : 'generic';
     } finally {
       spSaving = false;
     }
@@ -134,6 +134,14 @@
     if (!d) return '—';
     return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
+
+  const doneReqs = $derived(
+    (assessment as CraAssessment | null)?.requirement_statuses.filter(
+      (r: { status: string }) => r.status === 'compliant' || r.status === 'not_applicable'
+    ).length ?? 0
+  );
+  const totalReqs2 = $derived((assessment as CraAssessment | null)?.requirement_statuses.length ?? 0);
+  const autoMapped = $derived((assessment as CraAssessment | null)?.requirement_statuses.filter(r => r.auto_mapped).length ?? 0);
 
   function getDeadlineColor(): string {
     if (!assessment?.compliance_deadline) return 'var(--color-text-tertiary)';
@@ -244,12 +252,14 @@
           </button>
         {/if}
         <button
-          class="inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium cursor-pointer"
-          style="color: var(--color-status-error);"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium cursor-pointer border transition-colors"
+          style="color: var(--color-status-error); border-color: var(--color-status-error); background: transparent;"
           onclick={() => { showDeleteConfirm = true; }}
           disabled={deleting}
+          aria-label="Delete assessment"
         >
           <Trash2 class="w-3 h-3" />
+          Delete
         </button>
       </div>
     </div>
@@ -280,44 +290,41 @@
       </div>
 
       <!-- Stats row -->
-      <div class="grid grid-cols-4 gap-4">
-        <div>
-          <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Compliance</div>
-          <div class="flex items-center gap-3">
-            <svg width="40" height="40" viewBox="0 0 40 40">
-              <circle cx="20" cy="20" r="16" fill="none" style="stroke: var(--color-bg-surface-hover);" stroke-width="4" />
-              <circle
-                cx="20" cy="20" r="16" fill="none"
-                style="stroke: {getComplianceColor(assessment.overall_compliance_pct)};"
-                stroke-width="4"
-                stroke-linecap="round"
-                stroke-dasharray={`${(assessment.overall_compliance_pct / 100) * 100.53} 100.53`}
-                transform="rotate(-90 20 20)"
-              />
-            </svg>
-            <span class="text-sm font-bold" style="color: {getComplianceColor(assessment.overall_compliance_pct)};">
-              {assessment.overall_compliance_pct}%
-            </span>
+      <div class="grid grid-cols-4 gap-0 rounded-lg overflow-hidden mt-4" style="border: 1px solid var(--color-border-subtle);">
+        <div class="px-4 py-3 flex flex-col gap-1">
+          <div class="text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Compliance</div>
+          <div class="flex items-center gap-2">
+            <div class="relative flex-shrink-0">
+              <svg width="36" height="36" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="13" fill="none" stroke="#1e293b" stroke-width="3" />
+                <circle cx="18" cy="18" r="13" fill="none"
+                  style="stroke: {getComplianceColor(assessment.overall_compliance_pct)};"
+                  stroke-width="3" stroke-linecap="round"
+                  stroke-dasharray="{(assessment.overall_compliance_pct / 100) * 81.68} 81.68"
+                  transform="rotate(-90 18 18)" />
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center" style="font-size: 9px; font-weight: 700; color: {getComplianceColor(assessment.overall_compliance_pct)};">{assessment.overall_compliance_pct}%</span>
+            </div>
+            <span class="text-lg font-bold" style="color: {getComplianceColor(assessment.overall_compliance_pct)};">{assessment.overall_compliance_pct}%</span>
           </div>
         </div>
-        <div>
-          <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Conformity Path</div>
-          <div class="text-sm font-medium" style="color: {assessment.classification === 'critical' ? '#dc2626' : assessment.classification === 'class_ii' ? 'var(--color-status-error)' : assessment.classification === 'class_i' ? 'var(--color-status-warning)' : 'var(--color-status-success)'};">
-            {assessment.classification === 'critical' ? 'EU Certification' : assessment.classification === 'class_ii' ? 'Third-Party' : assessment.classification === 'class_i' ? 'Self + Standards' : assessment.classification ? 'Self-Assessment' : 'Not classified'}
-          </div>
+        <div class="px-4 py-3 flex flex-col gap-1" style="border-left: 1px solid var(--color-border-subtle);">
+          <div class="text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Conformity Path</div>
+          <div class="text-sm font-semibold" style="color: {assessment.classification === 'critical' ? '#dc2626' : assessment.classification === 'class_ii' ? 'var(--color-status-error)' : assessment.classification === 'class_i' ? 'var(--color-status-warning)' : 'var(--color-status-success)'};"
+          >{assessment.classification === 'critical' ? 'EU Certification' : assessment.classification === 'class_ii' ? 'Third-Party Audit' : assessment.classification === 'class_i' ? 'Self + Standards' : assessment.classification ? 'Self-Assessment' : '—'}</div>
         </div>
-        <div>
-          <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Deadline</div>
-          <div class="flex items-center gap-1 text-sm font-medium" style="color: {getDeadlineColor()};">
-            <Calendar class="w-3.5 h-3.5" />
+        <div class="px-4 py-3 flex flex-col gap-1" style="border-left: 1px solid var(--color-border-subtle);">
+          <div class="text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Deadline</div>
+          <div class="flex items-center gap-1.5 text-sm font-semibold" style="color: {getDeadlineColor()};">
+            <Calendar class="w-3.5 h-3.5 flex-shrink-0" />
             {formatDeadline(assessment.compliance_deadline)}
           </div>
         </div>
-        <div>
-          <div class="text-xs mb-1" style="color: var(--color-text-tertiary);">Requirements</div>
-          <div class="text-sm font-medium" style="color: var(--color-text-primary);">
-            {assessment.requirement_statuses.filter(r => r.status === 'compliant' || r.status === 'not_applicable').length}
-            / {assessment.requirement_statuses.length} done
+        <div class="px-4 py-3 flex flex-col gap-1" style="border-left: 1px solid var(--color-border-subtle);">
+          <div class="text-[11px] font-medium uppercase tracking-wider" style="color: var(--color-text-tertiary);">Requirements</div>
+          <div class="text-sm font-semibold" style="color: var(--color-text-primary);">{doneReqs} / {totalReqs2} <span class="text-xs font-normal" style="color: var(--color-text-tertiary);">done</span></div>
+          <div class="w-full h-1 rounded-full" style="background: var(--color-bg-elevated);">
+            <div class="h-1 rounded-full" style="width: {totalReqs2 ? (doneReqs/totalReqs2)*100 : 0}%; background: var(--color-accent-primary);"></div>
           </div>
         </div>
       </div>
@@ -350,17 +357,21 @@
     {/if}
 
     <!-- Tabs -->
-    <div class="flex gap-1 border-b" style="border-color: var(--color-border-default);">
+    <div class="flex gap-0.5 border-b" style="border-color: var(--color-border-default);" role="tablist" aria-label="Assessment sections">
       {#each tabs as tab}
         <button
-          class="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer"
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-all cursor-pointer rounded-t"
           style="
             border-color: {activeTab === tab.id ? 'var(--color-accent-primary)' : 'transparent'};
-            color: {activeTab === tab.id ? 'var(--color-accent-primary)' : 'var(--color-text-tertiary)'};
+            color: {activeTab === tab.id ? 'var(--color-accent-primary)' : 'var(--color-text-secondary)'};
+            background: {activeTab === tab.id ? 'rgba(79,143,247,0.06)' : 'transparent'};
+            font-weight: {activeTab === tab.id ? '600' : '400'};
           "
           onclick={() => { activeTab = tab.id; }}
         >
-          <tab.icon class="w-4 h-4" />
+          <tab.icon class="w-3.5 h-3.5" />
           {tab.label}
         </button>
       {/each}
@@ -384,8 +395,9 @@
           >
             <X class="w-4 h-4" />
           </button>
-          <div class="text-sm font-semibold mb-3" style="color: var(--color-accent-primary);">
-            📋 Next Steps
+          <div class="flex items-center gap-2 text-sm font-semibold mb-3" style="color: var(--color-accent-primary);">
+            <FileText class="w-4 h-4" />
+            Next Steps
           </div>
           <div class="space-y-3">
             {#if completedReqs === 0}
@@ -445,22 +457,24 @@
         </div>
       {/if}
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-3">
         <!-- Requirement summary by category -->
         {#each ['technical', 'process', 'documentation'] as category}
           {@const catReqs = assessment.requirement_statuses.filter(r => r.requirement_category === category)}
           {@const catDone = catReqs.filter(r => r.status === 'compliant' || r.status === 'not_applicable').length}
+          {@const catPct = catReqs.length ? Math.round((catDone / catReqs.length) * 100) : 0}
           <div class="rounded-lg border p-4" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
-            <div class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--color-text-tertiary);">
-              {category}
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-tertiary);">{category}</div>
+              <span class="text-xs font-bold" style="color: {catPct >= 80 ? '#34d399' : catPct >= 40 ? '#fbbf24' : '#f87171'}">{catPct}%</span>
             </div>
-            <div class="text-2xl font-bold mb-1" style="color: var(--color-text-primary);">
-              {catDone}/{catReqs.length}
+            <div class="flex items-end justify-between mb-2">
+              <div class="text-2xl font-bold" style="color: var(--color-text-primary);">{catDone}<span class="text-base font-normal" style="color: var(--color-text-tertiary);">/{catReqs.length}</span></div>
+              <div class="text-xs" style="color: var(--color-text-tertiary);">requirements</div>
             </div>
-            <div class="h-1.5 rounded-full" style="background: var(--color-bg-surface-hover);">
-              <div
-                class="h-1.5 rounded-full"
-                style="width: {catReqs.length ? (catDone / catReqs.length) * 100 : 0}%; background: var(--color-accent-primary);"
+            <div class="h-1.5 rounded-full" style="background: var(--color-bg-elevated);">
+              <div class="h-1.5 rounded-full transition-all"
+                style="width: {catPct}%; background: {catPct >= 80 ? '#34d399' : catPct >= 40 ? '#fbbf24' : '#f87171'};"
               ></div>
             </div>
           </div>
@@ -468,14 +482,10 @@
 
         <!-- Auto-mapped summary -->
         <div class="rounded-lg border p-4" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
-          <div class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--color-text-tertiary);">
-            Auto-Mapped from TARA
-          </div>
-          <div class="text-2xl font-bold mb-1" style="color: var(--color-accent-primary);">
-            {assessment.requirement_statuses.filter(r => r.auto_mapped).length}
-          </div>
+          <div class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--color-text-tertiary);">Auto-Linked from TARA</div>
+          <div class="text-2xl font-bold mb-1" style="color: {autoMapped > 0 ? 'var(--color-accent-primary)' : 'var(--color-text-tertiary)'};"> {autoMapped}</div>
           <div class="text-xs" style="color: var(--color-text-secondary);">
-            requirements linked to existing artifacts
+            {autoMapped > 0 ? 'requirements linked to existing TARA artifacts' : 'No TARA artifacts linked yet — use the Link to TARA button above'}
           </div>
         </div>
       </div>
@@ -513,21 +523,47 @@
             </div>
           {/if}
           <button
-            class="px-3 py-1.5 rounded text-xs font-medium cursor-pointer shrink-0"
+            class="px-3 py-1.5 rounded text-xs font-medium cursor-pointer shrink-0 disabled:opacity-50"
             style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
             onclick={saveSupportPeriod}
             disabled={spSaving || spYears === null}
           >
-            {spSaving ? 'Saving...' : spSuccess ? '✓ Saved' : 'Save'}
+            {#if spSaving}
+              Saving…
+            {:else if spSuccess}
+              Saved
+            {:else}
+              Save
+            {/if}
           </button>
         </div>
         {#if spError}
-          <p class="text-xs mt-2" style="color: var(--color-status-error);">{spError}</p>
+          <div class="mt-3 rounded-md p-3 flex items-start gap-2.5" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.35);">
+            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-status-error);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <div>
+              <p class="text-xs font-semibold mb-0.5" style="color: var(--color-status-error);">
+                {spError === 'short_period' ? 'Support period too short' : 'Could not save'}
+              </p>
+              <p class="text-xs" style="color: var(--color-text-secondary);">
+                {spError === 'short_period'
+                  ? 'CRA requires a minimum of 5 years. Set at least 5, or add a justification above explaining why a shorter period applies.'
+                  : 'Something went wrong saving the support period. Try again.'}
+              </p>
+            </div>
+          </div>
         {/if}
-        {#if spYears !== null && spYears >= 5}
-          <p class="text-xs mt-2" style="color: var(--color-status-success);">✓ Meets CRA minimum (5 years)</p>
+        {#if spSuccess}
+          <div class="mt-3 rounded-md p-2.5 flex items-center gap-2" style="background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.3);">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-status-success);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <p class="text-xs" style="color: var(--color-status-success);">Support period saved</p>
+          </div>
+        {:else if spYears !== null && spYears >= 5}
+          <p class="text-xs mt-2 flex items-center gap-1.5" style="color: var(--color-status-success);">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            Meets CRA minimum (5 years)
+          </p>
         {:else if spYears !== null && spYears < 5}
-          <p class="text-xs mt-2" style="color: var(--color-status-warning);">Below 5-year minimum — justification required in technical documentation</p>
+          <p class="text-xs mt-2" style="color: var(--color-status-warning);">Below 5-year minimum — add a justification above before saving</p>
         {/if}
       </div>
 

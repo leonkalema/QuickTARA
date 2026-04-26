@@ -24,20 +24,24 @@
 <div class="p-6 max-w-7xl mx-auto">
   <!-- Header -->
   <div class="mb-6">
-    <h1 class="text-sm font-bold" style="color: var(--color-text-primary);">Audit & Compliance</h1>
-    {#if $selectedProduct}
-      <p class="text-xs mt-1" style="color: var(--color-text-tertiary);">
-        Product: <span class="font-medium" style="color: var(--color-text-secondary);">{$selectedProduct.name}</span>
-      </p>
-    {:else}
-      <p class="text-xs mt-1" style="color: var(--color-error);">Select a product from the sidebar to view audit data.</p>
-    {/if}
+    <h1 class="text-xl font-bold tracking-tight" style="color: var(--color-text-primary);">Audit & Compliance</h1>
+    <p class="text-sm mt-1" style="color: var(--color-text-secondary);">
+      {#if $selectedProduct}
+        Change history, approvals, and evidence for <strong style="color: var(--color-text-primary);">{$selectedProduct.name}</strong>.
+      {:else}
+        Select a product to view its audit trail and compliance records.
+      {/if}
+    </p>
   </div>
 
   {#if !scopeId}
-    <div class="rounded-lg p-6 text-center" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-      <p class="text-xs font-medium" style="color: var(--color-text-primary);">No product selected</p>
-      <p class="text-[11px] mt-1" style="color: var(--color-text-tertiary);">Go to Product Scope and select a product first.</p>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No product selected</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Select a product from the header dropdown to view its audit trail, approvals, and evidence.</p>
+      <a href="/products" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Go to Products</a>
     </div>
   {:else}
     <!-- Tabs -->

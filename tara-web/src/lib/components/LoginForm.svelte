@@ -84,11 +84,15 @@
 				<input
 					id="email"
 					type="email"
+					name="email"
+					autocomplete="email"
 					bind:value={email}
 					on:keypress={handleKeyPress}
 					placeholder="name@company.com"
 					disabled={isLoading}
 					required
+					aria-describedby={error ? 'login-error' : undefined}
+					aria-invalid={error ? 'true' : undefined}
 					class="with-icon"
 				/>
 			</div>
@@ -103,11 +107,15 @@
 				<input
 					id="password"
 					type={showPassword ? 'text' : 'password'}
+					name="password"
+					autocomplete="current-password"
 					bind:value={password}
 					on:keypress={handleKeyPress}
 					placeholder="Enter your password"
 					disabled={isLoading}
 					required
+					aria-describedby={error ? 'login-error' : undefined}
+					aria-invalid={error ? 'true' : undefined}
 					class="with-icon"
 				/>
 				<button
@@ -127,8 +135,8 @@
 		</div>
 
 		{#if error}
-			<div class="error-message">
-				<AlertCircle size={16} />
+			<div id="login-error" class="error-message" role="alert" aria-live="assertive">
+				<AlertCircle size={16} aria-hidden="true" />
 				<span>{error}</span>
 			</div>
 		{/if}

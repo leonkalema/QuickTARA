@@ -17,14 +17,11 @@
   const { title, description, icon, ctaLabel, ctaHref, onAction }: Props = $props();
 </script>
 
-<div class="relative flex flex-col items-center justify-center py-16 text-center">
-  <!-- Radar motif background -->
-  <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-
-  <div class="relative z-10 flex flex-col items-center max-w-md">
+<div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+  <div class="flex flex-col items-center max-w-md mx-auto">
     <div
-      class="w-14 h-14 rounded-xl flex items-center justify-center mb-4"
-      style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);"
+      class="w-14 h-14 rounded-full flex items-center justify-center mb-4"
+      style="background: var(--color-bg-elevated);"
     >
       {#if icon}
         {@const Icon = icon}

@@ -5,6 +5,21 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta
 from typing import Optional
 
+try:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+    _login_limiter = Limiter(key_func=get_remote_address)
+    HAS_LIMITER = True
+except ImportError:
+    _login_limiter = None
+    HAS_LIMITER = False
+
+def _login_rate_limit(func):
+    """Apply 10/minute rate limit to login if slowapi is available."""
+    if HAS_LIMITER:
+        return _login_limiter.limit("10/minute")(func)
+    return func
+
 from ..deps.db import get_db
 from ..models.user import User, UserRole, UserStatus, Organization, RefreshToken, user_organizations
 from ..auth.security import security_manager, create_user_token_data
@@ -97,6 +112,7 @@ async def register_user(
     )
 
 @router.post("/login", response_model=TokenResponse)
+@_login_rate_limit
 async def login_user(
     login_data: UserLogin,
     request: Request,

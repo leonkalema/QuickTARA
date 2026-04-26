@@ -20,3 +20,5 @@ passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.5
 # PDF generation
 reportlab>=3.6.0
+# Rate limiting (brute-force protection on /auth/login)
+slowapi>=0.1.9

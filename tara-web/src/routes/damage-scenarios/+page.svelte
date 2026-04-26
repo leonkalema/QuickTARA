@@ -277,28 +277,22 @@
   </div>
 
   {#if !$selectedProduct}
-    <div class="relative flex flex-col items-center py-16 text-center">
-      <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-      <div class="relative z-10 flex flex-col items-center max-w-md">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No Product Selected</h3>
-        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Select a product from the header to manage its damage scenarios.</p>
-        <a href="/products" class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Select a Product</a>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
       </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No product selected</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Select a product from the header dropdown to manage its damage scenarios.</p>
+      <a href="/products" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Go to Products</a>
     </div>
   {:else if assets.length === 0 && !loading}
-    <div class="relative flex flex-col items-center py-16 text-center">
-      <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-      <div class="relative z-10 flex flex-col items-center max-w-md">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No Assets Found</h3>
-        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Create assets first — they're the building blocks for damage scenarios.</p>
-        <a href="/assets" class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Create Assets First</a>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
       </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No assets yet</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Damage scenarios are built from assets. Add assets for this product first, then come back here.</p>
+      <a href="/assets" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Add Assets First</a>
     </div>
   {:else}
     {#if loading}

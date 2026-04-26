@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, tick } from 'svelte';
   import { X } from '@lucide/svelte';
 
   export let isOpen = false;
@@ -10,14 +10,35 @@
     close: void;
   }>();
 
+  let dialogEl: HTMLDivElement | null = null;
+  let triggerEl: HTMLElement | null = null;
+
   function closeModal() {
     isOpen = false;
     dispatch('close');
+    triggerEl?.focus();
   }
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && isOpen) {
+      event.stopPropagation();
       closeModal();
+    }
+    if (event.key === 'Tab' && dialogEl) {
+      trapFocus(event);
+    }
+  }
+
+  function trapFocus(event: KeyboardEvent) {
+    const focusable = dialogEl!.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey) {
+      if (document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    } else {
+      if (document.activeElement === last) { event.preventDefault(); first?.focus(); }
     }
   }
 
@@ -27,6 +48,11 @@
     }
   }
 
+  $: if (isOpen) {
+    triggerEl = document.activeElement as HTMLElement;
+    tick().then(() => dialogEl?.focus());
+  }
+
   $: sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -34,8 +60,6 @@
     xl: 'max-w-4xl'
   };
 </script>
-
-<svelte:window on:keydown={handleKeydown} />
 
 {#if isOpen}
   <div
@@ -47,6 +71,7 @@
     aria-modal="true"
     aria-labelledby="modal-title"
     tabindex="-1"
+    bind:this={dialogEl}
   >
     <div
       class="relative w-full {sizeClasses[size]} rounded-lg transform transition-all"

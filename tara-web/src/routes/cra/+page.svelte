@@ -132,20 +132,51 @@
   <!-- Content -->
   {#if loading}
     <div class="flex items-center justify-center py-16">
-      <div class="animate-spin rounded-full h-6 w-6 border-2 border-t-transparent" style="border-color: var(--color-accent-primary); border-top-color: transparent;"></div>
+      <div role="status" aria-label="Loading assessments" class="animate-spin rounded-full h-6 w-6 border-2 border-t-transparent" style="border-color: var(--color-accent-primary); border-top-color: transparent;"></div>
     </div>
   {:else if error}
-    <div class="rounded-lg border p-4 text-sm" style="background: var(--color-status-error)10; border-color: var(--color-status-error); color: var(--color-status-error);">
+    <div class="rounded-lg border p-4 text-sm" role="alert" style="background: rgba(248,113,113,0.08); border-color: #f87171; color: #f87171;">
       {error}
     </div>
   {:else if filteredAssessments.length === 0}
-    <div class="text-center py-16">
-      <Shield class="w-12 h-12 mx-auto mb-3" style="color: var(--color-text-tertiary);" />
-      <h3 class="text-sm font-semibold mb-1" style="color: var(--color-text-primary);">No CRA assessments yet</h3>
-      <p class="text-xs" style="color: var(--color-text-tertiary);">Create your first assessment to start tracking CRA compliance.</p>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <Shield class="w-7 h-7" style="color: var(--color-text-tertiary);" />
+      </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No CRA assessments yet</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">
+        The EU Cyber Resilience Act requires a compliance assessment for each product. Start by creating your first assessment.
+      </p>
+      <button
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
+        style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
+        onclick={() => { showCreateModal = true; }}
+      >
+        <Plus class="w-4 h-4" />
+        Create First Assessment
+      </button>
     </div>
   {:else}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Summary bar -->
+    {@const avgCompliance = Math.round(filteredAssessments.reduce((s, a) => s + a.overall_compliance_pct, 0) / filteredAssessments.length)}
+    {@const critical = filteredAssessments.filter(a => a.classification === 'critical' || a.classification === 'class_ii').length}
+    {@const complete = filteredAssessments.filter(a => a.status === 'complete').length}
+    <div class="grid grid-cols-3 gap-3 rounded-xl border p-4" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+      <div class="text-center">
+        <div class="text-2xl font-bold mb-0.5" style="color: {avgCompliance >= 80 ? '#34d399' : avgCompliance >= 40 ? '#fbbf24' : '#f87171'};">{avgCompliance}%</div>
+        <div class="text-xs" style="color: var(--color-text-tertiary);">Avg. Compliance</div>
+      </div>
+      <div class="text-center" style="border-left: 1px solid var(--color-border-subtle); border-right: 1px solid var(--color-border-subtle);">
+        <div class="text-2xl font-bold mb-0.5" style="color: {critical > 0 ? '#f87171' : 'var(--color-text-primary)'};">{critical}</div>
+        <div class="text-xs" style="color: var(--color-text-tertiary);">High-Risk Products</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold mb-0.5" style="color: var(--color-text-primary);">{complete}/{filteredAssessments.length}</div>
+        <div class="text-xs" style="color: var(--color-text-tertiary);">Assessments Complete</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       {#each filteredAssessments as assessment (assessment.id)}
         <CraAssessmentCard
           {assessment}

@@ -4,105 +4,38 @@ import type {
   UpdateDamageScenarioRequest,
   DamageScenariosResponse
 } from '../types/damageScenario';
-import { DamageScenarioApiError } from '../types/damageScenario';
-import { API_BASE_URL } from '$lib/config';
+import { apiFetch } from './apiClient';
 
-class DamageScenarioApi {
-  private async handleResponse<T>(response: Response): Promise<T> {
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new DamageScenarioApiError(`API Error: ${response.status} - ${errorText}`);
-    }
-    return response.json();
-  }
+const BASE = '/damage-scenarios';
 
-  // Damage Scenarios
-  async getAll(skip = 0, limit = 100): Promise<DamageScenariosResponse> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios?skip=${skip}&limit=${limit}`);
-    return this.handleResponse<DamageScenariosResponse>(response);
-  }
+export const damageScenarioApi = {
+  getAll: (skip = 0, limit = 100): Promise<DamageScenariosResponse> =>
+    apiFetch<DamageScenariosResponse>(`${BASE}?skip=${skip}&limit=${limit}`),
 
-  async getById(id: string): Promise<DamageScenario> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios/${id}`);
-    return this.handleResponse<DamageScenario>(response);
-  }
+  getById: (id: string): Promise<DamageScenario> =>
+    apiFetch<DamageScenario>(`${BASE}/${id}`),
 
-  async getDamageScenariosByProduct(productId: string): Promise<DamageScenariosResponse> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios?scope_id=${productId}&limit=1000`);
-    if (!response.ok) {
-      throw new DamageScenarioApiError(`Failed to fetch damage scenarios: ${response.statusText}`);
-    }
-    return response.json();
-  }
+  getDamageScenariosByProduct: (productId: string): Promise<DamageScenariosResponse> =>
+    apiFetch<DamageScenariosResponse>(`${BASE}?scope_id=${productId}&limit=1000`),
 
-  async updateDamageScenario(scenarioId: string, updateData: UpdateDamageScenarioRequest): Promise<DamageScenario> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios/${scenarioId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updateData),
-    });
-    
-    if (!response.ok) {
-      throw new DamageScenarioApiError(`Failed to update damage scenario: ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
+  create: (damageScenario: CreateDamageScenarioRequest): Promise<DamageScenario> =>
+    apiFetch<DamageScenario>(BASE, { method: 'POST', body: JSON.stringify(damageScenario) }),
 
-  async deleteDamageScenario(scenarioId: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios/${scenarioId}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      throw new DamageScenarioApiError(`Failed to delete damage scenario: ${response.statusText}`);
-    }
-  }
+  createDamageScenario: (damageScenario: CreateDamageScenarioRequest): Promise<DamageScenario> =>
+    apiFetch<DamageScenario>(BASE, { method: 'POST', body: JSON.stringify(damageScenario) }),
 
-  async create(damageScenario: CreateDamageScenarioRequest): Promise<DamageScenario> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(damageScenario),
-    });
-    return this.handleResponse<DamageScenario>(response);
-  }
+  update: (id: string, updates: UpdateDamageScenarioRequest): Promise<DamageScenario> =>
+    apiFetch<DamageScenario>(`${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(updates) }),
 
-  async createDamageScenario(damageScenario: CreateDamageScenarioRequest): Promise<DamageScenario> {
-    return this.create(damageScenario);
-  }
+  updateDamageScenario: (id: string, updates: UpdateDamageScenarioRequest): Promise<DamageScenario> =>
+    apiFetch<DamageScenario>(`${BASE}/${id}`, { method: 'PUT', body: JSON.stringify(updates) }),
 
-  async update(id: string, updates: UpdateDamageScenarioRequest): Promise<DamageScenario> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updates),
-    });
-    return this.handleResponse<DamageScenario>(response);
-  }
+  acceptScenario: (id: string): Promise<DamageScenario> =>
+    apiFetch<DamageScenario>(`${BASE}/${id}/accept`, { method: 'PATCH' }),
 
-  async acceptScenario(id: string): Promise<DamageScenario> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios/${id}/accept`, {
-      method: 'PATCH',
-    });
-    return this.handleResponse<DamageScenario>(response);
-  }
+  delete: (id: string): Promise<void> =>
+    apiFetch<void>(`${BASE}/${id}`, { method: 'DELETE' }),
 
-  async delete(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/damage-scenarios/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new DamageScenarioApiError(`API Error: ${response.status} - ${errorText}`);
-    }
-  }
-}
-
-export const damageScenarioApi = new DamageScenarioApi();
+  deleteDamageScenario: (id: string): Promise<void> =>
+    apiFetch<void>(`${BASE}/${id}`, { method: 'DELETE' }),
+};

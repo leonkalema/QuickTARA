@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { selectedProduct } from '$lib/stores/productStore';
   import { notifications } from '$lib/stores/notificationStore';
@@ -81,12 +80,6 @@
       goto('/unauthorized');
     }
   }
-
-  onMount(async () => {
-    if ($selectedProduct?.scope_id) {
-      await loadData();
-    }
-  });
 
   $: if ($selectedProduct?.scope_id) {
     loadData();
@@ -229,28 +222,22 @@
   </div>
 
   {#if !$selectedProduct}
-    <div class="relative flex flex-col items-center py-16 text-center">
-      <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-      <div class="relative z-10 flex flex-col items-center max-w-md">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No Product Selected</h3>
-        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Select a product from the header to begin risk assessment.</p>
-        <a href="/products" class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Select a Product</a>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
       </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No product selected</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Select a product from the header dropdown to begin risk assessment.</p>
+      <a href="/products" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Go to Products</a>
     </div>
   {:else if threatScenarios.length === 0 && !loading}
-    <div class="relative flex flex-col items-center py-16 text-center">
-      <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-      <div class="relative z-10 flex flex-col items-center max-w-md">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No Threat Scenarios Found</h3>
-        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Create threat scenarios first to assess attack paths and feasibility.</p>
-        <a href="/threat-scenarios" class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Create Threat Scenarios</a>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No threat scenarios yet</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Create threat scenarios first — risk assessment rates how likely each attack path is to succeed.</p>
+      <a href="/threat-scenarios" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Add Threat Scenarios</a>
     </div>
   {:else}
     {#if loading}
@@ -289,15 +276,15 @@
         <div class="rounded-lg p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
           <div class="flex items-center justify-between mb-5">
             <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Create New Attack Path</h3>
-            <button on:click={() => showAddForm = false} style="color: var(--color-text-tertiary);">
+            <button on:click={() => showAddForm = false} aria-label="Close form" style="color: var(--color-text-tertiary);">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div class="space-y-4">
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Threat Scenario *</label>
-                <select bind:value={formData.threat_scenario_id} required
+                <label for="threat-scenario-select" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Threat Scenario *</label>
+                <select id="threat-scenario-select" bind:value={formData.threat_scenario_id} required
                   class="w-full px-3 py-2 rounded-md text-sm border-0"
                   style="background: var(--color-bg-inset); color: var(--color-text-primary);">
                   <option value="">Select a threat scenario</option>
@@ -307,20 +294,20 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Attack Path Name *</label>
-                <input type="text" bind:value={formData.name} placeholder="e.g., Remote Code Execution via Buffer Overflow" required
+                <label for="attack-path-name" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Attack Path Name *</label>
+                <input id="attack-path-name" type="text" bind:value={formData.name} placeholder="e.g., Remote Code Execution via Buffer Overflow" required
                   class="w-full px-3 py-2 rounded-md text-sm border-0"
                   style="background: var(--color-bg-inset); color: var(--color-text-primary);" />
               </div>
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Description</label>
-                <textarea bind:value={formData.description} placeholder="Brief description..." rows="3"
+                <label for="attack-path-desc" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Description</label>
+                <textarea id="attack-path-desc" bind:value={formData.description} placeholder="Brief description..." rows="3"
                   class="w-full px-3 py-2 rounded-md text-sm border-0"
                   style="background: var(--color-bg-inset); color: var(--color-text-primary);"></textarea>
               </div>
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Attack Steps *</label>
-                <textarea bind:value={formData.attack_steps}
+                <label for="attack-path-steps" class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">Attack Steps *</label>
+                <textarea id="attack-path-steps" bind:value={formData.attack_steps}
                   placeholder="Enter each attack step on a new line:&#10;1. Reconnaissance&#10;2. Vulnerability scanning&#10;3. Exploit development&#10;..."
                   rows="8" required
                   class="w-full px-3 py-2 rounded-md text-sm font-mono border-0"
@@ -410,9 +397,13 @@
                             </ol>
                           </div>
                         </div>
-                        <button on:click={() => handleDeleteAttackPath(attackPath)} title="Delete attack path"
-                          class="ml-3" style="color: var(--color-error);">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <button on:click={() => handleDeleteAttackPath(attackPath)}
+                          aria-label="Delete attack path"
+                          class="delete-path-btn ml-3 inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border"
+                          style="color: var(--color-status-error); border-color: var(--color-status-error); background: transparent;"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                          Delete
                         </button>
                       </div>
                     </div>

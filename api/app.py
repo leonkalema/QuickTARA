@@ -1,7 +1,8 @@
 """
 Main FastAPI application factory
 """
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import logging
@@ -9,6 +10,20 @@ from pathlib import Path
 
 # Set up logger
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Rate limiting (SlowAPI — optional, gracefully skipped if not installed)
+# ---------------------------------------------------------------------------
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+    _limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
+    HAS_LIMITER = True
+except ImportError:
+    _limiter = None
+    HAS_LIMITER = False
+    logger.warning("slowapi not installed — rate limiting disabled. Run: pip install slowapi")
 
 # Import all routers
 from api.routers import (
@@ -26,31 +41,53 @@ def create_app(settings=None):
         description="REST API for automotive security threat analysis and risk assessment",
         version="1.0.0",
     )
-    
-    # Configure CORS
+
+    # ------------------------------------------------------------------
+    # Rate limiter (login brute-force protection)
+    # ------------------------------------------------------------------
+    if HAS_LIMITER:
+        app.state.limiter = _limiter
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # ------------------------------------------------------------------
+    # Security headers middleware
+    # ------------------------------------------------------------------
+    @app.middleware("http")
+    async def add_security_headers(request: Request, call_next) -> Response:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        return response
+
+    # ------------------------------------------------------------------
+    # CORS — locked to known origins; extend via QUICKTARA_CORS_ORIGINS
+    # ------------------------------------------------------------------
+    _default_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+    ]
+    _env_origins = [
+        o.strip()
+        for o in os.environ.get("QUICKTARA_CORS_ORIGINS", "").split(",")
+        if o.strip()
+    ]
+    allowed_origins = list(dict.fromkeys(_default_origins + _env_origins))
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",     # Vite dev server
-            "http://127.0.0.1:5173",     # Vite dev server alternative
-            "http://localhost:4173",     # Vite preview
-            "http://127.0.0.1:4173",     # Vite preview alternative
-            "http://localhost:3000",     # Alternative development port
-            "http://127.0.0.1:3000",     # Alternative development port IP
-            "http://localhost",          # Generic localhost
-            "http://127.0.0.1",         # Generic local IP
-            "http://localhost:8080",     # If frontend is served by the same backend
-            "http://127.0.0.1:8080",     # Backend local IP
-            "http://localhost:5174",     # Additional Vite ports
-            "http://127.0.0.1:5174",      # Additional Vite ports
-            "*"                         # Allow all origins (for development only)
-            # In production, replace this with specific allowed origins
-        ],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],  # Allows all headers
+        allow_headers=["Authorization", "Content-Type", "Accept"],
         expose_headers=["Content-Disposition"],
-        max_age=1800  # Cache preflight requests for 30 minutes
+        max_age=600,
     )
     
     # Include all API routers

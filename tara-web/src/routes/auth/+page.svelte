@@ -303,6 +303,18 @@
 		}
 	}
 
+	@media (prefers-reduced-motion: reduce) {
+		.form-wrapper {
+			animation: none;
+		}
+		.success-banner {
+			animation: none;
+		}
+		.feature:hover {
+			transform: none;
+		}
+	}
+
 	/* Responsive */
 	@media (max-width: 1024px) {
 		.brand-panel {

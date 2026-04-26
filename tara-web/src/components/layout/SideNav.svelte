@@ -98,7 +98,7 @@
   </button>
 
   <!-- Nav groups -->
-  <nav class="flex-1 overflow-y-auto px-2 pb-4 space-y-4">
+  <nav class="flex-1 overflow-y-auto px-2 pb-4 space-y-4" aria-label="Main navigation">
     {#each groups as group}
       {@const items = navItems.filter(i => i.group === group.key && hasPermission(i.permission))}
       {#if items.length > 0}
@@ -118,21 +118,36 @@
             {#each items as item}
               {@const active = isCurrent(item)}
               {@const accessible = isAccessible(item)}
+              {@const lockedReason = !accessible && item.requiresProduct ? 'Select a product first' : ''}
               <a
                 href={accessible ? item.path : undefined}
+                aria-current={active ? 'page' : undefined}
+                aria-disabled={!accessible ? 'true' : undefined}
                 class="group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150 focus-ring
-                  {active ? '' : accessible ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'}"
+                  {active ? '' : accessible ? 'cursor-pointer' : 'cursor-not-allowed opacity-35'}"
                 style="
                   background: {active ? 'var(--color-accent-primary)' : 'transparent'};
                   color: {active ? 'var(--color-text-inverse)' : 'var(--color-text-secondary)'};
                 "
                 onmouseenter={(e) => { if (!active && accessible) { e.currentTarget.style.background = 'var(--color-bg-surface-hover)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}}
                 onmouseleave={(e) => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}}
-                title={collapsed ? item.label : ''}
+                title={collapsed ? item.label : lockedReason}
               >
-                <item.icon class="w-[18px] h-[18px] flex-shrink-0" />
+                {#if item.step && !collapsed}
+                  <span class="flex-shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold"
+                    style="background: {active ? 'rgba(255,255,255,0.25)' : accessible ? 'var(--color-bg-elevated)' : 'var(--color-bg-elevated)'}; color: {active ? '#fff' : 'var(--color-text-tertiary)'};">
+                    {item.step}
+                  </span>
+                {:else}
+                  <item.icon class="w-[18px] h-[18px] flex-shrink-0" />
+                {/if}
                 {#if !collapsed}
-                  <span class="truncate">{item.label}</span>
+                  <span class="truncate flex-1">{item.label}</span>
+                  {#if !accessible && item.requiresProduct}
+                    <svg class="w-3 h-3 flex-shrink-0 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                  {/if}
                 {/if}
               </a>
             {/each}

@@ -51,6 +51,18 @@ def main():
         help="Enable debug mode",
         action="store_true"
     )
+    parser.add_argument(
+        "--ssl-certfile",
+        help="Path to TLS certificate file (enables HTTPS)",
+        type=str,
+        default=os.environ.get("QUICKTARA_SSL_CERTFILE"),
+    )
+    parser.add_argument(
+        "--ssl-keyfile",
+        help="Path to TLS private key file (enables HTTPS)",
+        type=str,
+        default=os.environ.get("QUICKTARA_SSL_KEYFILE"),
+    )
     
     args = parser.parse_args()
     
@@ -108,16 +120,31 @@ def main():
     port = int(server_settings.get("port", 8080))
     debug = server_settings.get("debug", False)
     
-    # Start server
-    logger.info(f"Starting server on {host}:{port} (debug={debug})...")
-    uvicorn.run(
-        "api.app:create_app",
+    ssl_certfile: str | None = getattr(args, 'ssl_certfile', None)
+    ssl_keyfile: str | None = getattr(args, 'ssl_keyfile', None)
+    tls_enabled = bool(ssl_certfile and ssl_keyfile)
+
+    scheme = "https" if tls_enabled else "http"
+    logger.info(f"Starting server on {scheme}://{host}:{port} (debug={debug}, tls={tls_enabled})...")
+
+    if not tls_enabled:
+        logger.warning(
+            "TLS is disabled. For production deployments pass --ssl-certfile and --ssl-keyfile "
+            "or set QUICKTARA_SSL_CERTFILE / QUICKTARA_SSL_KEYFILE environment variables."
+        )
+
+    uvicorn_kwargs = dict(
         host=host,
         port=port,
         reload=debug,
         factory=True,
-        log_level="debug" if debug else "info"
+        log_level="debug" if debug else "info",
     )
+    if tls_enabled:
+        uvicorn_kwargs["ssl_certfile"] = ssl_certfile
+        uvicorn_kwargs["ssl_keyfile"] = ssl_keyfile
+
+    uvicorn.run("api.app:create_app", **uvicorn_kwargs)
 
 
 if __name__ == "__main__":

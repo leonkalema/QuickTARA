@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { selectedProduct } from '$lib/stores/productStore';
   import { notifications } from '$lib/stores/notificationStore';
@@ -56,12 +55,6 @@
       goto('/unauthorized');
     }
   }
-
-  onMount(async () => {
-    if ($selectedProduct?.scope_id) {
-      await loadData();
-    }
-  });
 
   $: if ($selectedProduct?.scope_id) {
     loadData();
@@ -229,27 +222,22 @@
   </div>
 
   {#if !$selectedProduct}
-    <div class="relative flex flex-col items-center py-16 text-center">
-      <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-      <div class="relative z-10 flex flex-col items-center max-w-md">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No Product Selected</h3>
-        <p class="text-sm" style="color: var(--color-text-secondary);">Select a product from the header to manage threat scenarios.</p>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No product selected</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Select a product from the header dropdown to manage its threat scenarios.</p>
+      <a href="/products" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Go to Products</a>
     </div>
   {:else if !damageScenarios || damageScenarios.length === 0}
-    <div class="relative flex flex-col items-center py-16 text-center">
-      <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-      <div class="relative z-10 flex flex-col items-center max-w-md">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-        </div>
-        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No Damage Scenarios Found</h3>
-        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Create damage scenarios first — threats describe how damage could happen.</p>
-        <a href="/damage-scenarios" class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Go to Damage Scenarios</a>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
       </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No damage scenarios yet</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Threat scenarios are built on top of damage scenarios. Define what could go wrong first, then come back here.</p>
+      <a href="/damage-scenarios" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Add Damage Scenarios</a>
     </div>
   {:else}
     <!-- Status filter tabs + bulk actions -->

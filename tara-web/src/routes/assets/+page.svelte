@@ -94,7 +94,7 @@
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-4 lg:space-y-0">
     <div>
-      <h1 class="text-sm font-bold" style="color: var(--color-text-primary);">Assets & Components</h1>
+      <h1 class="text-xl font-bold tracking-tight" style="color: var(--color-text-primary);">Assets & Components</h1>
       {#if $selectedProduct}
         <p class="mt-1 text-xs max-w-2xl" style="color: var(--color-text-tertiary);">
           Manage assets and components for <strong style="color: var(--color-text-secondary);">{$selectedProduct.name}</strong>. 
@@ -109,23 +109,18 @@
   </div>
 
   {#if !$selectedProduct}
-    <!-- No Product Selected State -->
-    <div class="text-center py-16">
-      <svg class="w-10 h-10 mx-auto mb-4" style="color: var(--color-text-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-      </svg>
-      <h3 class="text-sm font-medium mb-2" style="color: var(--color-text-primary);">No Product Selected</h3>
-      <p class="text-xs mb-6 max-w-md mx-auto" style="color: var(--color-text-tertiary);">
-        Select a product from the header dropdown or visit the Products page to choose which product's assets you want to manage.
-      </p>
-      <a
-        href="/products"
-        class="px-4 py-2 rounded-lg text-xs font-medium transition-colors inline-flex items-center space-x-2" style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+    <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
         </svg>
-        <span>Select a Product</span>
+      </div>
+      <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No product selected</h3>
+      <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">
+        Select a product from the header dropdown to view and manage its assets and components.
+      </p>
+      <a href="/products" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">
+        Go to Products
       </a>
     </div>
   {:else}

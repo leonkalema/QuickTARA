@@ -25,16 +25,22 @@
   }
 </script>
 
-<div class="fixed top-4 right-4 z-50 space-y-2">
+<div
+  class="fixed top-4 right-4 z-50 space-y-2"
+  aria-live="polite"
+  aria-atomic="false"
+  aria-label="Notifications"
+  role="region"
+>
   {#each $notifications as notification (notification.id)}
     {@const s = getTokenStyles(notification.type)}
-    <div class="max-w-sm w-full animate-slide-in">
+    <div class="max-w-sm w-full animate-slide-in" role="status">
       <div
         class="rounded-lg p-3.5"
         style="background: {s.bg}; border: 1px solid {s.border}; box-shadow: var(--shadow-lg);"
       >
         <div class="flex items-start">
-          <div class="flex-shrink-0">
+          <div class="flex-shrink-0" aria-hidden="true">
             <svelte:component this={getIcon(notification.type)} class="w-4 h-4" style="color: {s.icon};" />
           </div>
           <div class="ml-2.5 flex-1">
@@ -46,9 +52,10 @@
             <button
               class="inline-flex rounded-md p-1 transition-colors"
               style="color: {s.fg};"
+              aria-label="Dismiss notification"
               on:click={() => notifications.remove(notification.id)}
             >
-              <XIcon class="w-3.5 h-3.5" />
+              <XIcon class="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -71,5 +78,11 @@
 
   .animate-slide-in {
     animation: slide-in 0.3s ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-slide-in {
+      animation: none;
+    }
   }
 </style>

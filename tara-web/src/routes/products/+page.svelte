@@ -239,9 +239,23 @@
 
   <!-- Content -->
   {#if isLoading}
-    <div class="flex flex-col items-center py-16">
-      <div class="animate-spin rounded-full h-7 w-7 border-2 border-t-transparent mb-3" style="border-color: var(--color-accent-primary); border-top-color: transparent;"></div>
-      <p class="text-sm" style="color: var(--color-text-tertiary);">Loading products...</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      {#each Array(6) as _}
+        <div class="flex rounded-xl overflow-hidden border animate-pulse" style="background: var(--color-bg-surface); border-color: var(--color-border-default);">
+          <div class="w-1 flex-shrink-0" style="background: var(--color-bg-elevated);"></div>
+          <div class="flex-1 p-4">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-9 h-9 rounded-lg flex-shrink-0" style="background: var(--color-bg-elevated);"></div>
+              <div class="flex-1">
+                <div class="h-3.5 rounded mb-1.5" style="background: var(--color-bg-elevated); width: 60%;"></div>
+                <div class="h-2.5 rounded" style="background: var(--color-bg-elevated); width: 40%;"></div>
+              </div>
+            </div>
+            <div class="h-2.5 rounded mb-1.5" style="background: var(--color-bg-elevated); width: 90%;"></div>
+            <div class="h-2.5 rounded" style="background: var(--color-bg-elevated); width: 70%;"></div>
+          </div>
+        </div>
+      {/each}
     </div>
   {:else if error}
     <div class="rounded-lg p-4" style="background: var(--color-error-bg); border: 1px solid var(--color-error);">
@@ -251,16 +265,13 @@
     </div>
   {:else if filteredProducts.length === 0}
     {#if products.length === 0}
-      <div class="relative flex flex-col items-center py-16 text-center">
-        <div class="absolute inset-0 radar-bg pointer-events-none"></div>
-        <div class="relative z-10 flex flex-col items-center max-w-md">
-          <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-default);">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-          </div>
-          <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No products yet</h3>
-          <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Define your first product scope to begin threat analysis.</p>
-          <button class="px-4 py-2 rounded-md text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);" on:click={() => showCreateModal = true}>Create Your First Product</button>
+      <div class="rounded-xl border border-dashed py-20 text-center" style="border-color: var(--color-border-default);">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--color-bg-elevated);">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--color-text-tertiary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
         </div>
+        <h3 class="text-base font-semibold mb-2" style="color: var(--color-text-primary);">No products yet</h3>
+        <p class="text-sm mb-6 max-w-sm mx-auto" style="color: var(--color-text-tertiary);">Define your first product scope to begin threat analysis.</p>
+        <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background: var(--color-accent-primary); color: var(--color-text-inverse);" on:click={() => showCreateModal = true}>Create Your First Product</button>
       </div>
     {:else}
       <div class="text-center py-12">

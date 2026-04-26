@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '$lib/config';
+import { apiFetch } from './apiClient';
 
 export interface RiskTreatmentData {
   risk_treatment_id: string;
@@ -50,45 +50,25 @@ export class RiskTreatmentApiError extends Error {
 }
 
 export class RiskTreatmentApi {
-  async getRiskTreatmentData(scopeId: string): Promise<RiskTreatmentResponse> {
-    const response = await fetch(`${API_BASE_URL}/risk-treatment?scope_id=${scopeId}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch risk treatment data: ${response.statusText}`);
-    }
-    return response.json();
+  getRiskTreatmentData(scopeId: string): Promise<RiskTreatmentResponse> {
+    return apiFetch<RiskTreatmentResponse>(`/risk-treatment?scope_id=${scopeId}`);
   }
 
-  async updateRiskTreatment(riskTreatmentId: string, treatmentData: {
+  updateRiskTreatment(riskTreatmentId: string, treatmentData: {
     selected_treatment?: string;
     treatment_goal?: string;
     treatment_status?: string;
   }): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/risk-treatment/${riskTreatmentId}`, {
+    return apiFetch<{ message: string }>(`/risk-treatment/${riskTreatmentId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(treatmentData),
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to update risk treatment: ${response.statusText}`);
-    }
-    return response.json();
   }
 
-  async approveRiskTreatment(riskTreatmentId: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/risk-treatment/${riskTreatmentId}/approve`, {
+  approveRiskTreatment(riskTreatmentId: string): Promise<{ message: string }> {
+    return apiFetch<{ message: string }>(`/risk-treatment/${riskTreatmentId}/approve`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to approve risk treatment: ${response.statusText}`);
-    }
-    return response.json();
   }
 }
 
