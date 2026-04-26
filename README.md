@@ -101,7 +101,7 @@ curl -sSL https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-dep
 - ✅ Downloads and installs QuickTARA
 - ✅ Sets up Python backend (FastAPI + SQLite)
 - ✅ Builds and starts SvelteKit frontend
-- ✅ Creates initial admin user (credentials printed to terminal on first run)
+- ✅ Creates initial admin user with a randomly generated password (written to `quicktara-initial-credentials.txt`, mode `0600`, in the project root)
 - ✅ Generates a self-signed TLS certificate (HTTPS by default when `openssl` is available)
 - ✅ Locks CORS to known origins, adds security headers, and rate-limits the login endpoint (10/min per IP)
 - ✅ Preserves existing data on updates
@@ -115,7 +115,7 @@ curl -sSL https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-dep
 > Browsers will warn about the self-signed certificate on first visit. Accept the warning, or import `./certs/quicktara.crt` into your OS trust store. To use a real cert, set `QUICKTARA_SSL_CERTFILE` and `QUICKTARA_SSL_KEYFILE` to point at your own files before running the script.
 
 **First Login:**
-The deploy script provisions an initial **System Administrator** account. The email and one-time password are printed to the installer's terminal on first run — copy them, sign in, and **change the password immediately** under *Settings → My Account*. The default account is intended only to bootstrap your own admin user; it must not be used in shared or production environments.
+The first-run database migration creates a **System Administrator** account with a randomly generated 144-bit password and writes the credentials to `quicktara-initial-credentials.txt` in the project root with file mode `0600` (owner read/write only). Open the file, sign in, **change the password immediately** under *Settings → My Account*, then **delete the file**. The bootstrap account exists only to let you create your own admin user — it is never reused or regenerated and must not be left in place on shared or production deployments.
 
 **Production environment variables:**
 

@@ -1,11 +1,24 @@
+import { readFileSync } from 'node:fs';
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-	export default defineConfig({
+const sslCertfile: string | undefined = process.env.QUICKTARA_SSL_CERTFILE;
+const sslKeyfile:  string | undefined = process.env.QUICKTARA_SSL_KEYFILE;
+
+const httpsConfig: false | { cert: Buffer; key: Buffer } =
+	sslCertfile && sslKeyfile
+		? { cert: readFileSync(sslCertfile), key: readFileSync(sslKeyfile) }
+		: false;
+
+export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	preview: {
-		allowedHosts: ['beta.quicktara.com']
+		allowedHosts: ['beta.quicktara.com'],
+		https: httpsConfig
+	},
+	server: {
+		https: httpsConfig
 	},
 	test: {
 		globals: true,
