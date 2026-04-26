@@ -58,3 +58,4 @@ quicktara.db
 quicktara-initial-credentials.txt
 .quicktara_jwt_secret
 certs/
+rules/
