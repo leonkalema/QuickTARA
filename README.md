@@ -101,18 +101,30 @@ curl -sSL https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-dep
 - ✅ Downloads and installs QuickTARA
 - ✅ Sets up Python backend (FastAPI + SQLite)
 - ✅ Builds and starts SvelteKit frontend
-- ✅ Creates default admin user
+- ✅ Creates initial admin user (credentials printed to terminal on first run)
+- ✅ Generates a self-signed TLS certificate (HTTPS by default when `openssl` is available)
+- ✅ Locks CORS to known origins, adds security headers, and rate-limits the login endpoint (10/min per IP)
 - ✅ Preserves existing data on updates
 - ✅ Provides both local and LAN access URLs
 
-**Access URLs:**
-- **Frontend (UI):** `http://localhost:4173`
-- **Backend (API):** `http://localhost:8080`
-- **LAN Access:** `http://your-ip:4173` and `http://your-ip:8080`
+**Access URLs (HTTPS by default):**
+- **Frontend (UI):** `https://localhost:4173`
+- **Backend (API):** `https://localhost:8080`
+- **LAN Access:** `https://your-ip:4173` and `https://your-ip:8080`
 
-**Default Login:**
-- **Email:** `admin@quicktara.local`
-- **Password:** `admin123`
+> Browsers will warn about the self-signed certificate on first visit. Accept the warning, or import `./certs/quicktara.crt` into your OS trust store. To use a real cert, set `QUICKTARA_SSL_CERTFILE` and `QUICKTARA_SSL_KEYFILE` to point at your own files before running the script.
+
+**First Login:**
+The deploy script provisions an initial **System Administrator** account. The email and one-time password are printed to the installer's terminal on first run — copy them, sign in, and **change the password immediately** under *Settings → My Account*. The default account is intended only to bootstrap your own admin user; it must not be used in shared or production environments.
+
+**Production environment variables:**
+
+| Variable                   | Purpose                                                              |
+|----------------------------|----------------------------------------------------------------------|
+| `QUICKTARA_SSL_CERTFILE`   | Path to TLS certificate (PEM). Enables HTTPS when paired with key.   |
+| `QUICKTARA_SSL_KEYFILE`    | Path to TLS private key (PEM).                                       |
+| `QUICKTARA_CORS_ORIGINS`   | Comma-separated allow-list of additional frontend origins.           |
+| `QUICKTARA_DB_*`           | Override the default SQLite database (see *Advanced Configuration*). |
 
 ---
 
@@ -185,7 +197,7 @@ QuickTARA implements comprehensive role-based access control (RBAC) for enterpri
 - ✅ Settings access
 - ✅ Audit logs
 
-*Default: `admin@quicktara.local`*
+*Initial bootstrap account is created by the installer; rotate the password immediately and create a per-user admin account.*
 
 </td>
 <td width="25%">
@@ -422,10 +434,9 @@ python quicktara_web.py
 <td width="50%">
 
 #### 1️⃣ **Access the Platform**
-- Open your browser to `http://localhost:8080`
-- Login with default credentials:
-  - **Email:** `admin@quicktara.local`
-  - **Password:** `admin123`
+- Open your browser to `https://localhost:4173` (or `http://` if TLS was disabled)
+- Sign in with the bootstrap admin credentials printed by the installer
+- **Change the password immediately** under *Settings → My Account*
 - Navigate to the dashboard
 
 #### 2️⃣ **Create Your Project**
