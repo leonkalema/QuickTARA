@@ -147,6 +147,16 @@ else
     echo "✅ Existing database found - preserving data"
 fi
 
+# Apply any new schema migrations (safe to re-run; alembic is idempotent)
+if [ -f "alembic.ini" ]; then
+    echo "🛠️  Applying database migrations..."
+    if alembic upgrade head; then
+        echo "✅ Migrations up to date"
+    else
+        echo "⚠️  alembic upgrade head failed — check the log above. Server will still start."
+    fi
+fi
+
 echo ""
 _SCHEME="http"
 _SSL_ARGS=""

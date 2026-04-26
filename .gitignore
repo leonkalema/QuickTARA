@@ -56,4 +56,5 @@ quicktara.db
 # Secrets — never commit
 # --------------------------------
 quicktara-initial-credentials.txt
+.quicktara_jwt_secret
 certs/

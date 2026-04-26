@@ -119,12 +119,13 @@ The first-run database migration creates a **System Administrator** account with
 
 **Production environment variables:**
 
-| Variable                   | Purpose                                                              |
-|----------------------------|----------------------------------------------------------------------|
-| `QUICKTARA_SSL_CERTFILE`   | Path to TLS certificate (PEM). Enables HTTPS when paired with key.   |
-| `QUICKTARA_SSL_KEYFILE`    | Path to TLS private key (PEM).                                       |
-| `QUICKTARA_CORS_ORIGINS`   | Comma-separated allow-list of additional frontend origins.           |
-| `QUICKTARA_DB_*`           | Override the default SQLite database (see *Advanced Configuration*). |
+| Variable                   | Purpose                                                                                  |
+|----------------------------|------------------------------------------------------------------------------------------|
+| `QUICKTARA_SSL_CERTFILE`   | Path to TLS certificate (PEM). Enables HTTPS when paired with key.                       |
+| `QUICKTARA_SSL_KEYFILE`    | Path to TLS private key (PEM).                                                           |
+| `QUICKTARA_JWT_SECRET`     | JWT signing secret. Auto-generated to `.quicktara_jwt_secret` (mode `0600`) if not set.  |
+| `QUICKTARA_CORS_ORIGINS`   | Comma-separated allow-list of additional frontend origins.                               |
+| `QUICKTARA_DB_*`           | Override the default SQLite database (see *Advanced Configuration*).                     |
 
 ---
 

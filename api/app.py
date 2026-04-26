@@ -52,6 +52,10 @@ def create_app(settings=None):
     # ------------------------------------------------------------------
     # Security headers middleware
     # ------------------------------------------------------------------
+    _tls_active: bool = bool(
+        os.environ.get("QUICKTARA_SSL_CERTFILE") and os.environ.get("QUICKTARA_SSL_KEYFILE")
+    )
+
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next) -> Response:
         response = await call_next(request)
@@ -60,6 +64,11 @@ def create_app(settings=None):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        # HSTS — only advertise on TLS deployments, otherwise misleading
+        if _tls_active:
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
         return response
 
     # ------------------------------------------------------------------

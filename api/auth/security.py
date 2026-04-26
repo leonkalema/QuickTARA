@@ -1,17 +1,54 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Optional, Dict, Any
-from jose import JWTError, jwt
+import hashlib
+import logging
+import os
+import secrets
+import stat
+
+import jwt  # PyJWT
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import secrets
-import hashlib
 
-# Security configuration
-SECRET_KEY = "your-secret-key-change-in-production"  # Change this in production!
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# JWT secret — never hardcoded. Resolution order:
+#   1. QUICKTARA_JWT_SECRET env var
+#   2. ./.quicktara_jwt_secret file (auto-generated on first run, mode 0600)
+# ---------------------------------------------------------------------------
+_SECRET_FILE: Path = Path(os.getcwd()) / ".quicktara_jwt_secret"
+
+
+def _load_or_create_jwt_secret() -> str:
+    """Return a stable JWT signing secret, generating one on first run."""
+    env_secret = os.environ.get("QUICKTARA_JWT_SECRET")
+    if env_secret:
+        return env_secret
+
+    if _SECRET_FILE.exists():
+        return _SECRET_FILE.read_text(encoding="utf-8").strip()
+
+    logger.warning(
+        "QUICKTARA_JWT_SECRET not set — generating a persistent random secret at %s. "
+        "For production, set QUICKTARA_JWT_SECRET in the environment instead.",
+        _SECRET_FILE,
+    )
+    new_secret = secrets.token_urlsafe(64)
+    _SECRET_FILE.write_text(new_secret, encoding="utf-8")
+    try:
+        os.chmod(_SECRET_FILE, stat.S_IRUSR | stat.S_IWUSR)  # 0600
+    except OSError:
+        pass
+    return new_secret
+
+
+SECRET_KEY: str = _load_or_create_jwt_secret()
+ALGORITHM: str = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -34,51 +71,38 @@ class SecurityManager:
     def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         """Create JWT access token"""
         to_encode = data.copy()
-        
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        
+        expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
         to_encode.update({"exp": expire, "type": "access"})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
-    
+        return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
     def create_refresh_token(self, data: Dict[str, Any]) -> str:
         """Create JWT refresh token"""
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         to_encode.update({"exp": expire, "type": "refresh"})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
-    
+        return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
     def verify_token(self, token: str, token_type: str = "access") -> Dict[str, Any]:
-        """Verify and decode JWT token"""
+        """Verify and decode JWT token. PyJWT validates `exp` natively."""
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            
-            # Check token type
-            if payload.get("type") != token_type:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token type"
-                )
-            
-            # Check expiration
-            exp = payload.get("exp")
-            if exp is None or datetime.utcnow() > datetime.fromtimestamp(exp):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token expired"
-                )
-            
-            return payload
-            
-        except JWTError:
+            payload: Dict[str, Any] = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        except jwt.ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials"
+                detail="Token expired",
             )
+        except jwt.InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+
+        if payload.get("type") != token_type:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type",
+            )
+        return payload
     
     def generate_refresh_token_hash(self, user_id: str, device_info: str = "") -> tuple[str, str]:
         """Generate a secure refresh token and its hash"""

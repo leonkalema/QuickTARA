@@ -20,6 +20,13 @@ def _login_rate_limit(func):
         return _login_limiter.limit("10/minute")(func)
     return func
 
+
+def _refresh_rate_limit(func):
+    """Apply 30/minute rate limit to refresh endpoint if slowapi is available."""
+    if HAS_LIMITER:
+        return _login_limiter.limit("30/minute")(func)
+    return func
+
 from ..deps.db import get_db
 from ..models.user import User, UserRole, UserStatus, Organization, RefreshToken, user_organizations
 from ..auth.security import security_manager, create_user_token_data
@@ -217,6 +224,7 @@ async def login_user(
     )
 
 @router.post("/refresh", response_model=TokenResponse)
+@_refresh_rate_limit
 async def refresh_access_token(
     refresh_data: RefreshTokenRequest,
     request: Request,
