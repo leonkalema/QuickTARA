@@ -566,30 +566,6 @@ python quicktara_web.py --debug
 
 </details>
 
-### 🖥️ **Command Line Interface**
-
-<details>
-<summary>For automated/batch processing</summary>
-
-```bash
-# Basic analysis
-python quicktara.py -i assets.csv
-
-# Custom output directory
-python quicktara.py -i assets.csv -o ./reports/
-
-# Specific report formats
-python quicktara.py -i assets.csv --pdf --excel --json
-```
-
-**Generated Reports:**
-- 📄 `report.pdf` - Executive summary and technical details
-- 📊 `report.xlsx` - Spreadsheet with multiple analysis sheets
-- 🔧 `report.json` - Machine-readable data for integrations
-- 📝 `report.txt` - Plain text detailed report
-
-</details>
-
 ---
 
 ## 📞 **Support & Contact**

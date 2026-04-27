@@ -1,6 +1,10 @@
 # QuickTARA – Git ignore rules
 project-info/
 
+# User-uploaded compliance evidence — runtime data, never versioned
+evidence_uploads/*
+!evidence_uploads/.gitkeep
+
 # --------------------------------
 # Project-specific
 # Do NOT track the local data directory or its contents
