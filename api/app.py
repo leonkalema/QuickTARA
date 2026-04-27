@@ -39,7 +39,7 @@ def create_app(settings=None):
     app = FastAPI(
         title="QuickTARA API",
         description="REST API for automotive security threat analysis and risk assessment",
-        version="1.0.0",
+        version="2.1.0",
     )
 
     # ------------------------------------------------------------------
