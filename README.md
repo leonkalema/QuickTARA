@@ -64,7 +64,7 @@ QuickTARA is the first TARA tool with **native EU Cyber Resilience Act (CRA) com
 ### 📋 **Classification & Gap Analysis**
 - **Product Classification** — 6-question wizard determines Default, Class I, Class II, or Critical
 - **Auto-Mapping** — Existing TARA artifacts (assets, damage scenarios, controls) automatically map to CRA requirements
-- **Gap Analysis** — All 18 Annex I requirements tracked with risk-level scoring
+- **Gap Analysis** — All **18 CRA requirements** (9 Part I risk-based, 5 Part II mandatory, 4 documentation) tracked with risk-level scoring; risk-based vs mandatory remain visually distinct in the UI and reports
 - **Legacy Product Support** — Compensating controls catalog for products that can't be redesigned
 - **Risk-Driven Workflow** — Apply a suggested control directly from a gap → control is created + linked → risk drops
 
@@ -113,7 +113,7 @@ notified-body submission or Pandoc conversion to PDF/DOCX. Read-only —
 regenerates on every refresh from the source of truth. Backed by
 `core/cra_annex_vii*`.
 
-### �🔒 **Validation & Integrity**
+### �� **Validation & Integrity**
 - N/A status requires documented justification — form blocks save without it
 - Residual risk labels accurately reflect control status (planned ≠ implemented ≠ verified)
 - Single source of truth — gap analysis reads from requirement statuses, not parallel data
@@ -406,6 +406,9 @@ QuickTARA implements comprehensive role-based access control (RBAC) for enterpri
 - **CRA Compliance Module** — Classification wizard, auto-mapping, gap analysis, compensating controls
 - **CRA Reports** — Audit traceability report (internal) and customer compliance summary (external)
 - **CRA Inventory** — SKU tracking, firmware versions, units in field/stock, OEM customers
+- **CRA SBOM Ingestion (Art. 13(6))** — CycloneDX 1.4+/1.5 and SPDX 2.3 upload, parse, and storage; auto-maps to CRA-10
+- **CRA Incident Reporting (Art. 14)** — 24h / 72h / 14d deadline tracking with structured ENISA Single Reporting Platform export
+- **CRA Annex VII Generator** — Seven-section technical documentation with completeness %, action-required flags, Markdown export
 - **Audit Trail** — Immutable action logging, evidence attachments, approval workflows, snapshots
 - **SFOP Risk Calculator** — Safety, Financial, Operational, Privacy impact scoring
 - **ISO 21434 Mapping** — Requirement traceability to standard clauses
@@ -418,6 +421,12 @@ QuickTARA implements comprehensive role-based access control (RBAC) for enterpri
 - Multi-tenant isolation hardening
 - Encryption at rest and default HTTPS deployment
 - Automated periodic compliance re-assessment
+
+### Known limitations & technical debt
+A running register of structural shortcuts (dual `Base` metadatas, partial
+Alembic coverage, mixed Pydantic v1/v2, no PDF golden-file tests, no
+Playwright E2E) is tracked in [`TECH_DEBT.md`](./TECH_DEBT.md). Reference
+entries by number in PRs that interact with them.
 
 ---
 
