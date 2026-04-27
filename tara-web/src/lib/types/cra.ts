@@ -423,3 +423,104 @@ export interface SbomUploadResponse {
   readonly warnings: readonly string[];
   readonly cra10_status: CraRequirementStatus;
 }
+
+// ── Incident reporting (CRA Art. 14) ────────────────────────
+
+export type IncidentType = 'actively_exploited_vulnerability' | 'severe_incident';
+
+export type IncidentStatus =
+  | 'draft'
+  | 'early_warning_submitted'
+  | 'incident_report_submitted'
+  | 'final_report_submitted'
+  | 'closed';
+
+export type IncidentSeverity = 'critical' | 'high' | 'medium' | 'low';
+
+export type DeadlinePhase = 'early_warning' | 'incident_report' | 'final_report';
+
+export type DeadlineStatus = 'on_track' | 'approaching' | 'overdue' | 'submitted';
+
+export interface DeadlineInfo {
+  readonly phase: DeadlinePhase;
+  readonly deadline_at: string;
+  readonly seconds_remaining: number;
+  readonly status: DeadlineStatus;
+  readonly submitted_at?: string;
+}
+
+export interface CraIncident {
+  readonly id: string;
+  readonly assessment_id?: string;
+  readonly product_id?: string;
+  readonly incident_type: IncidentType;
+  readonly title: string;
+  readonly severity?: IncidentSeverity;
+  readonly status: IncidentStatus;
+  readonly discovered_at: string;
+  readonly corrective_measure_available_at?: string;
+  readonly early_warning_submitted_at?: string;
+  readonly incident_report_submitted_at?: string;
+  readonly final_report_submitted_at?: string;
+  readonly closed_at?: string;
+  readonly actively_exploited: boolean;
+  readonly member_states_affected?: readonly string[];
+  readonly product_description?: string;
+  readonly vulnerability_nature?: string;
+  readonly mitigations_taken?: string;
+  readonly mitigations_recommended?: string;
+  readonly vulnerability_description?: string;
+  readonly impact_description?: string;
+  readonly malicious_actor_info?: string;
+  readonly fixes_applied?: string;
+  readonly cve_id?: string;
+  readonly notes?: string;
+  readonly created_at: string;
+  readonly updated_at: string;
+  readonly deadlines: readonly DeadlineInfo[];
+  readonly overall_overdue: boolean;
+}
+
+export interface IncidentCreateRequest {
+  title: string;
+  incident_type: IncidentType;
+  discovered_at: string;
+  assessment_id?: string;
+  product_id?: string;
+  severity?: IncidentSeverity;
+  actively_exploited?: boolean;
+  member_states_affected?: string[];
+  product_description?: string;
+  cve_id?: string;
+  notes?: string;
+}
+
+export interface IncidentUpdateRequest {
+  title?: string;
+  severity?: IncidentSeverity;
+  actively_exploited?: boolean;
+  member_states_affected?: string[];
+  product_description?: string;
+  vulnerability_nature?: string;
+  mitigations_taken?: string;
+  mitigations_recommended?: string;
+  vulnerability_description?: string;
+  impact_description?: string;
+  malicious_actor_info?: string;
+  fixes_applied?: string;
+  cve_id?: string;
+  corrective_measure_available_at?: string;
+  notes?: string;
+}
+
+export interface IncidentListResponse {
+  readonly incidents: readonly CraIncident[];
+  readonly total: number;
+}
+
+export interface EnisaExport {
+  readonly incident_id: string;
+  readonly phase: DeadlinePhase;
+  readonly generated_at: string;
+  readonly payload: Record<string, unknown>;
+}

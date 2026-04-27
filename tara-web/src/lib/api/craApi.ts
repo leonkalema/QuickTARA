@@ -31,6 +31,12 @@ import type {
   SbomListItem,
   SbomDetail,
   SbomUploadResponse,
+  CraIncident,
+  IncidentCreateRequest,
+  IncidentUpdateRequest,
+  IncidentListResponse,
+  DeadlinePhase,
+  EnisaExport,
 } from '../types/cra';
 import { API_BASE_URL } from '$lib/config';
 import { browser } from '$app/environment';
@@ -349,6 +355,76 @@ export const craApi = {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new CraApiError(errData.detail || 'Failed to delete SBOM', res.status);
+    }
+  },
+
+  // ── Incidents (CRA Art. 14) ────────────────────────────────
+
+  async listIncidents(filters: {
+    assessmentId?: string;
+    incidentStatus?: string;
+  } = {}): Promise<IncidentListResponse> {
+    const params = new URLSearchParams();
+    if (filters.assessmentId) params.set('assessment_id', filters.assessmentId);
+    if (filters.incidentStatus) params.set('incident_status', filters.incidentStatus);
+    const qs = params.toString();
+    const res = await fetch(`${API_BASE_URL}/cra/incidents${qs ? `?${qs}` : ''}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<IncidentListResponse>(res);
+  },
+
+  async getIncident(incidentId: string): Promise<CraIncident> {
+    const res = await fetch(`${API_BASE_URL}/cra/incidents/${incidentId}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<CraIncident>(res);
+  },
+
+  async createIncident(payload: IncidentCreateRequest): Promise<CraIncident> {
+    const res = await fetch(`${API_BASE_URL}/cra/incidents`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<CraIncident>(res);
+  },
+
+  async updateIncident(incidentId: string, payload: IncidentUpdateRequest): Promise<CraIncident> {
+    const res = await fetch(`${API_BASE_URL}/cra/incidents/${incidentId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<CraIncident>(res);
+  },
+
+  async submitIncidentPhase(incidentId: string, phase: DeadlinePhase): Promise<CraIncident> {
+    const res = await fetch(`${API_BASE_URL}/cra/incidents/${incidentId}/submit`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ phase }),
+    });
+    return handleResponse<CraIncident>(res);
+  },
+
+  async getEnisaExport(incidentId: string, phase: DeadlinePhase): Promise<EnisaExport> {
+    const params = new URLSearchParams({ phase });
+    const res = await fetch(
+      `${API_BASE_URL}/cra/incidents/${incidentId}/enisa-export?${params}`,
+      { headers: getAuthHeaders() },
+    );
+    return handleResponse<EnisaExport>(res);
+  },
+
+  async deleteIncident(incidentId: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/cra/incidents/${incidentId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new CraApiError(errData.detail || 'Failed to delete incident', res.status);
     }
   },
 };
