@@ -6,7 +6,7 @@ mirror Art. 14(2)(a)/(b)/(c).
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 IncidentType = Literal["actively_exploited_vulnerability", "severe_incident"]
 IncidentStatus = Literal[
@@ -100,6 +100,26 @@ class IncidentResponse(BaseModel):
     actively_exploited: bool
     member_states_affected: Optional[List[str]] = None
     product_description: Optional[str] = None
+
+    @field_validator("member_states_affected", mode="before")
+    @classmethod
+    def _coerce_member_states(cls, value: object) -> Optional[List[str]]:
+        """``CraIncident.member_states_affected`` is a JSON-encoded ``TEXT``
+        column. Decode it here so callers always see a list."""
+        if value is None or value == "":
+            return None
+        if isinstance(value, list):
+            return [str(v) for v in value]
+        if isinstance(value, str):
+            import json as _json
+            try:
+                parsed = _json.loads(value)
+            except _json.JSONDecodeError:
+                return [value]
+            if isinstance(parsed, list):
+                return [str(v) for v in parsed]
+            return [str(parsed)]
+        return [str(value)]
     vulnerability_nature: Optional[str] = None
     mitigations_taken: Optional[str] = None
     mitigations_recommended: Optional[str] = None

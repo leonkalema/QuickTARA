@@ -141,9 +141,11 @@ def create_app(settings=None):
     from api.routes import cra as cra_routes
     from api.routes import cra_sbom as cra_sbom_routes
     from api.routes import cra_incident as cra_incident_routes
+    from api.routes import cra_annex_vii as cra_annex_vii_routes
     app.include_router(cra_routes.router, prefix="/api/cra", tags=["cra"])
     app.include_router(cra_sbom_routes.router, prefix="/api/cra", tags=["cra-sbom"])
     app.include_router(cra_incident_routes.router, prefix="/api/cra", tags=["cra-incident"])
+    app.include_router(cra_annex_vii_routes.router, prefix="/api/cra", tags=["cra-annex-vii"])
     
     app.include_router(settings_router.router, tags=["settings"])
     app.include_router(organizations.router, tags=["organizations"])

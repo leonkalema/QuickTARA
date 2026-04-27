@@ -13,15 +13,16 @@
   import CraDataClassification from '../../../features/cra/components/CraDataClassification.svelte';
   import CraSbom from '../../../features/cra/components/CraSbom.svelte';
   import CraIncidents from '../../../features/cra/components/CraIncidents.svelte';
+  import CraAnnexVii from '../../../features/cra/components/CraAnnexVii.svelte';
   import {
     ArrowLeft, Shield, Calendar, Wand2, Trash2,
-    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package, Database, FileCode, ShieldAlert
+    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package, Database, FileCode, ShieldAlert, BookOpen
   } from '@lucide/svelte';
 
   let assessment: CraAssessment | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
-  let activeTab: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents' = $state('overview');
+  let activeTab: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents' | 'annex_vii' = $state('overview');
   let showClassifyWizard = $state(false);
   let autoMapping = $state(false);
   let deleting = $state(false);
@@ -169,13 +170,14 @@
     draft: 'Draft', in_progress: 'In Progress', complete: 'Complete',
   };
 
-  const tabs: Array<{ id: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents'; label: string; icon: any }> = $derived([
+  const tabs: Array<{ id: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents' | 'annex_vii'; label: string; icon: any }> = $derived([
     { id: 'overview' as const, label: 'Overview', icon: FileText },
     { id: 'data_profile' as const, label: 'Data Profile', icon: Database },
     { id: 'requirements' as const, label: 'Requirements', icon: ShieldCheck },
     { id: 'gap_analysis' as const, label: 'Gap Analysis', icon: BarChart3 },
     { id: 'sbom' as const, label: 'SBOM', icon: FileCode },
     { id: 'incidents' as const, label: 'Incidents', icon: ShieldAlert },
+    { id: 'annex_vii' as const, label: 'Annex VII', icon: BookOpen },
     ...(isLegacyProduct() ? [{ id: 'controls' as const, label: 'Compensating Controls', icon: Settings2 }] : []),
     ...(isLegacyProduct() ? [{ id: 'inventory' as const, label: 'Inventory', icon: Package }] : []),
   ]);
@@ -634,6 +636,8 @@
         assessmentId={assessment.id ?? ''}
         onupdate={loadAssessment}
       />
+    {:else if activeTab === 'annex_vii'}
+      <CraAnnexVii assessmentId={assessment.id ?? ''} />
     {:else if activeTab === 'inventory'}
       <CraInventory
         assessmentId={assessment.id ?? ''}

@@ -524,3 +524,86 @@ export interface EnisaExport {
   readonly generated_at: string;
   readonly payload: Record<string, unknown>;
 }
+
+// ──────────────── Annex VII technical documentation ────────────────
+
+export interface AnnexViiSection {
+  readonly number: string;
+  readonly title: string;
+  readonly article_ref: string;
+  readonly body: string;
+  readonly is_action_required: boolean;
+}
+
+export interface AnnexViiAsset {
+  readonly asset_id: string;
+  readonly name: string;
+  readonly asset_type: string;
+  readonly confidentiality: string;
+  readonly integrity: string;
+  readonly availability: string;
+}
+
+export interface AnnexViiDamageScenario {
+  readonly scenario_id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly severity: string;
+  readonly safety_impact: string;
+  readonly financial_impact: string;
+  readonly operational_impact: string;
+  readonly privacy_impact: string;
+  readonly threat_count: number;
+}
+
+export interface AnnexViiRequirementRow {
+  readonly requirement_id: string;
+  readonly name: string;
+  readonly category: string;
+  readonly annex_part: string;
+  readonly status: string;
+  readonly auto_mapped: boolean;
+  readonly evidence_notes: string | null;
+}
+
+export interface AnnexViiCompensatingControl {
+  readonly control_id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly status: string;
+  readonly requirement_id: string | null;
+}
+
+export interface AnnexViiSbomEntry {
+  readonly sbom_id: string;
+  readonly sbom_format: string;
+  readonly spec_version: string;
+  readonly component_count: number;
+  readonly primary_component_name: string | null;
+  readonly primary_component_version: string | null;
+  readonly uploaded_at: string;
+}
+
+export interface AnnexViiDocument {
+  readonly assessment_id: string;
+  readonly product_name: string;
+  readonly product_id: string;
+  readonly classification: string | null;
+  readonly conformity_assessment: string | null;
+  readonly support_period_years: number | null;
+  readonly support_period_justification: string | null;
+  readonly compliance_deadline: string | null;
+  readonly generated_at: string;
+  readonly intended_purpose: string | null;
+  readonly product_description: string | null;
+  readonly safety_level: string | null;
+  readonly interfaces: readonly string[];
+  readonly access_points: readonly string[];
+  readonly assets: readonly AnnexViiAsset[];
+  readonly damage_scenarios: readonly AnnexViiDamageScenario[];
+  readonly requirements: readonly AnnexViiRequirementRow[];
+  readonly compensating_controls: readonly AnnexViiCompensatingControl[];
+  readonly sboms: readonly AnnexViiSbomEntry[];
+  readonly sections: readonly AnnexViiSection[];
+  readonly completeness_pct: number;
+}

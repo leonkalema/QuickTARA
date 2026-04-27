@@ -6,7 +6,7 @@ Used by `api/routes/cra_sbom.py`. Mirrors the persistence layer in
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class SbomComponentResponse(BaseModel):
@@ -23,6 +23,21 @@ class SbomComponentResponse(BaseModel):
     cpe: Optional[str] = None
     supplier: Optional[str] = None
     licenses: Tuple[str, ...] = Field(default_factory=tuple)
+
+    @field_validator("licenses", mode="before")
+    @classmethod
+    def _coerce_licenses(cls, value: object) -> Tuple[str, ...]:
+        """Persistence stores licenses as comma-separated text (see
+        ``db.cra_sbom_models.CraSbomComponent.licenses``). Normalise any of
+        ``None`` / ``str`` / list / tuple into a tuple of trimmed IDs so
+        the field can be validated regardless of upstream shape."""
+        if value is None or value == "":
+            return ()
+        if isinstance(value, str):
+            return tuple(part.strip() for part in value.split(",") if part.strip())
+        if isinstance(value, (list, tuple)):
+            return tuple(str(v) for v in value)
+        return (str(value),)
 
 
 class SbomListItem(BaseModel):

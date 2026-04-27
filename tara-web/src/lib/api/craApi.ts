@@ -37,6 +37,7 @@ import type {
   IncidentListResponse,
   DeadlinePhase,
   EnisaExport,
+  AnnexViiDocument,
 } from '../types/cra';
 import { API_BASE_URL } from '$lib/config';
 import { browser } from '$app/environment';
@@ -426,5 +427,36 @@ export const craApi = {
       const errData = await res.json().catch(() => ({}));
       throw new CraApiError(errData.detail || 'Failed to delete incident', res.status);
     }
+  },
+
+  // ──────────────── Annex VII technical documentation ────────────────
+
+  async getAnnexVii(assessmentId: string): Promise<AnnexViiDocument> {
+    const res = await fetch(
+      `${API_BASE_URL}/cra/assessments/${assessmentId}/annex-vii`,
+      { headers: getAuthHeaders() },
+    );
+    return handleResponse<AnnexViiDocument>(res);
+  },
+
+  async downloadAnnexViiMarkdown(assessmentId: string, productName: string): Promise<void> {
+    const res = await fetch(
+      `${API_BASE_URL}/cra/assessments/${assessmentId}/annex-vii/markdown`,
+      { headers: getAuthHeaders() },
+    );
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new CraApiError(errData.detail || 'Failed to download Annex VII', res.status);
+    }
+    const blob = await res.blob();
+    const safe = productName.replace(/[^a-zA-Z0-9_-]+/g, '_') || 'product';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `annex-vii-${safe}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   },
 };

@@ -82,10 +82,43 @@ QuickTARA is the first TARA tool with **native EU Cyber Resilience Act (CRA) com
 </tr>
 </table>
 
-### 🔒 **Validation & Integrity**
+### � **SBOM Ingestion (CRA Art. 13(6))**
+Upload **CycloneDX 1.4+/1.5** or **SPDX 2.3** SBOMs per assessment. The parser
+extracts components, versions, `purl`, supplier, license IDs and hashes;
+storage is keyed by assessment so revisions form an audit trail. Each upload
+auto-maps to **CRA-10** (component identification) and is surfaced as evidence
+in the Annex VII technical-documentation export. Backed by `core/cra_sbom_*`
+and the `cra_sboms` / `cra_sbom_components` tables (Alembic
+`a1c2d3e4f5g6`).
+
+### 🚨 **ENISA 24h / 72h / 14d Incident Reporting (CRA Art. 14)**
+Every incident drives three independent deadline clocks computed from the
+discovery timestamp (and, for the final report, the corrective-measure
+availability). Phase status (`pending` / `approaching` / `overdue` /
+`submitted`) is recomputed on every read so dashboards never lie. The
+**Single Reporting Platform export** produces a structured payload per phase
+ready to paste into the ENISA portal. Naive (timezone-less) timestamps are
+rejected at the API boundary — Art. 14 windows are absolute, not local.
+Backed by `core/cra_incident_*` and the `cra_incidents` table (Alembic
+`b2d3e4f5g6h7`).
+
+### 📑 **Annex VII Technical Documentation Generator**
+One click produces the full **seven-section Annex VII document** — product
+description, vulnerability handling, risk assessment, harmonised standards,
+test reports, declaration of conformity, and SBOM appendix — assembled from
+the live TARA artefacts, requirement statuses, compensating controls, and
+SBOMs. The UI shows a **completeness percentage**, flags which sections still
+need manual input ("Action required"), and exports a Markdown file ready for
+notified-body submission or Pandoc conversion to PDF/DOCX. Read-only —
+regenerates on every refresh from the source of truth. Backed by
+`core/cra_annex_vii*`.
+
+### �🔒 **Validation & Integrity**
 - N/A status requires documented justification — form blocks save without it
 - Residual risk labels accurately reflect control status (planned ≠ implemented ≠ verified)
 - Single source of truth — gap analysis reads from requirement statuses, not parallel data
+- SBOM and incident persistence are covered by **alembic upgrade + downgrade round-trip tests** under `tests/db/`
+- API surfaces (SBOM, incidents, Annex VII) have **end-to-end integration tests** under `tests/api/test_cra_integration.py`
 
 ---
 
