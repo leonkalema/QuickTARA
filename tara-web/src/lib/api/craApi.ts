@@ -28,6 +28,9 @@ import type {
   GapAnalysisResponse,
   InventoryItem,
   InventorySummary,
+  SbomListItem,
+  SbomDetail,
+  SbomUploadResponse,
 } from '../types/cra';
 import { API_BASE_URL } from '$lib/config';
 import { browser } from '$app/environment';
@@ -292,6 +295,60 @@ export const craApi = {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new CraApiError(errData.detail || 'Failed to delete inventory item', res.status);
+    }
+  },
+
+  // ── SBOM (CRA Art. 13(6)) ─────────────────────────────────
+
+  async listSboms(assessmentId: string): Promise<SbomListItem[]> {
+    const res = await fetch(`${API_BASE_URL}/cra/assessments/${assessmentId}/sboms`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<SbomListItem[]>(res);
+  },
+
+  async getSbom(sbomId: string): Promise<SbomDetail> {
+    const res = await fetch(`${API_BASE_URL}/cra/sboms/${sbomId}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<SbomDetail>(res);
+  },
+
+  async uploadSbom(assessmentId: string, file: File): Promise<SbomUploadResponse> {
+    const auth = get(authStore);
+    const tokenFromStorage: string | null = browser ? localStorage.getItem('auth_token') : null;
+    const token: string | null = auth.token ?? tokenFromStorage;
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const form = new FormData();
+    form.append('file', file);
+
+    const res = await fetch(`${API_BASE_URL}/cra/assessments/${assessmentId}/sboms`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const detail = typeof errData.detail === 'string'
+        ? errData.detail
+        : Array.isArray(errData.detail?.errors)
+          ? errData.detail.errors.join('; ')
+          : 'Failed to upload SBOM';
+      throw new CraApiError(detail, res.status);
+    }
+    return res.json();
+  },
+
+  async deleteSbom(sbomId: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/cra/sboms/${sbomId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new CraApiError(errData.detail || 'Failed to delete SBOM', res.status);
     }
   },
 };

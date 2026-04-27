@@ -11,15 +11,16 @@
   import CraGapAnalysis from '../../../features/cra/components/CraGapAnalysis.svelte';
   import CraClassificationImpact from '../../../features/cra/components/CraClassificationImpact.svelte';
   import CraDataClassification from '../../../features/cra/components/CraDataClassification.svelte';
+  import CraSbom from '../../../features/cra/components/CraSbom.svelte';
   import {
     ArrowLeft, Shield, Calendar, Wand2, Trash2,
-    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package, Database
+    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package, Database, FileCode
   } from '@lucide/svelte';
 
   let assessment: CraAssessment | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
-  let activeTab: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' = $state('overview');
+  let activeTab: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' = $state('overview');
   let showClassifyWizard = $state(false);
   let autoMapping = $state(false);
   let deleting = $state(false);
@@ -167,11 +168,12 @@
     draft: 'Draft', in_progress: 'In Progress', complete: 'Complete',
   };
 
-  const tabs: Array<{ id: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory'; label: string; icon: any }> = $derived([
+  const tabs: Array<{ id: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom'; label: string; icon: any }> = $derived([
     { id: 'overview' as const, label: 'Overview', icon: FileText },
     { id: 'data_profile' as const, label: 'Data Profile', icon: Database },
     { id: 'requirements' as const, label: 'Requirements', icon: ShieldCheck },
     { id: 'gap_analysis' as const, label: 'Gap Analysis', icon: BarChart3 },
+    { id: 'sbom' as const, label: 'SBOM', icon: FileCode },
     ...(isLegacyProduct() ? [{ id: 'controls' as const, label: 'Compensating Controls', icon: Settings2 }] : []),
     ...(isLegacyProduct() ? [{ id: 'inventory' as const, label: 'Inventory', icon: Package }] : []),
   ]);
@@ -618,6 +620,11 @@
         assessmentId={assessment.id ?? ''}
         controls={assessment.compensating_controls}
         requirements={assessment.requirement_statuses}
+        onupdate={loadAssessment}
+      />
+    {:else if activeTab === 'sbom'}
+      <CraSbom
+        assessmentId={assessment.id ?? ''}
         onupdate={loadAssessment}
       />
     {:else if activeTab === 'inventory'}

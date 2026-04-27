@@ -381,3 +381,45 @@ export interface GapAnalysisResponse {
   readonly requirements: GapRequirementItem[];
   readonly summary: GapAnalysisSummary;
 }
+
+// ── SBOM (CRA Art. 13(6)) ───────────────────────────────────
+
+export type SbomFormat = 'cyclonedx' | 'spdx';
+
+export interface SbomComponent {
+  readonly id: number;
+  readonly bom_ref: string;
+  readonly name: string;
+  readonly version?: string;
+  readonly component_type?: string;
+  readonly purl?: string;
+  readonly cpe?: string;
+  readonly supplier?: string;
+  readonly licenses: readonly string[];
+}
+
+export interface SbomListItem {
+  readonly id: string;
+  readonly assessment_id: string;
+  readonly sbom_format: SbomFormat;
+  readonly spec_version: string;
+  readonly document_name?: string;
+  readonly primary_component_name?: string;
+  readonly primary_component_version?: string;
+  readonly component_count: number;
+  readonly raw_size_bytes: number;
+  readonly uploaded_at: string;
+  readonly uploaded_by?: string;
+}
+
+export interface SbomDetail extends SbomListItem {
+  readonly serial_number?: string;
+  readonly notes?: string;
+  readonly components: readonly SbomComponent[];
+}
+
+export interface SbomUploadResponse {
+  readonly sbom: SbomListItem;
+  readonly warnings: readonly string[];
+  readonly cra10_status: CraRequirementStatus;
+}
