@@ -70,6 +70,11 @@ if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
 else
   echo "🔐 Using existing TLS certificate: $SSL_CERT"
 fi
+# Resolve to absolute paths now — the script changes directory later and relative paths break
+if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
+  SSL_CERT="$(cd "$(dirname "$SSL_CERT")" && pwd)/$(basename "$SSL_CERT")"
+  SSL_KEY="$(cd "$(dirname "$SSL_KEY")" && pwd)/$(basename "$SSL_KEY")"
+fi
 echo ""
 
 # Clone or update repository
@@ -114,10 +119,10 @@ if [ -d "tara-web" ]; then
 VITE_API_BASE_URL="${_API_SCHEME}://localhost:${API_PORT}/api"
 EOF
 
-  # Export TLS paths (resolved to absolute) so vite preview can pick them up
+  # Export TLS paths so vite preview can pick them up (already absolute, set before any cd)
   if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
-    export QUICKTARA_SSL_CERTFILE="$(cd "$(dirname "../$SSL_CERT")" && pwd)/$(basename "$SSL_CERT")"
-    export QUICKTARA_SSL_KEYFILE="$(cd "$(dirname "../$SSL_KEY")" && pwd)/$(basename "$SSL_KEY")"
+    export QUICKTARA_SSL_CERTFILE="$SSL_CERT"
+    export QUICKTARA_SSL_KEYFILE="$SSL_KEY"
   fi
 
   npm install --silent
