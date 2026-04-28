@@ -58,6 +58,7 @@ def create_app(settings=None):
 
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next) -> Response:
+        origin = request.headers.get("origin", "")
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -69,6 +70,13 @@ def create_app(settings=None):
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains"
             )
+        # Safety net: Starlette's CORSMiddleware doesn't add CORS headers to
+        # unhandled 500 responses (ServerErrorMiddleware runs outside CORS).
+        # Re-add them here for any allowed origin so the browser can read the error.
+        if origin and "access-control-allow-origin" not in response.headers:
+            if origin in allowed_origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Credentials"] = "true"
         return response
 
     # ------------------------------------------------------------------

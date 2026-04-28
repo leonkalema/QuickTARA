@@ -97,25 +97,33 @@ def get_session_factory(settings=None):
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+def _create_all_tables(engine):
+    """Create all tables across every SQLAlchemy Base in the project (idempotent)."""
+    from db.base import Base as LegacyBase
+    from api.models.user import Base as UserBase  # separate declarative_base
+
+    LegacyBase.metadata.create_all(bind=engine)
+    UserBase.metadata.create_all(bind=engine)
+
+
 def init_db(settings=None):
     """
-    Initialize database with required tables using Alembic migrations
-    
-    If running migrations fails, falls back to direct schema generation
+    Initialize database with required tables using Alembic migrations.
+
+    Falls back to direct schema generation if migrations fail.
+    Always calls create_all after alembic so ORM-only models (e.g. User,
+    Organization) are created even when no migration covers them.
     """
-    from db.base import Base
     import subprocess
-    import os
     import sys
     from pathlib import Path
-    
+
     engine = get_engine(settings)
-    
+
     # Try to run Alembic migrations first
     try:
-        # Get the project root directory
         project_dir = Path(__file__).parent.parent.absolute()
-        
+
         logger.info("Running database migrations...")
         result = subprocess.run(
             [sys.executable, "-m", "alembic", "upgrade", "head"],
@@ -124,25 +132,21 @@ def init_db(settings=None):
             text=True,
             check=False
         )
-        
+
         if result.returncode == 0:
             logger.info("Database migrations completed successfully")
-            # Also create any ORM-defined tables not covered by migrations (idempotent)
-            Base.metadata.create_all(bind=engine)
-            return
         else:
-            # Check if the error is just because tables already exist
             if "table already exists" in result.stderr:
                 logger.info("Tables already exist, skipping migration")
-                return
             else:
                 logger.warning(
                     f"Failed to run migrations: {result.stderr}\nFalling back to direct table creation"
                 )
     except Exception as e:
         logger.warning(f"Error running migrations: {str(e)}\nFalling back to direct table creation")
-    
-    # Fall back to direct table creation if migrations fail
-    logger.info("Creating database tables directly...")
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
+
+    # Always run create_all so tables defined in ORM models outside of Alembic
+    # migrations are created (e.g. users, organizations, refresh_tokens).
+    logger.info("Ensuring all ORM tables exist...")
+    _create_all_tables(engine)
+    logger.info("Database tables ready")
