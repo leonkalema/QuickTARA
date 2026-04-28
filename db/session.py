@@ -127,6 +127,8 @@ def init_db(settings=None):
         
         if result.returncode == 0:
             logger.info("Database migrations completed successfully")
+            # Also create any ORM-defined tables not covered by migrations (idempotent)
+            Base.metadata.create_all(bind=engine)
             return
         else:
             # Check if the error is just because tables already exist

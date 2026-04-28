@@ -84,8 +84,10 @@ if [ -d "QuickTARA" ]; then
     git pull
 else
     echo "📥 Cloning QuickTARA..."
-    git clone https://github.com/leonkalema/QuickTARA.git
+    git clone --depth=1 https://github.com/leonkalema/QuickTARA.git
     cd QuickTARA
+    # Remove dev-only files not needed at runtime
+    rm -rf tests/ docs/ TECH_DEBT.md CONTRIBUTING.md .github/
 fi
 
 echo ""

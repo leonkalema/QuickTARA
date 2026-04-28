@@ -16,7 +16,7 @@ import bcrypt
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import table, column
-from sqlalchemy import String, Boolean, DateTime
+from sqlalchemy import String, Boolean, DateTime, Enum as SAEnum
 
 
 # revision identifiers, used by Alembic.
@@ -31,7 +31,6 @@ CREDENTIALS_FILENAME = 'quicktara-initial-credentials.txt'
 
 
 def _generate_password() -> str:
-    """24-char URL-safe random password (~144 bits of entropy)."""
     return secrets.token_urlsafe(18)
 
 
@@ -40,7 +39,6 @@ def _hash_password(password: str) -> str:
 
 
 def _write_credentials_file(email: str, password: str) -> Path:
-    """Write the bootstrap credentials to a 0600 file in the project root."""
     target = Path(os.getcwd()) / CREDENTIALS_FILENAME
     target.write_text(
         "QuickTARA — initial bootstrap credentials\n"
@@ -56,18 +54,80 @@ def _write_credentials_file(email: str, password: str) -> Path:
     try:
         os.chmod(target, stat.S_IRUSR | stat.S_IWUSR)  # 0600
     except OSError:
-        # Best-effort on platforms (e.g. Windows) without POSIX perms
         pass
     return target
+
+
+def _ensure_auth_tables(connection, inspector):
+    """Create auth tables if they don't exist (they're ORM-only, not in the initial schema migration)."""
+    existing = inspector.get_table_names()
+
+    if 'organizations' not in existing:
+        op.create_table(
+            'organizations',
+            sa.Column('organization_id', String, primary_key=True),
+            sa.Column('name', String(255), nullable=False),
+            sa.Column('description', String(500)),
+            sa.Column('domain', String(255)),
+            sa.Column('is_active', Boolean, default=True),
+            sa.Column('created_at', DateTime),
+            sa.Column('updated_at', DateTime),
+        )
+
+    if 'users' not in existing:
+        op.create_table(
+            'users',
+            sa.Column('user_id', String, primary_key=True),
+            sa.Column('email', String(255), nullable=False, unique=True),
+            sa.Column('username', String(100), nullable=False, unique=True),
+            sa.Column('first_name', String(100), nullable=False),
+            sa.Column('last_name', String(100), nullable=False),
+            sa.Column('hashed_password', String(255), nullable=False),
+            sa.Column('status', String(20), default='active'),
+            sa.Column('is_verified', Boolean, default=True),
+            sa.Column('is_superuser', Boolean, default=False),
+            sa.Column('created_at', DateTime),
+            sa.Column('updated_at', DateTime),
+            sa.Column('last_login', DateTime),
+            sa.Column('password_changed_at', DateTime),
+            sa.Column('failed_login_attempts', String, default='0'),
+            sa.Column('locked_until', DateTime),
+        )
+
+    if 'user_organizations' not in existing:
+        op.create_table(
+            'user_organizations',
+            sa.Column('user_id', String, sa.ForeignKey('users.user_id'), primary_key=True),
+            sa.Column('organization_id', String, sa.ForeignKey('organizations.organization_id'), primary_key=True),
+            sa.Column('role', String(50), nullable=False),
+            sa.Column('created_at', DateTime),
+        )
+
+    if 'refresh_tokens' not in existing:
+        op.create_table(
+            'refresh_tokens',
+            sa.Column('token_id', String, primary_key=True),
+            sa.Column('user_id', String, sa.ForeignKey('users.user_id'), nullable=False),
+            sa.Column('token_hash', String(255), nullable=False),
+            sa.Column('expires_at', DateTime, nullable=False),
+            sa.Column('is_revoked', Boolean, default=False),
+            sa.Column('created_at', DateTime),
+            sa.Column('device_info', String(500)),
+            sa.Column('ip_address', String(45)),
+            sa.Column('user_agent', String(500)),
+        )
 
 
 def upgrade():
     connection = op.get_bind()
     inspector = sa.inspect(connection)
 
+    _ensure_auth_tables(connection, inspector)
+
+    # Re-inspect after potential table creation
+    inspector = sa.inspect(connection)
     if 'users' not in inspector.get_table_names():
-        print("Users table doesn't exist yet. Skipping default admin user creation.")
-        print("Run this migration again after the users table is created.")
+        print("ERROR: Could not create users table. Skipping admin user creation.")
         return
 
     result = connection.execute(
@@ -81,12 +141,17 @@ def upgrade():
     users_table = table('users',
         column('user_id', String),
         column('email', String),
+        column('username', String),
+        column('first_name', String),
+        column('last_name', String),
         column('hashed_password', String),
-        column('full_name', String),
-        column('role', String),
-        column('is_active', Boolean),
+        column('status', String),
+        column('is_verified', Boolean),
+        column('is_superuser', Boolean),
         column('created_at', DateTime),
         column('updated_at', DateTime),
+        column('password_changed_at', DateTime),
+        column('failed_login_attempts', String),
     )
 
     password = _generate_password()
@@ -97,12 +162,17 @@ def upgrade():
         {
             'user_id': str(uuid.uuid4()),
             'email': ADMIN_EMAIL,
+            'username': 'admin',
+            'first_name': 'System',
+            'last_name': 'Administrator',
             'hashed_password': hashed_password,
-            'full_name': 'System Administrator',
-            'role': 'Tool Admin',
-            'is_active': True,
+            'status': 'active',
+            'is_verified': True,
+            'is_superuser': True,
             'created_at': now,
             'updated_at': now,
+            'password_changed_at': now,
+            'failed_login_attempts': '0',
         }
     ])
 
