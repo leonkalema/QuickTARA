@@ -7,6 +7,9 @@ echo "======================================"
 # Configuration
 FRONTEND_PORT=${FRONTEND_PORT:-4173}
 API_PORT=${API_PORT:-8080}
+# TLS is opt-in. Set QUICKTARA_ENABLE_TLS=1 to generate/use a self-signed cert.
+# Default is plain HTTP — no browser cert warnings, works out of the box on a LAN.
+ENABLE_TLS=${QUICKTARA_ENABLE_TLS:-0}
 SSL_DIR="${SSL_DIR:-./certs}"
 SSL_CERT="${QUICKTARA_SSL_CERTFILE:-$SSL_DIR/quicktara.crt}"
 SSL_KEY="${QUICKTARA_SSL_KEYFILE:-$SSL_DIR/quicktara.key}"
@@ -48,32 +51,39 @@ echo "✅ Prerequisites OK"
 echo ""
 
 # ------------------------------------------------------------------
-# TLS certificate — generate self-signed if no cert exists
+# TLS certificate — only when QUICKTARA_ENABLE_TLS=1
 # ------------------------------------------------------------------
-if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
-  if command -v openssl >/dev/null 2>&1; then
-    echo "🔐 Generating self-signed TLS certificate (valid 2 years)..."
-    mkdir -p "$SSL_DIR"
-    openssl req -x509 -newkey rsa:4096 -sha256 -days 730 -nodes \
-      -keyout "$SSL_KEY" -out "$SSL_CERT" \
-      -subj "/CN=quicktara.local" \
-      -addext "subjectAltName=IP:127.0.0.1,IP:${LAN_IP},DNS:localhost,DNS:quicktara.local" \
-      2>/dev/null
-    echo "   Certificate: $SSL_CERT"
-    echo "   ⚠️  Self-signed — browsers will show a security warning."
-    echo "      Accept the warning or install the cert in your OS trust store."
+if [ "$ENABLE_TLS" = "1" ]; then
+  if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
+    if command -v openssl >/dev/null 2>&1; then
+      echo "🔐 Generating self-signed TLS certificate (valid 2 years)..."
+      mkdir -p "$SSL_DIR"
+      openssl req -x509 -newkey rsa:4096 -sha256 -days 730 -nodes \
+        -keyout "$SSL_KEY" -out "$SSL_CERT" \
+        -subj "/CN=quicktara.local" \
+        -addext "subjectAltName=IP:127.0.0.1,IP:${LAN_IP},DNS:localhost,DNS:quicktara.local" \
+        2>/dev/null
+      echo "   Certificate: $SSL_CERT"
+      echo "   ⚠️  Self-signed — browsers will show a security warning."
+      echo "      Visit https://localhost:${API_PORT} once and accept the warning,"
+      echo "      or install the cert in your OS trust store."
+    else
+      echo "⚠️  openssl not found — TLS disabled. Install openssl for HTTPS support."
+      SSL_CERT=""
+      SSL_KEY=""
+    fi
   else
-    echo "⚠️  openssl not found — TLS disabled. Install openssl for HTTPS support."
-    SSL_CERT=""
-    SSL_KEY=""
+    echo "🔐 Using existing TLS certificate: $SSL_CERT"
+  fi
+  # Resolve to absolute paths now — the script changes directory later and relative paths break
+  if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
+    SSL_CERT="$(cd "$(dirname "$SSL_CERT")" && pwd)/$(basename "$SSL_CERT")"
+    SSL_KEY="$(cd "$(dirname "$SSL_KEY")" && pwd)/$(basename "$SSL_KEY")"
   fi
 else
-  echo "🔐 Using existing TLS certificate: $SSL_CERT"
-fi
-# Resolve to absolute paths now — the script changes directory later and relative paths break
-if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
-  SSL_CERT="$(cd "$(dirname "$SSL_CERT")" && pwd)/$(basename "$SSL_CERT")"
-  SSL_KEY="$(cd "$(dirname "$SSL_KEY")" && pwd)/$(basename "$SSL_KEY")"
+  echo "🔓 Running in HTTP mode (default). Set QUICKTARA_ENABLE_TLS=1 before running to enable HTTPS."
+  SSL_CERT=""
+  SSL_KEY=""
 fi
 echo ""
 
