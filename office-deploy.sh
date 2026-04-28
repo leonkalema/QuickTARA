@@ -172,7 +172,7 @@ echo ""
 echo "🗄️  Setting up database..."
 if [ ! -f "quicktara.db" ]; then
     echo "Creating new database..."
-    python quicktara_web.py --db ./quicktara.db --host 127.0.0.1 --port ${API_PORT} &
+    QUICKTARA_SSL_CERTFILE="" QUICKTARA_SSL_KEYFILE="" python quicktara_web.py --db ./quicktara.db --host 127.0.0.1 --port ${API_PORT} &
     SERVER_PID=$!
     sleep 5
     kill $SERVER_PID 2>/dev/null || true
@@ -197,6 +197,11 @@ _SSL_ARGS=""
 if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
   _SCHEME="https"
   _SSL_ARGS="--ssl-certfile $SSL_CERT --ssl-keyfile $SSL_KEY"
+else
+  # Explicitly clear TLS env vars so stale values from a previous HTTPS install
+  # don't cause quicktara_web.py to silently re-enable TLS (its argparse defaults
+  # to QUICKTARA_SSL_CERTFILE / QUICKTARA_SSL_KEYFILE if set in the environment).
+  unset QUICKTARA_SSL_CERTFILE QUICKTARA_SSL_KEYFILE
 fi
 
 # Export CORS origins so the backend allows the frontend origin
