@@ -7,8 +7,8 @@ import os
 import secrets
 import stat
 
+import bcrypt
 import jwt  # PyJWT
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
@@ -50,23 +50,17 @@ ALGORITHM: str = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # JWT Bearer token scheme
 security = HTTPBearer()
 
 class SecurityManager:
-    def __init__(self):
-        self.pwd_context = pwd_context
-        
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash"""
-        return self.pwd_context.verify(plain_password, hashed_password)
-    
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+
     def get_password_hash(self, password: str) -> str:
         """Hash a password"""
-        return self.pwd_context.hash(password)
+        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
     
     def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         """Create JWT access token"""
