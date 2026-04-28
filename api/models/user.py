@@ -27,7 +27,7 @@ user_organizations = Table(
     Base.metadata,
     Column('user_id', String, ForeignKey('users.user_id'), primary_key=True),
     Column('organization_id', String, ForeignKey('organizations.organization_id'), primary_key=True),
-    Column('role', Enum(UserRole), nullable=False),
+    Column('role', Enum(UserRole, values_callable=lambda e: [x.value for x in e]), nullable=False),
     Column('created_at', DateTime, default=datetime.utcnow)
 )
 
@@ -56,7 +56,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     
     # User status and metadata
-    status = Column(Enum(UserStatus), default=UserStatus.PENDING)
+    status = Column(Enum(UserStatus, values_callable=lambda e: [x.value for x in e]), default=UserStatus.PENDING)
     is_verified = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)  # Tool Admin flag
     
