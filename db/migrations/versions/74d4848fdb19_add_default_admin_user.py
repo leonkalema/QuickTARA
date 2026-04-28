@@ -26,7 +26,7 @@ branch_labels = None
 depends_on = None
 
 
-ADMIN_EMAIL = 'admin@quicktara.local'
+ADMIN_EMAIL = os.environ.get('QUICKTARA_ADMIN_EMAIL', 'admin@quicktara.local')
 CREDENTIALS_FILENAME = 'quicktara-initial-credentials.txt'
 
 

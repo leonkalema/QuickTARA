@@ -51,6 +51,23 @@ echo "✅ Prerequisites OK"
 echo ""
 
 # ------------------------------------------------------------------
+# Admin account setup
+# ------------------------------------------------------------------
+if [ -z "${QUICKTARA_ADMIN_EMAIL:-}" ]; then
+  printf "📧 Enter admin email address [admin@quicktara.local]: "
+  read -r QUICKTARA_ADMIN_EMAIL </dev/tty
+  QUICKTARA_ADMIN_EMAIL="${QUICKTARA_ADMIN_EMAIL:-admin@quicktara.local}"
+fi
+# Basic validation
+case "$QUICKTARA_ADMIN_EMAIL" in
+  *@*.*) ;;
+  *) echo "❌ '$QUICKTARA_ADMIN_EMAIL' doesn't look like a valid email. Aborting."; exit 1 ;;
+esac
+export QUICKTARA_ADMIN_EMAIL
+echo "✅ Admin email: $QUICKTARA_ADMIN_EMAIL"
+echo ""
+
+# ------------------------------------------------------------------
 # TLS certificate — only when QUICKTARA_ENABLE_TLS=1
 # ------------------------------------------------------------------
 if [ "$ENABLE_TLS" = "1" ]; then
