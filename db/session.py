@@ -102,8 +102,16 @@ def _create_all_tables(engine):
     from db.base import Base as LegacyBase
     from api.models.user import Base as UserBase  # separate declarative_base
 
+    # product_asset_models has its own Base shared by CRA/SBOM/incident models.
+    # Import all models that register against it so metadata is populated before create_all.
+    from db.product_asset_models import Base as ProductBase  # noqa: F401
+    import db.cra_models  # noqa: F401
+    import db.cra_incident_models  # noqa: F401
+    import db.cra_sbom_models  # noqa: F401
+
     LegacyBase.metadata.create_all(bind=engine)
     UserBase.metadata.create_all(bind=engine)
+    ProductBase.metadata.create_all(bind=engine)
 
 
 def init_db(settings=None):

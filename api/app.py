@@ -2,8 +2,10 @@
 Main FastAPI application factory
 """
 import os
+import traceback
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import logging
 from pathlib import Path
@@ -106,7 +108,18 @@ def create_app(settings=None):
         expose_headers=["Content-Disposition"],
         max_age=600,
     )
-    
+
+    # Global handler: converts unhandled exceptions into JSON 500s *before*
+    # the response leaves ExceptionMiddleware, so CORSMiddleware (which wraps it)
+    # can still add the Access-Control-Allow-Origin header.  Without this the
+    # exception propagates all the way to ServerErrorMiddleware (outermost),
+    # which returns a bare 500 with no CORS headers and the browser blocks it.
+    @app.exception_handler(Exception)
+    async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path,
+                     traceback.format_exc())
+        return JSONResponse(status_code=500, content={"detail": str(exc) or "Internal server error"})
+
     # Include all API routers
     
     # Authentication routes (no auth required)
