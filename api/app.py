@@ -109,16 +109,25 @@ def create_app(settings=None):
         max_age=600,
     )
 
-    # Global handler: converts unhandled exceptions into JSON 500s *before*
-    # the response leaves ExceptionMiddleware, so CORSMiddleware (which wraps it)
-    # can still add the Access-Control-Allow-Origin header.  Without this the
-    # exception propagates all the way to ServerErrorMiddleware (outermost),
-    # which returns a bare 500 with no CORS headers and the browser blocks it.
+    # Global handler for unhandled exceptions.
+    # NOTE: FastAPI routes @app.exception_handler(Exception) to ServerErrorMiddleware
+    # (the outermost layer, *above* CORSMiddleware), so the response never passes
+    # through CORSMiddleware and arrives at the browser without CORS headers.
+    # We work around this by adding the CORS header manually inside the handler.
     @app.exception_handler(Exception)
     async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path,
                      traceback.format_exc())
-        return JSONResponse(status_code=500, content={"detail": str(exc) or "Internal server error"})
+        origin = request.headers.get("origin", "")
+        headers = {}
+        if origin and origin in allowed_origins:
+            headers["Access-Control-Allow-Origin"] = origin
+            headers["Access-Control-Allow-Credentials"] = "true"
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc) or "Internal server error"},
+            headers=headers,
+        )
 
     # Include all API routers
     

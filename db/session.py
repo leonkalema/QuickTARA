@@ -98,16 +98,26 @@ def get_session_factory(settings=None):
 
 
 def _create_all_tables(engine):
-    """Create all tables across every SQLAlchemy Base in the project (idempotent)."""
-    from db.base import Base as LegacyBase
-    from api.models.user import Base as UserBase  # separate declarative_base
+    """Create all tables across every SQLAlchemy Base in the project (idempotent).
 
-    # product_asset_models has its own Base shared by CRA/SBOM/incident models.
-    # Import all models that register against it so metadata is populated before create_all.
+    SQLAlchemy only creates tables whose ORM models have been imported *before*
+    metadata.create_all() is called.  Explicitly import every model module here
+    so nothing is silently skipped.
+    """
+    # --- Legacy Base (db/base.py) ---
+    from db.base import Base as LegacyBase  # noqa: F401
+    import db.damage_scenario   # noqa: F401 — registers DamageScenario against LegacyBase
+    import db.threat_scenario   # noqa: F401 — registers ThreatScenario against LegacyBase
+    import db.threat_catalog    # noqa: F401
+
+    # --- User/Auth Base (api/models/user.py) ---
+    from api.models.user import Base as UserBase  # noqa: F401
+
+    # --- Product/CRA Base (db/product_asset_models.py) ---
     from db.product_asset_models import Base as ProductBase  # noqa: F401
-    import db.cra_models  # noqa: F401
+    import db.cra_models          # noqa: F401
     import db.cra_incident_models  # noqa: F401
-    import db.cra_sbom_models  # noqa: F401
+    import db.cra_sbom_models      # noqa: F401
 
     LegacyBase.metadata.create_all(bind=engine)
     UserBase.metadata.create_all(bind=engine)
