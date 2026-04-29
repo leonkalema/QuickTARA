@@ -50,6 +50,7 @@ from db.cra_models import (
 )
 from db.cra_sbom_models import CraSbom
 from db.product_asset_models import Asset, DamageScenario, ProductScope, ThreatScenario
+from core.cra_auto_mapper import get_requirement_by_id
 
 
 # ──────────────── Public API ────────────────
@@ -188,12 +189,16 @@ def _load_requirements(
         .filter(CraRequirementStatusRecord.assessment_id == assessment_id)
         .all()
     )
+    def _meta(req_id: str, field: str, default: str) -> str:
+        defn = get_requirement_by_id(req_id)
+        return defn.get(field, default) if defn else default
+
     return tuple(
         AnnexViiRequirement(
             requirement_id=str(r.requirement_id),
-            name=str(r.requirement_name or r.requirement_id),
-            category=str(r.requirement_category or "uncategorised"),
-            annex_part=str(getattr(r, "annex_part", "") or ""),
+            name=_meta(r.requirement_id, "name", r.requirement_id),
+            category=_meta(r.requirement_id, "category", "uncategorised"),
+            annex_part=_meta(r.requirement_id, "annex_part", ""),
             status=str(r.status or "not_started"),
             auto_mapped=bool(r.auto_mapped),
             evidence_notes=r.evidence_notes,
