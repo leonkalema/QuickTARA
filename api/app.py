@@ -123,9 +123,11 @@ def create_app(settings=None):
         if origin and origin in allowed_origins:
             headers["Access-Control-Allow-Origin"] = origin
             headers["Access-Control-Allow-Credentials"] = "true"
+        # Return a clean, user-friendly message — never expose raw tracebacks or
+        # SQL to the browser.  Full detail is in the server log.
         return JSONResponse(
             status_code=500,
-            content={"detail": str(exc) or "Internal server error"},
+            content={"detail": "An internal server error occurred. Please try again or contact your administrator."},
             headers=headers,
         )
 
