@@ -194,7 +194,7 @@ def get_damage_scenario(db: Session, scenario_id: str) -> Optional[DamageScenari
     """
     db_scenario = db.query(DBDamageScenario).filter(
         DBDamageScenario.scenario_id == scenario_id,
-        DBDamageScenario.is_deleted == False
+        ~DBDamageScenario.is_deleted.is_(True)
     ).first()
     
     if not db_scenario:
@@ -215,7 +215,7 @@ def get_damage_scenarios(
     """
     Get all damage scenarios with pagination and filtering
     """
-    query = db.query(DBDamageScenario).filter(DBDamageScenario.is_deleted == False)
+    query = db.query(DBDamageScenario).filter(~DBDamageScenario.is_deleted.is_(True))
     
     # Apply filters
     if scope_id:
@@ -250,7 +250,7 @@ def count_damage_scenarios(
     """
     Count total number of damage scenarios with filters
     """
-    query = db.query(DBDamageScenario).filter(DBDamageScenario.is_deleted == False)
+    query = db.query(DBDamageScenario).filter(~DBDamageScenario.is_deleted.is_(True))
     
     # Apply filters
     if scope_id:
@@ -289,7 +289,7 @@ def update_damage_scenario(
     if not db_scenario:
         db_scenario = db.query(DBDamageScenario).filter(
             DBDamageScenario.scenario_id == scenario_id,
-            DBDamageScenario.is_deleted == False
+            ~DBDamageScenario.is_deleted.is_(True)
         ).first()
     
     if not db_scenario:
@@ -492,7 +492,7 @@ def delete_damage_scenario(db: Session, scenario_id: str) -> bool:
     """
     db_scenario = db.query(DBDamageScenario).filter(
         DBDamageScenario.scenario_id == scenario_id,
-        DBDamageScenario.is_deleted == False
+        ~DBDamageScenario.is_deleted.is_(True)
     ).first()
     
     if not db_scenario:

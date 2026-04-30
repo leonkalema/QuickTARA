@@ -223,13 +223,15 @@ async def create_or_get_workflow(
 async def get_artifact_workflow(
     artifact_type: str,
     artifact_id: str,
+    scope_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get the current workflow state for an artifact. Requires authentication."""
+    """Get the current workflow state for an artifact, creating it if it doesn't exist yet."""
     wf = get_workflow(db, artifact_type, artifact_id)
     if not wf:
-        raise HTTPException(status_code=404, detail="No workflow found for this artifact")
+        wf = get_or_create_workflow(db, artifact_type, artifact_id, current_user.email, scope_id)
+        db.commit()
     return wf
 
 
