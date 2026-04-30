@@ -2,6 +2,7 @@
 Main FastAPI application factory
 """
 import os
+import socket
 import traceback
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,27 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import logging
 from pathlib import Path
+
+
+def _local_lan_ips() -> list[str]:
+    """Return all non-loopback IPv4 addresses this machine has."""
+    ips: set[str] = set()
+    try:
+        # Outbound IP (most reliable for the LAN-facing interface)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ips.add(s.getsockname()[0])
+        s.close()
+    except Exception:
+        pass
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ip = info[4][0]
+            if not ip.startswith("127."):
+                ips.add(ip)
+    except Exception:
+        pass
+    return list(ips)
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -87,10 +109,13 @@ def create_app(settings=None):
     # Include a range of Vite preview ports (4173–4183) so stale processes
     # occupying lower ports don't break login when Vite picks a higher one.
     _vite_ports = list(range(4173, 4184)) + [5173]
+    _lan_ips = _local_lan_ips()
     _default_origins = (
         [f"http://localhost:{p}" for p in _vite_ports]
         + [f"http://127.0.0.1:{p}" for p in _vite_ports]
+        + [f"http://{ip}:{p}" for ip in _lan_ips for p in _vite_ports]
         + ["http://localhost:8080", "http://127.0.0.1:8080"]
+        + [f"http://{ip}:8080" for ip in _lan_ips]
     )
     _env_origins = [
         o.strip()
@@ -98,6 +123,7 @@ def create_app(settings=None):
         if o.strip()
     ]
     allowed_origins = list(dict.fromkeys(_default_origins + _env_origins))
+    logger.info("CORS allowed origins: %s", allowed_origins)
 
     app.add_middleware(
         CORSMiddleware,
