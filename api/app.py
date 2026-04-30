@@ -84,14 +84,14 @@ def create_app(settings=None):
     # ------------------------------------------------------------------
     # CORS — locked to known origins; extend via QUICKTARA_CORS_ORIGINS
     # ------------------------------------------------------------------
-    _default_origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-    ]
+    # Include a range of Vite preview ports (4173–4183) so stale processes
+    # occupying lower ports don't break login when Vite picks a higher one.
+    _vite_ports = list(range(4173, 4184)) + [5173]
+    _default_origins = (
+        [f"http://localhost:{p}" for p in _vite_ports]
+        + [f"http://127.0.0.1:{p}" for p in _vite_ports]
+        + ["http://localhost:8080", "http://127.0.0.1:8080"]
+    )
     _env_origins = [
         o.strip()
         for o in os.environ.get("QUICKTARA_CORS_ORIGINS", "").split(",")
