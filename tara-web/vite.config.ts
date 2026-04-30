@@ -14,7 +14,7 @@ const httpsConfig: false | { cert: Buffer; key: Buffer } =
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	preview: {
-		allowedHosts: ['beta.quicktara.com'],
+		allowedHosts: true,
 		https: httpsConfig
 	},
 	server: {
