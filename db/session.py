@@ -109,6 +109,9 @@ def _create_all_tables(engine):
     import db.damage_scenario   # noqa: F401 — registers DamageScenario against LegacyBase
     import db.threat_scenario   # noqa: F401 — registers ThreatScenario against LegacyBase
     import db.threat_catalog    # noqa: F401
+    import db.attack_path       # noqa: F401 — registers AttackPath/AttackStep/AttackChain
+    import db.risk_treatment    # noqa: F401 — registers RiskTreatment
+    import db.audit_models      # noqa: F401 — registers AuditLog/ApprovalWorkflow/Evidence/Snapshot
 
     # --- User/Auth Base (api/models/user.py) ---
     from api.models.user import Base as UserBase  # noqa: F401
