@@ -46,6 +46,7 @@ from core.cra_annex_vii_sections import (
 from db.cra_models import (
     CraAssessment,
     CraCompensatingControl,
+    CraControlRequirementLink,
     CraRequirementStatusRecord,
 )
 from db.cra_sbom_models import CraSbom
@@ -215,16 +216,29 @@ def _load_compensating_controls(
         .filter(CraCompensatingControl.assessment_id == assessment_id)
         .all()
     )
-    return tuple(
-        AnnexViiCompensatingControl(
+    result = []
+    for c in rows:
+        # Resolve requirement_id via junction table → requirement status record
+        first_link = (
+            db.query(CraControlRequirementLink)
+            .filter(CraControlRequirementLink.control_id == c.id)
+            .first()
+        )
+        req_id: Optional[str] = None
+        if first_link:
+            req_status = db.query(CraRequirementStatusRecord).filter(
+                CraRequirementStatusRecord.id == first_link.requirement_status_id
+            ).first()
+            if req_status:
+                req_id = str(req_status.requirement_id)
+        result.append(AnnexViiCompensatingControl(
             control_id=str(c.id),
             name=str(c.name),
             description=str(c.description or ""),
-            status=str(c.status or "planned"),
-            requirement_id=getattr(c, "mitigates_requirement_id", None),
-        )
-        for c in rows
-    )
+            status=str(c.implementation_status or "planned"),
+            requirement_id=req_id,
+        ))
+    return tuple(result)
 
 
 def _load_sboms(db: Session, assessment_id: str) -> Tuple[AnnexViiSbomEntry, ...]:
