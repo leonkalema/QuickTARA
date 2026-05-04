@@ -104,13 +104,18 @@ def _create_all_tables(engine):
     metadata.create_all() is called.  Explicitly import every model module here
     so nothing is silently skipped.
     """
+    # --- Simple Attack Path Base (api/models/simple_attack_path.py) ---
+    # Must be created FIRST: risk_treatment has a FK to attack_paths.attack_path_id
+    # which is defined here (not in db/attack_path.py which uses a different schema).
+    from api.models.simple_attack_path import Base as SimpleAttackPathBase  # noqa: F401
+
     # --- Legacy Base (db/base.py) ---
     from db.base import Base as LegacyBase  # noqa: F401
     import db.damage_scenario   # noqa: F401 — registers DamageScenario against LegacyBase
     import db.threat_scenario   # noqa: F401 — registers ThreatScenario against LegacyBase
     import db.threat_catalog    # noqa: F401
     import db.attack_path       # noqa: F401 — registers AttackPath/AttackStep/AttackChain
-    import db.risk_treatment    # noqa: F401 — registers RiskTreatment
+    import db.risk_treatment    # noqa: F401 — registers RiskTreatment (FK uses use_alter)
     import db.audit_models      # noqa: F401 — registers AuditLog/ApprovalWorkflow/Evidence/Snapshot
 
     # --- User/Auth Base (api/models/user.py) ---
@@ -122,6 +127,7 @@ def _create_all_tables(engine):
     import db.cra_incident_models  # noqa: F401
     import db.cra_sbom_models      # noqa: F401
 
+    SimpleAttackPathBase.metadata.create_all(bind=engine)
     LegacyBase.metadata.create_all(bind=engine)
     UserBase.metadata.create_all(bind=engine)
     ProductBase.metadata.create_all(bind=engine)

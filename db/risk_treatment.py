@@ -18,7 +18,11 @@ class RiskTreatment(Base):
     
     # Links to related entities
     damage_scenario_id = Column(String, ForeignKey("damage_scenarios.scenario_id"), nullable=False)
-    attack_path_id = Column(String, ForeignKey("attack_paths.attack_path_id"), nullable=False)
+    # No FK constraint: db.attack_path (LegacyBase) defines attack_paths with `path_id` while
+    # the actual table uses attack_path_id (api/models/simple_attack_path.py, separate Base).
+    # Keeping a FK here causes NoReferencedColumnError at create_all() time. Routes query
+    # this column via raw SQL so no ORM relationship is needed; SQLite wouldn't enforce it anyway.
+    attack_path_id = Column(String, nullable=True)
     scope_id = Column(String, ForeignKey("system_scopes.scope_id"), nullable=False)
     
     # Calculated risk data (stored when attack path is created)
