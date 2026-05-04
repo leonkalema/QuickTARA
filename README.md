@@ -61,21 +61,37 @@ ISO 21434, UN R155, and the CRA specifically.
 
 ## One-line install
 
+**macOS / Linux:**
 ```bash
 curl -sSL https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-deploy.sh | bash
 ```
 
-The installer clones the repo, builds the SvelteKit frontend, starts the
-FastAPI backend, generates a self-signed TLS certificate (HTTPS by default
-when `openssl` is available), creates an initial System Administrator with a
-randomly generated 144-bit password, and writes the credentials to
-`quicktara-initial-credentials.txt` (mode `0600`).
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-deploy.ps1 | iex
+```
 
-**Default URLs (HTTPS):**
+> **Windows prerequisites:** [Python 3](https://www.python.org/downloads/) (check *Add Python to PATH*), [Node.js LTS](https://nodejs.org/), [Git for Windows](https://git-scm.com/download/win). Install these first, then run the command above in PowerShell.
 
-- Frontend: `https://localhost:4173`
-- Backend: `https://localhost:8080`
-- LAN access: `https://<your-ip>:4173` and `https://<your-ip>:8080`
+Both installers clone the repo, build the SvelteKit frontend, start the
+FastAPI backend, run database migrations, create an initial System Administrator
+with a randomly generated 144-bit password, and write the credentials to
+`quicktara-initial-credentials.txt`.
+
+**Default URLs (HTTP — LAN mode):**
+
+- Frontend: `http://localhost:4173`
+- Backend: `http://localhost:8080`
+- LAN access: `http://<your-ip>:4173` and `http://<your-ip>:8080`
+
+**To enable HTTPS** (self-signed cert, opt-in):
+```bash
+# macOS/Linux
+QUICKTARA_ENABLE_TLS=1 bash office-deploy.sh
+
+# Windows PowerShell
+$env:QUICKTARA_ENABLE_TLS = "1"; .\office-deploy.ps1
+```
 
 **First login:** open `quicktara-initial-credentials.txt`, sign in, change
 the password immediately under *Settings → My Account*, then delete the
@@ -102,7 +118,7 @@ JWT with refresh tokens and bcrypt password hashing.
 - Node.js 16+ and npm
 - Git
 - 2 GB RAM minimum (4 GB recommended), 1 GB disk
-- macOS 10.15+, Linux, Windows 10+ (WSL2 recommended), or any Docker host
+- macOS 10.15+, Linux, Windows 10+, or any Docker host
 
 ---
 
@@ -132,7 +148,7 @@ file before opening the instance to others.
 - **Frontend:** SvelteKit (in `tara-web/`)
 - **Database:** SQLite (default), MySQL, or PostgreSQL
 - **Reports:** ReportLab (PDF), OpenPyXL (Excel)
-- **Entry point:** `quicktara_web.py` — called by `office-deploy.sh` and `Dockerfile`
+- **Entry point:** `quicktara_web.py` — called by `office-deploy.sh` (macOS/Linux), `office-deploy.ps1` (Windows), and `Dockerfile`
 
 ### Deployment modes
 
