@@ -96,72 +96,29 @@ def get_session_factory(settings=None):
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def _create_all_tables(engine):
-    """Create all tables in the project (idempotent).
-
-    All ORM models now share a single Base (from db.product_asset_models).
-    Import every model module so their classes are registered with Base.metadata
-    before calling create_all once.
-    """
-    # Import all model modules to register them with the shared Base metadata.
-    # Order does not matter — there is now one Base.metadata.
-    from db.product_asset_models import Base  # noqa: F401
-    import db.damage_scenario      # noqa: F401
-    import db.threat_scenario      # noqa: F401
-    import db.threat_catalog       # noqa: F401
-    import db.attack_path          # noqa: F401
-    import db.risk_treatment       # noqa: F401
-    import db.audit_models         # noqa: F401
-    import db.cra_models           # noqa: F401
-    import db.cra_incident_models  # noqa: F401
-    import db.cra_sbom_models      # noqa: F401
-    from api.models import simple_attack_path  # noqa: F401
-    from api.models import user as user_models  # noqa: F401
-
-    Base.metadata.create_all(bind=engine)
-
 
 def init_db(settings=None):
-    """
-    Initialize database with required tables using Alembic migrations.
-
-    Falls back to direct schema generation if migrations fail.
-    Always calls create_all after alembic so ORM-only models (e.g. User,
-    Organization) are created even when no migration covers them.
-    """
+    """Initialize database by running Alembic migrations to head."""
     import subprocess
     import sys
     from pathlib import Path
 
-    engine = get_engine(settings)
+    project_dir = Path(__file__).parent.parent.absolute()
 
-    # Try to run Alembic migrations first
+    logger.info("Running database migrations...")
     try:
-        project_dir = Path(__file__).parent.parent.absolute()
-
-        logger.info("Running database migrations...")
         result = subprocess.run(
             [sys.executable, "-m", "alembic", "upgrade", "head"],
             cwd=str(project_dir),
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
-
         if result.returncode == 0:
             logger.info("Database migrations completed successfully")
         else:
-            if "table already exists" in result.stderr:
-                logger.info("Tables already exist, skipping migration")
-            else:
-                logger.warning(
-                    f"Failed to run migrations: {result.stderr}\nFalling back to direct table creation"
-                )
+            logger.error(f"Migration failed:\n{result.stderr}")
+            raise RuntimeError(f"alembic upgrade head failed: {result.stderr}")
     except Exception as e:
-        logger.warning(f"Error running migrations: {str(e)}\nFalling back to direct table creation")
-
-    # Always run create_all so tables defined in ORM models outside of Alembic
-    # migrations are created (e.g. users, organizations, refresh_tokens).
-    logger.info("Ensuring all ORM tables exist...")
-    _create_all_tables(engine)
-    logger.info("Database tables ready")
+        logger.error(f"Error running migrations: {e}")
+        raise

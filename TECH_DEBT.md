@@ -10,30 +10,6 @@ longer than ~10 entries** — if it does, schedule a debt sprint.
 ---
 
 
-## 3. Pydantic v1 ↔ v2 mixed validators
-
-**Where:** `api/models/component.py` (and possibly siblings) still uses the
-v1-era `@validator` decorator. The rest of the codebase is on v2
-(`@field_validator`, `ConfigDict(from_attributes=True)`).
-
-**Symptom:** Pydantic deprecation warnings on every test run. More
-importantly: three latent serialization bugs were caught during the
-integration-test backfill (April 2026) where SQLAlchemy column types
-(comma-separated `Text`, JSON-encoded `Text`) did not coerce into the
-declared schema types — patched ad-hoc with `field_validator(mode="before")`
-in `api/models/cra_sbom.py` and `api/models/cra_incident.py`.
-
-**Impact:** Future Pydantic releases will drop v1 compatibility entirely;
-the warning gradient hides real validation failures behind noise.
-
-**Remediation:** Sweep all `api/models/` for `@validator`, port to
-`@field_validator`. Add a CI rule that fails on Pydantic deprecation
-warnings.
-
-**Effort:** Small (half a day).
-
----
-
 ## 4. No PDF golden-file tests for reports
 
 **Where:** `api/services/reporting/` produces ReportLab PDFs (audit trace,

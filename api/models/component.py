@@ -3,7 +3,8 @@ Component models for FastAPI
 """
 from enum import Enum
 from typing import List, Optional, Set, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
+from pydantic import ValidationInfo
 
 
 class AssetType(str, Enum):
@@ -75,60 +76,45 @@ class ComponentBase(BaseModel):
         description="Whether access controls are required"
     )
     
-    @validator('confidentiality', 'integrity', 'availability', pre=True)
-    def set_smart_defaults(cls, v, values):
-        # If value is already specified, return it
+    @field_validator('confidentiality', 'integrity', 'availability', mode='before')
+    @classmethod
+    def set_smart_defaults(cls, v, info: ValidationInfo):
         if v is not None:
             return v
-            
-        # Default to MEDIUM if we can't calculate
-        if 'type' not in values or 'safety_level' not in values or 'trust_zone' not in values:
+
+        data = info.data or {}
+        component_type = data.get('type')
+        safety_level = data.get('safety_level')
+        trust_zone = data.get('trust_zone')
+        field_name = info.field_name
+
+        if not all([component_type, safety_level, trust_zone]):
             return SecurityLevel.MEDIUM
-        
-        component_type = values['type']
-        safety_level = values['safety_level']
-        trust_zone = values['trust_zone']
-        
-        # Get the field name from validator context
-        field_name = None
-        for field in cls.__fields__.values():
-            if field.name in ('confidentiality', 'integrity', 'availability'):
-                if field.validate_default() == v:
-                    field_name = field.name
-                    break
-                    
-        if not field_name:
-            return SecurityLevel.MEDIUM
-        
-        # For safety-critical components (ASIL C or D)
+
+        # ASIL C/D — integrity and availability must be HIGH
         if safety_level in (SafetyLevel.ASIL_C, SafetyLevel.ASIL_D):
             if field_name in ('integrity', 'availability'):
                 return SecurityLevel.HIGH
-        
-        # For critical trust zone
+
+        # Critical trust zone — integrity and availability must be HIGH
         if trust_zone == TrustZone.CRITICAL:
             if field_name in ('integrity', 'availability'):
                 return SecurityLevel.HIGH
-        
+
         # Type-specific defaults
         if component_type == AssetType.ECU:
             if field_name == 'integrity':
                 return SecurityLevel.HIGH
-            elif field_name == 'authorization_required':
-                return True
         elif component_type == AssetType.GATEWAY:
             if field_name in ('confidentiality', 'integrity'):
                 return SecurityLevel.HIGH
-            elif field_name in ('authenticity_required', 'authorization_required'):
-                return True
         elif component_type == AssetType.SENSOR:
             if field_name == 'integrity':
                 return SecurityLevel.HIGH
         elif component_type == AssetType.ACTUATOR:
             if field_name in ('integrity', 'availability'):
                 return SecurityLevel.HIGH
-        
-        # Default if no special case applies
+
         return SecurityLevel.MEDIUM
 
 
