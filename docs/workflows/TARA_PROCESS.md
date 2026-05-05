@@ -1,80 +1,155 @@
-# QuickTARA Step-by-Step Process Flow
+# The TARA Process in QuickTARA
 
-This document outlines the sequential flow of a complete TARA (Threat Analysis and Risk Assessment) process with inputs and outputs for each step, fully compliant with ISO/SAE 21434 and UNECE R155 requirements.
+This guide covers all 15 steps of a complete Threat Analysis and Risk Assessment (TARA). The process follows ISO/SAE 21434 Clause 9 and satisfies UNECE R155 requirements. Each step lists what you need before you start and what you produce when you finish.
 
-## 1. Item Definition (Scope Definition)
-**Input needed:** System description, stakeholder requirements, vehicle architecture  
-**Output:** Clear item description with boundaries, components, and interfaces  
-**Next step:** Asset Identification
+---
 
-## 2. Asset Identification
-**Input needed:** Item definition, system documentation  
-**Output:** Asset inventory with security properties (C-I-A, authenticity, authorization, non-repudiation)  
-**Next step:** Damage Scenario Identification
+## Step 1: Item Definition
 
-## 3. Damage Scenario Identification
-**Input needed:** Asset list with security properties  
-**Output:** Set of damage scenarios describing what could happen if security properties are violated  
-**Next step:** Impact Rating
+**What you need:** A system description, stakeholder requirements, and the vehicle architecture.
 
-## 4. Impact Rating (Severity Assessment)
-**Input needed:** Damage scenarios, system safety requirements  
-**Output:** Impact ratings for each damage scenario (SFOP: Safety, Financial, Operational, Privacy)  
-**Next step:** Threat Scenario Identification
+**What you produce:** A written item description with clear boundaries, a component list, and the interfaces between them.
 
-## 5. Threat Scenario Identification
-**Input needed:** Assets, damage scenarios, threat catalogs (1000.csv, 3000.csv, UNECE R155 Annex 5)  
-**Output:** Specific threat scenarios describing how attackers could cause identified damage  
-**Next step:** Attack Path Analysis
+**Next:** Step 2
 
-## 6. Attack Path Analysis
-**Input needed:** Threat scenarios, system architecture, entry points  
-**Output:** Attack paths showing step-by-step exploitation routes through the system  
-**Next step:** Attack Feasibility Assessment
+---
 
-## 7. Attack Feasibility (Likelihood) Rating
-**Input needed:** Attack paths, vulnerability information, attacker profiles  
-**Output:** Feasibility ratings for each attack path based on technical difficulty, knowledge, resources, and time  
-**Next step:** Risk Determination
+## Step 2: Asset Identification
 
-## 8. Risk Determination (Risk Value Calculation)
-**Input needed:** Impact ratings, attack feasibility ratings  
-**Output:** Risk values for each threat scenario using formula or risk matrix  
-**Next step:** Risk Treatment Decision
+**What you need:** The item definition from Step 1 and supporting system documentation.
 
-## 9. Risk Treatment Decision
-**Input needed:** Risk values, organizational risk acceptance criteria  
-**Output:** Risk treatment decisions for each unacceptable risk (Mitigate, Accept, Avoid, Transfer)  
-**Next step:** Cybersecurity Goals Definition
+**What you produce:** An asset inventory. Each asset has rated security properties: Confidentiality, Integrity, Availability, Authenticity, Authorization, and Non-repudiation.
 
-## 10. Cybersecurity Goals (Requirements) Definition
-**Input needed:** Risk treatment decisions, damage scenarios  
-**Output:** Specific cybersecurity goals mapped to each risk requiring mitigation  
-**Next step:** Cybersecurity Claims
+**Next:** Step 3
 
-## 11. Cybersecurity Claims (Evidence Requirements)
-**Input needed:** Cybersecurity goals  
-**Output:** Claims and arguments for how each security goal will be verified  
-**Next step:** Cybersecurity Concept Development
+---
 
-## 12. Cybersecurity Concept Development
-**Input needed:** Cybersecurity goals, claims, system architecture  
-**Output:** Security requirements allocated to specific system elements  
-**Next step:** Documentation and Residual Risk Acceptance
+## Step 3: Damage Scenario Identification
 
-## 13. Documentation and Residual Risk Acceptance
-**Input needed:** All TARA outputs, remaining risk information  
-**Output:** Comprehensive TARA report with formal acceptance of residual risks  
-**Next step:** Review and Validation
+**What you need:** The asset list with security properties from Step 2.
 
-## 14. Review and Validation of Results
-**Input needed:** Complete TARA documentation  
-**Output:** Verified and approved TARA with stakeholder sign-off  
-**Next step:** Continuous Monitoring
+**What you produce:** A set of damage scenarios. Each one describes what could happen if a security property is violated.
 
-## 15. Continuous Monitoring
-**Input needed:** Final TARA, change management process  
-**Output:** Triggers for TARA updates and periodic reassessment  
-**Next step:** Periodic Re-assessment
+**Next:** Step 4
 
-Each step builds on the previous, creating a comprehensive chain of evidence from item definition through risk treatment and monitoring. The process precisely follows ISO/SAE 21434 clauses and UNECE R155 requirements while maintaining traceability throughout.
+---
+
+## Step 4: Impact Rating
+
+**What you need:** The damage scenarios and any system safety requirements.
+
+**What you produce:** An impact rating for each damage scenario across four dimensions: Safety, Financial, Operational, and Privacy (SFOP). Each dimension is rated Negligible, Moderate, Major, or Severe.
+
+**Next:** Step 5
+
+---
+
+## Step 5: Threat Scenario Identification
+
+**What you need:** The asset list, damage scenarios, and access to the threat catalog.
+
+**What you produce:** Specific threat scenarios. Each one describes how an attacker could cause a damage scenario.
+
+**Next:** Step 6
+
+---
+
+## Step 6: Attack Path Analysis
+
+**What you need:** The threat scenarios and the system architecture, including entry points.
+
+**What you produce:** Attack paths. Each path shows the step-by-step route an attacker takes through the system.
+
+**Next:** Step 7
+
+---
+
+## Step 7: Attack Feasibility Rating
+
+**What you need:** Attack paths, known vulnerability information, and attacker profile assumptions.
+
+**What you produce:** A feasibility rating for each attack path. QuickTARA uses five factors: elapsed time, expertise, system knowledge, window of opportunity, and equipment.
+
+**Next:** Step 8
+
+---
+
+## Step 8: Risk Determination
+
+**What you need:** Impact ratings from Step 4 and feasibility ratings from Step 7.
+
+**What you produce:** A risk value for each threat scenario. QuickTARA uses the ISO 21434 4x5 risk matrix with worst-case SFOP aggregation.
+
+**Next:** Step 9
+
+---
+
+## Step 9: Risk Treatment Decision
+
+**What you need:** Risk values and your organisation's risk acceptance criteria.
+
+**What you produce:** A treatment decision for each unacceptable risk: Mitigate, Accept, Avoid, or Transfer. Each decision requires a written justification.
+
+**Next:** Step 10
+
+---
+
+## Step 10: Cybersecurity Goals Definition
+
+**What you need:** Treatment decisions and the linked damage scenarios.
+
+**What you produce:** Specific cybersecurity goals, each mapped to one or more risks that require mitigation.
+
+**Next:** Step 11
+
+---
+
+## Step 11: Cybersecurity Claims
+
+**What you need:** The cybersecurity goals from Step 10.
+
+**What you produce:** Claims and arguments showing how you will verify each security goal.
+
+**Next:** Step 12
+
+---
+
+## Step 12: Cybersecurity Concept Development
+
+**What you need:** Goals, claims, and the system architecture.
+
+**What you produce:** Security requirements allocated to specific system elements.
+
+**Next:** Step 13
+
+---
+
+## Step 13: Documentation and Residual Risk Acceptance
+
+**What you need:** All outputs from Steps 1 through 12, plus remaining risk information.
+
+**What you produce:** A complete TARA report with formal acceptance of residual risks.
+
+**Next:** Step 14
+
+---
+
+## Step 14: Review and Validation
+
+**What you need:** The complete TARA documentation.
+
+**What you produce:** A verified, approved TARA report with stakeholder sign-offs.
+
+**Next:** Step 15
+
+---
+
+## Step 15: Continuous Monitoring
+
+**What you need:** The approved TARA and a change management process.
+
+**What you produce:** A process for triggering TARA updates when the product changes, plus a schedule for periodic reassessment.
+
+---
+
+Each step builds on the last. The full chain runs from item definition to continuous monitoring, with a traceable record at every stage.

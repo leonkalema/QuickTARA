@@ -1,115 +1,84 @@
 # Component Management
 
-The Component Management module provides a comprehensive interface for managing automotive components within QuickTARA.
+Components are the individual parts of the system you are analysing. Each one represents a physical or logical element: an ECU, a sensor, a gateway, or a communication bus. You define a component once and reuse it across damage scenarios, threat scenarios, and risk assessments.
 
-## Features
+---
 
-- **Component Listing**: View all components in a responsive card-based layout
-- **Component Creation**: Add new components with detailed specifications
-- **Component Editing**: Modify existing component details
-- **Component Deletion**: Remove components from the system
-- **CSV Import/Export**: Bulk import and export components in CSV format
-- **Filtering & Search**: Find components by type, safety level, trust zone, or search term
+## Adding a Component
 
-## Architecture
+Click "Add Component" on the Components page. Fill in the required fields and click "Save Component".
 
-The Component Management UI follows a modular architecture with clear separation of concerns:
+**Required fields:**
 
-1. **ComponentManager.svelte**: Main container for component management features
-2. **ComponentList.svelte**: Handles component listing, filtering, and CRUD operations
-3. **ComponentCard.svelte**: Individual component display card with actions
-4. **ComponentForm.svelte**: Form for adding and editing components
-5. **ComponentFilter.svelte**: Advanced filtering interface
-6. **ComponentImport.svelte**: CSV import functionality
+| Field | What to enter |
+|-------|---------------|
+| Component ID | A unique code with no spaces (e.g. ECU-001). Alphanumeric characters, hyphens, and underscores are accepted. |
+| Name | A plain-language name (e.g. Engine Control Unit) |
+| Type | ECU, Sensor, Gateway, or another listed type |
 
-## API Integration
+**Optional but recommended fields:**
 
-The UI connects with the backend using the Component API client (`/frontend/src/api/components.ts`), which provides methods for:
+| Field | Purpose |
+|-------|---------|
+| Safety Level | ASIL A, B, C, D, or QM. This feeds into risk calculations. |
+| Location | Internal or External. Indicates whether the component sits inside the vehicle boundary. |
+| Trust Zone | Critical, Boundary, Standard, or Untrusted. This affects threat scenario generation. |
+| Interfaces | Communication protocols the component uses (CAN, FlexRay, Ethernet, LIN). |
+| Access Points | Physical or debug interfaces (OBD-II, JTAG, Debug Port). |
+| Data Types | The nature of data the component handles (Control Commands, Sensor Data). |
+| Connected Components | IDs of other components this one communicates with. |
 
-- Fetching all components
-- Getting a component by ID
-- Creating new components
-- Updating existing components
-- Deleting components
-- Importing components from CSV
-- Exporting components to CSV
+---
 
-## Data Validation
+## Editing and Deleting
 
-Component data is validated at multiple levels:
+Click a component card to open its details. Click "Edit" to change any field. Click "Delete" to remove the component.
 
-1. **Client-side validation**: Ensures all required fields are provided and formatted correctly
-2. **API validation**: Backend validation ensures data integrity and consistency
-3. **Database constraints**: Enforces data relationships and uniqueness
+Deleting a component removes it from all linked scenarios. Confirm before you proceed.
 
-## Usage
+---
 
-### Adding a Component
+## Importing from CSV
 
-1. Click the "Add Component" button
-2. Fill in the component details in the form:
-   - Component ID (must be unique, alphanumeric, hyphens and underscores allowed)
-   - Name (required)
-   - Type (ECU, Sensor, Gateway, etc.)
-   - Safety Level (ASIL A-D, QM)
-   - Location (Internal/External)
-   - Trust Zone (Critical, Boundary, Standard, Untrusted)
-   - Interfaces (communication protocols used by the component)
-   - Access Points (physical or debug interfaces)
-   - Data Types (types of data handled by the component)
-   - Connected Components (other components this component is connected to)
-3. Click "Save Component" to create the component
+You can create many components at once by uploading a CSV file.
 
-### Importing Components
-
-1. Click the "Import" button
-2. Select a CSV file or drag and drop it into the designated area
-3. Click "Import Components" to process the file
-4. View the import results, including any errors
-
-### Filtering Components
-
-1. Use the search box to filter by component ID or name
-2. Use the type dropdown to filter by component type
-3. Use the safety level dropdown to filter by ASIL rating
-4. Use the trust zone dropdown to filter by security domain
-
-## Component Properties
-
-| Property      | Description                                      | Example Values                  |
-|---------------|--------------------------------------------------|--------------------------------|
-| component_id  | Unique identifier                                | ECU001, SNS001                 |
-| name          | Human-readable name                              | Engine Control Unit            |
-| type          | Component type                                   | ECU, Sensor, Gateway           |
-| safety_level  | Automotive Safety Integrity Level                | ASIL D, ASIL C, QM             |
-| interfaces    | Communication protocols                          | CAN, FlexRay, Ethernet         |
-| access_points | Physical/debug interfaces                        | OBD-II, Debug Port             |
-| data_types    | Nature of data handled                           | Control Commands, Sensor Data  |
-| location      | Physical placement                               | Internal, External             |
-| trust_zone    | Security domain                                  | Critical, Boundary, Untrusted  |
-| connected_to  | Connected component IDs                          | ECU002, SNS001                 |
-
-## CSV Import Format
-
-The CSV import format must include the following headers:
-
-```csv
+**Required headers:**
+```
 component_id,name,type,safety_level,interfaces,access_points,data_types,location,trust_zone,connected_to
 ```
 
-Multiple values in a single field should be separated by the pipe character:
-
-```csv
+Separate multiple values in a single field with a pipe character (`|`):
+```
 ECU001,Engine Control Unit,ECU,ASIL D,CAN|FlexRay,OBD-II|Debug Port,Control Commands|Sensor Data,Internal,Critical,ECU002|ECU003
 ```
 
-## Error Handling
+Click "Import", select your file, and click "Import Components". The page shows a result list with any rows that failed and the reason for each failure.
 
-The UI handles various error scenarios gracefully:
+---
 
-- Network errors when communicating with the API
-- Validation errors in form submissions
-- Import errors for invalid CSV files
-- Duplicate component IDs
+## Exporting to CSV
 
-Error messages are displayed in context to help users quickly resolve issues.
+Click "Export" on the Components page. The system downloads a CSV of all components in your current product. Use this to back up your data, share it with colleagues, or prepare a bulk edit.
+
+---
+
+## Finding Components
+
+Use the search box to filter by component ID or name. Use the dropdowns to filter by type, safety level, or trust zone. Filters stack, so you can narrow to Gateway components at ASIL C with a Boundary trust zone in three clicks.
+
+---
+
+## Component Properties Reference
+
+| Property | Description | Example values |
+|----------|-------------|----------------|
+| component_id | Unique identifier | ECU001, SNS001 |
+| name | Human-readable name | Engine Control Unit |
+| type | Component type | ECU, Sensor, Gateway |
+| safety_level | Automotive Safety Integrity Level | ASIL D, ASIL C, QM |
+| interfaces | Communication protocols | CAN, FlexRay, Ethernet |
+| access_points | Physical or debug interfaces | OBD-II, Debug Port |
+| data_types | Nature of data handled | Control Commands, Sensor Data |
+| location | Physical placement | Internal, External |
+| trust_zone | Security domain | Critical, Boundary, Untrusted |
+| connected_to | Connected component IDs | ECU002, SNS001 |
