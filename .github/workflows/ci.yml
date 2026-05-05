@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Alembic migration round-trip ────────────────────────────────────────────
+  # Blocks merge if any migration breaks upgrade or downgrade.
+  migration:
+    name: Migration round-trip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-test.txt
+
+      - name: Upgrade to head
+        run: alembic upgrade head
+
+      - name: Downgrade one revision
+        run: alembic downgrade -1
+
+      - name: Upgrade back to head
+        run: alembic upgrade head
+
+  # ── Backend tests (169) ─────────────────────────────────────────────────────
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-test.txt
+
+      - name: Run tests
+        run: pytest tests/ -q
+
+  # ── Frontend component tests (42) ───────────────────────────────────────────
+  frontend:
+    name: Frontend component tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tara-web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tara-web
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: tara-web
+        run: npx playwright install chromium --with-deps
+
+      - name: Run CRA component tests
+        working-directory: tara-web
+        run: npx vitest run --project=client src/features/cra/components/CraAnnexVii.test.ts src/features/cra/components/CraClassificationWizard.test.ts
