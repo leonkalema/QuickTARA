@@ -310,6 +310,7 @@ class ClassificationResponse(BaseModel):
     cost_estimate_max: int
     automotive_exception: bool
     rationale: str
+    scope_warning: str = ""
 
 
 class CraAssessmentResponse(BaseModel):

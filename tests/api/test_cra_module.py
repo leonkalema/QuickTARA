@@ -72,9 +72,17 @@ class TestClassificationLogic:
         assert result.cost_estimate_min >= 50000
 
     def test_automotive_exception_flag(self) -> None:
-        """Automotive exception passes through."""
+        """Automotive exception sets scope_warning per Art. 2(5)(a) CRA."""
         result = classify_product({}, category_id="CI-01", automotive_exception=True)
         assert result.automotive_exception is True
+        assert result.scope_warning != "", "scope_warning must be non-empty when automotive_exception=True"
+        assert "Art. 2(5)(a)" in result.scope_warning
+        assert "PROVISIONAL" in result.scope_warning
+
+    def test_no_automotive_exception_has_no_scope_warning(self) -> None:
+        """Normal products have no scope_warning."""
+        result = classify_product({}, category_id="CI-01", automotive_exception=False)
+        assert result.scope_warning == ""
 
     def test_result_is_frozen_dataclass(self) -> None:
         """ClassificationResult is immutable."""

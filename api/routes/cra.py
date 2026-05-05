@@ -483,6 +483,7 @@ async def classify_assessment(
         cost_estimate_max=result.cost_estimate_max,
         automotive_exception=result.automotive_exception,
         rationale=result.rationale,
+        scope_warning=result.scope_warning,
     )
 
 

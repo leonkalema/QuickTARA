@@ -121,6 +121,8 @@ class ClassificationResult:
     cost_estimate_max: int
     automotive_exception: bool
     rationale: str
+    # Non-empty when product may be outside CRA scope — assessment is provisional.
+    scope_warning: str = ""
 
 
 def _build_conformity_module(
@@ -269,6 +271,19 @@ def classify_product(
         classification, uses_harmonised_standard, is_open_source_public,
     )
     cost_min, cost_max = COST_RANGES.get(classification, (0, 5_000))
+
+    # Art. 2(5)(a) CRA: products falling under type-approval Regulation (EU) 2019/2144
+    # (motor vehicles, UN R155 cybersecurity management system) are excluded from CRA scope.
+    # The assessment is retained for documentation but must not be treated as a CRA compliance
+    # record until legal applicability is confirmed with a notified body.
+    scope_warning = (
+        "PROVISIONAL — Automotive exception flagged. Products subject to type-approval "
+        "under Regulation (EU) 2019/2144 / UN R155 may be excluded from CRA scope per "
+        "Art. 2(5)(a). This assessment is for internal documentation only. Confirm legal "
+        "applicability with your notified body or legal counsel before relying on it for "
+        "CRA compliance purposes."
+    ) if automotive_exception else ""
+
     return ClassificationResult(
         classification=classification,
         category_id=category_id,
@@ -281,4 +296,5 @@ def classify_product(
         cost_estimate_max=cost_max,
         automotive_exception=automotive_exception,
         rationale=rationale,
+        scope_warning=scope_warning,
     )

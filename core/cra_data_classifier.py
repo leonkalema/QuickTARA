@@ -48,8 +48,12 @@ DATA_QUESTIONS: List[DataQuestion] = [
     ),
     DataQuestion(
         key="has_network_interfaces",
-        label="Does the product connect to a network?",
-        help_text="Wi-Fi, Ethernet, Bluetooth, cellular, CAN bus, any IP-based interface.",
+        label="Does the product have network or wireless connectivity?",
+        help_text=(
+            "Wi-Fi, Ethernet, Bluetooth, cellular, CAN bus, or any IP-based interface. "
+            "Per Art. 2(1) CRA, both direct and indirect logical connections qualify. "
+            "Physical data ports (USB, SD card, JTAG, diagnostic) are covered separately below."
+        ),
         category="Connectivity",
     ),
     DataQuestion(
@@ -60,9 +64,13 @@ DATA_QUESTIONS: List[DataQuestion] = [
     ),
     DataQuestion(
         key="has_physical_interfaces",
-        label="Does the product have physical debug/data interfaces?",
-        help_text="USB, serial, JTAG, SD card slot, diagnostic port.",
-        category="Access",
+        label="Does the product have physical data interfaces?",
+        help_text=(
+            "USB, serial, JTAG, SD card slot, diagnostic port, or any removable-media "
+            "update path. These are 'indirect physical data connections' per Art. 2(1) CRA "
+            "and are in scope even when there is no network interface."
+        ),
+        category="Connectivity",
     ),
     DataQuestion(
         key="has_updateable_software",
