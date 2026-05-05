@@ -137,9 +137,17 @@ class ClassifyRequest(BaseModel):
         default=False,
         description="Whether product is free/open-source with public technical docs"
     )
+    is_open_source_steward: bool = Field(
+        default=False,
+        description=(
+            "Whether the supplier is a non-commercial open-source steward per Art. 24 CRA. "
+            "Stewards are exempt from conformity assessment (Arts. 13-16) but must publish a "
+            "security attestation. Art. 14 reporting obligations still apply."
+        )
+    )
     automotive_exception: bool = Field(
         default=False,
-        description="Whether UN R155 lex specialis applies"
+        description="Whether UN R155 lex specialis applies (Art. 2(2)(c))"
     )
     answers: Dict[str, bool] = Field(
         default={},
@@ -309,6 +317,7 @@ class ClassificationResponse(BaseModel):
     cost_estimate_min: int
     cost_estimate_max: int
     automotive_exception: bool
+    is_open_source_steward: bool = False
     rationale: str
     scope_warning: str = ""
 
@@ -426,3 +435,92 @@ class InventorySummary(BaseModel):
     eu_units: int
     non_eu_units: int
     oems: List[str]
+
+
+# --- Art. 13 Conformity Workflow ---
+
+# --- Annex II User Information Checklist ---
+
+class AnnexIIItemResponse(BaseModel):
+    """One Annex II mandatory user-information item with its status."""
+    key: str
+    title: str
+    article_ref: str
+    description: str
+    status: str  # "done" | "action_required" | "not_checked"
+    auto_derived: bool
+    derived_value: Optional[str] = None
+
+
+class AnnexIIChecklistResponse(BaseModel):
+    """Full Annex II evaluation for an assessment."""
+    assessment_id: str
+    items: List[AnnexIIItemResponse]
+    done_count: int
+    total_count: int
+
+
+# --- Art. 13 Conformity Workflow ---
+
+class ConformityChecklistUpdate(BaseModel):
+    """Update the Art. 13 conformity obligations checklist."""
+    # Art. 32 — conformity assessment
+    conformity_assessment_done: Optional[bool] = None
+    conformity_assessment_module: Optional[str] = None
+    conformity_assessment_date: Optional[str] = None
+    conformity_assessment_notes: Optional[str] = None
+    # Art. 28 + Annex V — Declaration of Conformity
+    doc_signed: Optional[bool] = None
+    doc_signed_date: Optional[str] = None
+    doc_signatory: Optional[str] = None
+    doc_storage_location: Optional[str] = None
+    # Art. 28 — CE marking
+    ce_marking_applied: Optional[bool] = None
+    ce_marking_date: Optional[str] = None
+    ce_marking_notes: Optional[str] = None
+    # Art. 31 — EU central database registration
+    eu_registration_done: Optional[bool] = None
+    eu_registration_id: Optional[str] = None
+    eu_registration_date: Optional[str] = None
+    # Art. 23(1) — 10-year retention plan
+    retention_plan_confirmed: Optional[bool] = None
+    retention_plan_notes: Optional[str] = None
+    # Art. 13(14) — post-market surveillance plan
+    post_market_plan_confirmed: Optional[bool] = None
+    post_market_plan_notes: Optional[str] = None
+    # Art. 14(2) — EOSS date published
+    eoss_published: Optional[bool] = None
+    eoss_published_url: Optional[str] = None
+
+
+class ConformityChecklistResponse(BaseModel):
+    """Art. 13 conformity obligations checklist response."""
+    id: str
+    assessment_id: str
+    conformity_assessment_done: bool = False
+    conformity_assessment_module: Optional[str] = None
+    conformity_assessment_date: Optional[str] = None
+    conformity_assessment_notes: Optional[str] = None
+    doc_signed: bool = False
+    doc_signed_date: Optional[str] = None
+    doc_signatory: Optional[str] = None
+    doc_storage_location: Optional[str] = None
+    ce_marking_applied: bool = False
+    ce_marking_date: Optional[str] = None
+    ce_marking_notes: Optional[str] = None
+    eu_registration_done: bool = False
+    eu_registration_id: Optional[str] = None
+    eu_registration_date: Optional[str] = None
+    retention_plan_confirmed: bool = False
+    retention_plan_notes: Optional[str] = None
+    post_market_plan_confirmed: bool = False
+    post_market_plan_notes: Optional[str] = None
+    eoss_published: bool = False
+    eoss_published_url: Optional[str] = None
+    completed_steps: int = 0
+    total_steps: int = 7
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

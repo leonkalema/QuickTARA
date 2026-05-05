@@ -41,12 +41,17 @@ from api.models.cra import (
     InventoryItemUpdate,
     InventoryItemResponse,
     InventorySummary,
+    ConformityChecklistUpdate,
+    ConformityChecklistResponse,
+    AnnexIIItemResponse,
+    AnnexIIChecklistResponse,
 )
 from db.cra_models import (
     CraAssessment,
     CraRequirementStatusRecord,
     CraCompensatingControl,
     CraControlRequirementLink,
+    CraConformityChecklist,
 )
 from db.product_asset_models import ProductScope
 from core.cra_classifier import classify_product, CRA_CLASSIFICATION_QUESTIONS
@@ -59,6 +64,7 @@ from core.cra_auto_mapper import (
 )
 import core.cra_requirement_guidance_part2  # noqa: F401 — registers Part II guidance
 from core.cra_requirement_guidance import get_guidance, get_all_guidance
+from core.cra_annex_ii import evaluate_annex_ii
 from core.cra_data_classifier import (
     compute_applicability,
     get_questions as get_data_questions,
@@ -445,11 +451,13 @@ async def classify_assessment(
         category_id=payload.category_id,
         uses_harmonised_standard=payload.uses_harmonised_standard,
         is_open_source_public=payload.is_open_source_public,
+        is_open_source_steward=payload.is_open_source_steward,
     )
     classification_data = {
         "category_id": payload.category_id,
         "uses_harmonised_standard": payload.uses_harmonised_standard,
         "is_open_source_public": payload.is_open_source_public,
+        "is_open_source_steward": payload.is_open_source_steward,
         **payload.answers,
     }
     assessment.classification = result.classification
@@ -482,6 +490,7 @@ async def classify_assessment(
         cost_estimate_min=result.cost_estimate_min,
         cost_estimate_max=result.cost_estimate_max,
         automotive_exception=result.automotive_exception,
+        is_open_source_steward=payload.is_open_source_steward,
         rationale=result.rationale,
         scope_warning=result.scope_warning,
     )
@@ -1161,11 +1170,142 @@ async def delete_inventory_item(
 ):
     """Delete an inventory item."""
     from db.cra_models import CraInventoryItem
-    
+
     item = db.query(CraInventoryItem).filter(CraInventoryItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Inventory item not found")
-    
+
     db.delete(item)
     db.commit()
     return {"deleted": True, "id": item_id}
+
+
+# ── Art. 13 Conformity Workflow ──────────────────────────────────────────────
+
+def _count_conformity_steps(checklist: CraConformityChecklist) -> int:
+    """Count how many of the 7 conformity obligation steps are done."""
+    flags = [
+        checklist.conformity_assessment_done,
+        checklist.doc_signed,
+        checklist.ce_marking_applied,
+        checklist.eu_registration_done,
+        checklist.retention_plan_confirmed,
+        checklist.post_market_plan_confirmed,
+        checklist.eoss_published,
+    ]
+    return sum(1 for f in flags if f)
+
+
+def _get_or_create_conformity_checklist(
+    db: Session, assessment_id: str
+) -> CraConformityChecklist:
+    checklist = db.query(CraConformityChecklist).filter(
+        CraConformityChecklist.assessment_id == assessment_id
+    ).first()
+    if not checklist:
+        checklist = CraConformityChecklist(
+            id=str(uuid.uuid4()),
+            assessment_id=assessment_id,
+        )
+        db.add(checklist)
+        db.commit()
+        db.refresh(checklist)
+    return checklist
+
+
+@router.get(
+    "/assessments/{assessment_id}/conformity-checklist",
+    response_model=ConformityChecklistResponse,
+)
+async def get_conformity_checklist(
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Return the Art. 13 conformity obligations checklist for an assessment.
+    Creates a blank checklist if one does not exist yet.
+    """
+    assessment = db.query(CraAssessment).filter(
+        CraAssessment.id == assessment_id
+    ).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    checklist = _get_or_create_conformity_checklist(db, assessment_id)
+    resp = ConformityChecklistResponse.model_validate(checklist)
+    resp = resp.model_copy(update={"completed_steps": _count_conformity_steps(checklist)})
+    return resp
+
+
+@router.patch(
+    "/assessments/{assessment_id}/conformity-checklist",
+    response_model=ConformityChecklistResponse,
+)
+async def update_conformity_checklist(
+    assessment_id: str,
+    payload: ConformityChecklistUpdate,
+    db: Session = Depends(get_db),
+):
+    """Update one or more Art. 13 conformity obligation fields."""
+    assessment = db.query(CraAssessment).filter(
+        CraAssessment.id == assessment_id
+    ).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    checklist = _get_or_create_conformity_checklist(db, assessment_id)
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(checklist, field, value)
+
+    db.commit()
+    db.refresh(checklist)
+    resp = ConformityChecklistResponse.model_validate(checklist)
+    resp = resp.model_copy(update={"completed_steps": _count_conformity_steps(checklist)})
+    return resp
+
+
+# ── Annex II User Information Checklist ─────────────────────────────────────
+
+@router.get(
+    "/assessments/{assessment_id}/annex-ii",
+    response_model=AnnexIIChecklistResponse,
+)
+async def get_annex_ii_checklist(
+    assessment_id: str,
+    db: Session = Depends(get_db),
+):
+    """Return Annex II mandatory user-information checklist for an assessment.
+
+    Items that can be auto-derived from stored assessment data (e.g. eoss_date)
+    are resolved automatically. All others are returned as 'not_checked' for
+    the user to confirm.
+    """
+    assessment = db.query(CraAssessment).filter(
+        CraAssessment.id == assessment_id
+    ).first()
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    assessment_data = {
+        "eoss_date": assessment.eoss_date,
+    }
+    results = evaluate_annex_ii(assessment_data)
+    items = [
+        AnnexIIItemResponse(
+            key=r.key,
+            title=r.title,
+            article_ref=r.article_ref,
+            description=r.description,
+            status=r.status,
+            auto_derived=r.auto_derived,
+            derived_value=r.derived_value,
+        )
+        for r in results
+    ]
+    done_count = sum(1 for i in items if i.status == "done")
+    return AnnexIIChecklistResponse(
+        assessment_id=assessment_id,
+        items=items,
+        done_count=done_count,
+        total_count=len(items),
+    )

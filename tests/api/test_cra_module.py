@@ -18,6 +18,7 @@ from core.cra_classifier import (
     CRA_CLASSIFICATION_QUESTIONS,
     ClassificationResult,
 )
+from core.cra_annex_ii import evaluate_annex_ii, ANNEX_II_ITEMS
 from core.cra_auto_mapper import (
     CRA_REQUIREMENTS,
     get_requirement_by_id,
@@ -72,17 +73,47 @@ class TestClassificationLogic:
         assert result.cost_estimate_min >= 50000
 
     def test_automotive_exception_flag(self) -> None:
-        """Automotive exception sets scope_warning per Art. 2(5)(a) CRA."""
+        """Automotive exception sets scope_warning per Art. 2(2)(c) CRA."""
         result = classify_product({}, category_id="CI-01", automotive_exception=True)
         assert result.automotive_exception is True
         assert result.scope_warning != "", "scope_warning must be non-empty when automotive_exception=True"
-        assert "Art. 2(5)(a)" in result.scope_warning
+        assert "Art. 2(2)(c)" in result.scope_warning
         assert "PROVISIONAL" in result.scope_warning
 
     def test_no_automotive_exception_has_no_scope_warning(self) -> None:
         """Normal products have no scope_warning."""
         result = classify_product({}, category_id="CI-01", automotive_exception=False)
         assert result.scope_warning == ""
+
+    def test_steward_path_classification(self) -> None:
+        """Art. 24 steward path produces 'steward' classification and security attestation."""
+        result = classify_product({}, is_open_source_steward=True)
+        assert result.classification == "steward"
+        assert result.conformity_module.module_id == "security_attestation"
+        assert result.conformity_module.mandatory is True
+        assert result.conformity_module.alternatives == []
+        assert "Art. 24" in result.rationale or "Art. 24" in result.conformity_module.rationale
+
+    def test_steward_path_scope_warning_is_provisional(self) -> None:
+        """Steward path sets a scope_warning flagging the provisional nature."""
+        result = classify_product({}, is_open_source_steward=True)
+        assert "PROVISIONAL" in result.scope_warning
+        assert "Art. 24" in result.scope_warning
+
+    def test_steward_path_cost_is_low(self) -> None:
+        """Steward cost estimate reflects attestation-only effort."""
+        result = classify_product({}, is_open_source_steward=True)
+        assert result.cost_estimate_max <= 2_000
+
+    def test_steward_reporting_deadline_still_applies(self) -> None:
+        """Art. 14 reporting deadline (Sep 2026) still applies to stewards."""
+        result = classify_product({}, is_open_source_steward=True)
+        assert result.reporting_deadline == "2026-09-11"
+
+    def test_steward_overrides_category(self) -> None:
+        """Steward flag takes precedence over category_id selection."""
+        result = classify_product({}, category_id="CII-01", is_open_source_steward=True)
+        assert result.classification == "steward"
 
     def test_result_is_frozen_dataclass(self) -> None:
         """ClassificationResult is immutable."""
@@ -114,6 +145,48 @@ class TestClassificationLogic:
         assert result.reporting_deadline == "2026-09-11"
 
 
+class TestAnnexII:
+    """Test the Annex II user information checklist."""
+
+    def test_nine_annex_ii_items(self) -> None:
+        """Annex II has exactly 9 mandatory user-information items."""
+        assert len(ANNEX_II_ITEMS) == 9
+
+    def test_all_items_have_article_ref(self) -> None:
+        """Every Annex II item references a specific article."""
+        for item in ANNEX_II_ITEMS:
+            assert item.article_ref.startswith("Annex II"), (
+                f"{item.key} missing Annex II reference"
+            )
+
+    def test_support_period_auto_derived_when_eoss_present(self) -> None:
+        """support_period item is marked 'done' when eoss_date is populated."""
+        results = evaluate_annex_ii({"eoss_date": "2032-12-31"})
+        sp = next(r for r in results if r.key == "support_period")
+        assert sp.status == "done"
+        assert sp.auto_derived is True
+        assert sp.derived_value == "2032-12-31"
+
+    def test_support_period_action_required_when_eoss_missing(self) -> None:
+        """support_period item is 'action_required' when eoss_date is absent."""
+        results = evaluate_annex_ii({})
+        sp = next(r for r in results if r.key == "support_period")
+        assert sp.status == "action_required"
+        assert sp.auto_derived is True
+
+    def test_non_auto_items_are_not_checked(self) -> None:
+        """Items that cannot be auto-derived are returned as 'not_checked'."""
+        results = evaluate_annex_ii({})
+        non_auto = [r for r in results if not r.auto_derived]
+        for r in non_auto:
+            assert r.status == "not_checked"
+
+    def test_evaluate_returns_all_nine(self) -> None:
+        """evaluate_annex_ii returns exactly 9 results."""
+        results = evaluate_annex_ii({})
+        assert len(results) == 9
+
+
 class TestCraRequirements:
     """Test the CRA requirements master list."""
 
@@ -132,6 +205,27 @@ class TestCraRequirements:
         valid_categories = {"technical", "process", "documentation"}
         for req in CRA_REQUIREMENTS:
             assert req["category"] in valid_categories, f"{req['id']} has invalid category"
+
+    def test_cra14_annex_part_is_art14_obligation(self) -> None:
+        """CRA-14 (24h reporting) is an Art. 14 obligation, not Annex I Part II."""
+        req = get_requirement_by_id("CRA-14")
+        assert req is not None
+        assert req["annex_part"] == "Art. 14 Obligation", (
+            "CRA-14 must be labelled 'Art. 14 Obligation' — it is not an Annex I item"
+        )
+
+    def test_cra09_covers_part_i_para1_and_para10(self) -> None:
+        """CRA-09 article reference covers both §1 (no known exploitable) and §10 (updates)."""
+        req = get_requirement_by_id("CRA-09")
+        assert req is not None
+        assert "§1" in req["article"] and "§10" in req["article"]
+
+    def test_cra13_covers_part_ii_para4_to_6(self) -> None:
+        """CRA-13 covers Annex I Part II §4 (disclosure), §5 (CVD policy), §6 (contact)."""
+        req = get_requirement_by_id("CRA-13")
+        assert req is not None
+        # Article string is "Annex I Part II §4-6" — range notation covers §4, §5, §6
+        assert "§4-6" in req["article"] or ("§4" in req["article"] and "§6" in req["article"])
 
     def test_get_requirement_by_id_found(self) -> None:
         """Look up existing requirement."""

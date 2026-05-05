@@ -16,6 +16,7 @@
   let selectedCategoryId: string | null = $state(null);
   let usesHarmonisedStandard: boolean = $state(false);
   let isOpenSourcePublic: boolean = $state(false);
+  let isOpenSourceSteward: boolean = $state(false);
   let autoException: boolean = $state(false);
   let searchQuery: string = $state('');
   let currentStep: number = $state(0);
@@ -62,6 +63,7 @@
         category_id: selectedCategoryId ?? undefined,
         uses_harmonised_standard: usesHarmonisedStandard,
         is_open_source_public: isOpenSourcePublic,
+        is_open_source_steward: isOpenSourceSteward,
         automotive_exception: autoException,
       });
       oncomplete?.(result);
@@ -77,6 +79,7 @@
     class_i: { color: 'var(--color-status-warning)', label: 'Important Class I' },
     class_ii: { color: 'var(--color-status-error)', label: 'Important Class II' },
     critical: { color: '#dc2626', label: 'Critical' },
+    steward: { color: '#6366f1', label: 'Open-source Steward (Art. 24)' },
   };
 </script>
 
@@ -244,6 +247,20 @@
               </p>
             </div>
           </label>
+          {#if isOpenSourcePublic}
+          <label class="flex items-start gap-3 rounded-lg border p-3 cursor-pointer ml-4" style="border-color: #6366f130; background: #6366f108;">
+            <input type="checkbox" class="mt-1" bind:checked={isOpenSourceSteward} />
+            <div>
+              <div class="text-sm font-medium" style="color: var(--color-text-primary);">Non-commercial open-source steward? <span class="font-mono text-xs text-indigo-500">Art. 24</span></div>
+              <p class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">
+                If your organisation supplies this software without commercialising it, you are a
+                <strong>steward</strong> not a manufacturer. Stewards are exempt from conformity assessment
+                (Arts. 13–16) but must publish a <strong>security attestation</strong> and comply with
+                Art. 14 incident reporting (24h/72h/14d from 11 Sep 2026).
+              </p>
+            </div>
+          </label>
+          {/if}
           <label class="flex items-start gap-3 rounded-lg border p-3 cursor-pointer" style="border-color: var(--color-border-default);">
             <input type="checkbox" class="mt-1" bind:checked={autoException} />
             <div>
@@ -272,7 +289,7 @@
               <span class="text-[10px] px-1.5 py-0.5 rounded mt-1 inline-block font-bold" style="background: var(--color-status-info)15; color: var(--color-status-info);">DEFAULT</span>
             {/if}
           </div>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <div class="rounded-lg border p-2 text-center" style="border-color: var(--color-border-default);">
               <div class="text-[10px]" style="color: var(--color-text-tertiary);">Harmonised Std</div>
               <div class="text-xs font-medium" style="color: var(--color-text-primary);">{usesHarmonisedStandard ? 'Yes' : 'No'}</div>
@@ -280,6 +297,10 @@
             <div class="rounded-lg border p-2 text-center" style="border-color: var(--color-border-default);">
               <div class="text-[10px]" style="color: var(--color-text-tertiary);">Open Source</div>
               <div class="text-xs font-medium" style="color: var(--color-text-primary);">{isOpenSourcePublic ? 'Yes' : 'No'}</div>
+            </div>
+            <div class="rounded-lg border p-2 text-center" style="border-color: var(--color-border-default);">
+              <div class="text-[10px]" style="color: var(--color-text-tertiary);">Art. 24 Steward</div>
+              <div class="text-xs font-medium" style="color: {isOpenSourceSteward ? '#6366f1' : 'var(--color-text-primary)'};">{isOpenSourceSteward ? 'Yes — attestation path' : 'No'}</div>
             </div>
             <div class="rounded-lg border p-2 text-center" style="border-color: var(--color-border-default);">
               <div class="text-[10px]" style="color: var(--color-text-tertiary);">Auto Exception</div>

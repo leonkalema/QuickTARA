@@ -225,6 +225,63 @@ class CraInventoryItem(Base):
     assessment = relationship("CraAssessment", backref="inventory_items")
 
 
+class CraConformityChecklist(Base):
+    """Art. 13 manufacturer conformity obligations checklist — one row per assessment.
+
+    Tracks the procedural acts manufacturers must complete BEYOND Annex I requirements:
+    conformity assessment, Declaration of Conformity, CE marking, EU registration,
+    technical documentation retention, and post-market surveillance plan.
+    """
+    __tablename__ = "cra_conformity_checklists"
+
+    id = Column(String, primary_key=True, index=True)
+    assessment_id = Column(
+        String,
+        ForeignKey("cra_assessments.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+    # Art. 32 — conformity assessment module completed
+    conformity_assessment_done = Column(Boolean, default=False)
+    conformity_assessment_module = Column(String, nullable=True)  # e.g. "Module A", "Module B+C"
+    conformity_assessment_date = Column(String, nullable=True)
+    conformity_assessment_notes = Column(Text, nullable=True)
+
+    # Art. 28 + Annex V — EU Declaration of Conformity drawn up and signed
+    doc_signed = Column(Boolean, default=False)
+    doc_signed_date = Column(String, nullable=True)
+    doc_signatory = Column(String, nullable=True)  # name/role of signatory
+    doc_storage_location = Column(String, nullable=True)
+
+    # Art. 28 — CE marking affixed
+    ce_marking_applied = Column(Boolean, default=False)
+    ce_marking_date = Column(String, nullable=True)
+    ce_marking_notes = Column(Text, nullable=True)
+
+    # Art. 31 — product registered in EU central database (ENISA)
+    eu_registration_done = Column(Boolean, default=False)
+    eu_registration_id = Column(String, nullable=True)
+    eu_registration_date = Column(String, nullable=True)
+
+    # Art. 23(1) — 10-year technical documentation retention plan confirmed
+    retention_plan_confirmed = Column(Boolean, default=False)
+    retention_plan_notes = Column(Text, nullable=True)
+
+    # Art. 13(14) — post-market surveillance plan in place
+    post_market_plan_confirmed = Column(Boolean, default=False)
+    post_market_plan_notes = Column(Text, nullable=True)
+
+    # Art. 14(2) — EOSS date published to users
+    eoss_published = Column(Boolean, default=False)
+    eoss_published_url = Column(String, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    assessment = relationship("CraAssessment", backref="conformity_checklist")
+
+
 class CraControlRequirementLink(Base):
     """Junction table linking compensating controls to requirements they mitigate"""
     __tablename__ = "cra_control_requirement_links"

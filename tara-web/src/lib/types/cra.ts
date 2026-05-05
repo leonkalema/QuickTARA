@@ -254,6 +254,7 @@ export interface ClassifyRequest {
   readonly category_id?: string;
   readonly uses_harmonised_standard: boolean;
   readonly is_open_source_public: boolean;
+  readonly is_open_source_steward?: boolean;
   readonly automotive_exception: boolean;
   readonly answers?: Record<string, boolean>;
 }
@@ -606,4 +607,59 @@ export interface AnnexViiDocument {
   readonly sboms: readonly AnnexViiSbomEntry[];
   readonly sections: readonly AnnexViiSection[];
   readonly completeness_pct: number;
+}
+
+// ── Art. 13 Conformity Workflow ─────────────────────────────────────────────
+
+export interface ConformityChecklist {
+  readonly id: string;
+  readonly assessment_id: string;
+  readonly conformity_assessment_done: boolean;
+  readonly conformity_assessment_module: string | null;
+  readonly conformity_assessment_date: string | null;
+  readonly conformity_assessment_notes: string | null;
+  readonly doc_signed: boolean;
+  readonly doc_signed_date: string | null;
+  readonly doc_signatory: string | null;
+  readonly doc_storage_location: string | null;
+  readonly ce_marking_applied: boolean;
+  readonly ce_marking_date: string | null;
+  readonly ce_marking_notes: string | null;
+  readonly eu_registration_done: boolean;
+  readonly eu_registration_id: string | null;
+  readonly eu_registration_date: string | null;
+  readonly retention_plan_confirmed: boolean;
+  readonly retention_plan_notes: string | null;
+  readonly post_market_plan_confirmed: boolean;
+  readonly post_market_plan_notes: string | null;
+  readonly eoss_published: boolean;
+  readonly eoss_published_url: string | null;
+  readonly completed_steps: number;
+  readonly total_steps: number;
+  readonly created_at?: string;
+  readonly updated_at?: string;
+}
+
+export type ConformityChecklistUpdate = Partial<Omit<ConformityChecklist,
+  'id' | 'assessment_id' | 'completed_steps' | 'total_steps' | 'created_at' | 'updated_at'>>;
+
+// ── Annex II User Information Checklist ─────────────────────────────────────
+
+export type AnnexIIItemStatus = 'done' | 'action_required' | 'not_checked';
+
+export interface AnnexIIItem {
+  readonly key: string;
+  readonly title: string;
+  readonly article_ref: string;
+  readonly description: string;
+  readonly status: AnnexIIItemStatus;
+  readonly auto_derived: boolean;
+  readonly derived_value: string | null;
+}
+
+export interface AnnexIIChecklist {
+  readonly assessment_id: string;
+  readonly items: readonly AnnexIIItem[];
+  readonly done_count: number;
+  readonly total_count: number;
 }

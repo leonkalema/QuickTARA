@@ -14,15 +14,17 @@
   import CraSbom from '../../../features/cra/components/CraSbom.svelte';
   import CraIncidents from '../../../features/cra/components/CraIncidents.svelte';
   import CraAnnexVii from '../../../features/cra/components/CraAnnexVii.svelte';
+  import CraConformityWorkflow from '../../../features/cra/components/CraConformityWorkflow.svelte';
+  import CraAnnexIIChecklist from '../../../features/cra/components/CraAnnexIIChecklist.svelte';
   import {
     ArrowLeft, Shield, Calendar, Wand2, Trash2,
-    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package, Database, FileCode, ShieldAlert, BookOpen
+    FileText, ShieldCheck, Settings2, BarChart3, X, Check, Package, Database, FileCode, ShieldAlert, BookOpen, ClipboardCheck, ScrollText
   } from '@lucide/svelte';
 
   let assessment: CraAssessment | null = $state(null);
   let loading = $state(true);
   let error: string | null = $state(null);
-  let activeTab: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents' | 'annex_vii' = $state('overview');
+  let activeTab: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents' | 'annex_vii' | 'conformity' | 'annex_ii' = $state('overview');
   let showClassifyWizard = $state(false);
   let autoMapping = $state(false);
   let deleting = $state(false);
@@ -170,7 +172,7 @@
     draft: 'Draft', in_progress: 'In Progress', complete: 'Complete',
   };
 
-  const tabs: Array<{ id: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents' | 'annex_vii'; label: string; icon: any }> = $derived([
+  const tabs: Array<{ id: 'overview' | 'data_profile' | 'requirements' | 'controls' | 'gap_analysis' | 'inventory' | 'sbom' | 'incidents' | 'annex_vii' | 'conformity' | 'annex_ii'; label: string; icon: any }> = $derived([
     { id: 'overview' as const, label: 'Overview', icon: FileText },
     { id: 'data_profile' as const, label: 'Data Profile', icon: Database },
     { id: 'requirements' as const, label: 'Requirements', icon: ShieldCheck },
@@ -178,6 +180,8 @@
     { id: 'sbom' as const, label: 'SBOM', icon: FileCode },
     { id: 'incidents' as const, label: 'Incidents', icon: ShieldAlert },
     { id: 'annex_vii' as const, label: 'Annex VII', icon: BookOpen },
+    { id: 'conformity' as const, label: 'Conformity', icon: ClipboardCheck },
+    { id: 'annex_ii' as const, label: 'Annex II', icon: ScrollText },
     ...(isLegacyProduct() ? [{ id: 'controls' as const, label: 'Compensating Controls', icon: Settings2 }] : []),
     ...(isLegacyProduct() ? [{ id: 'inventory' as const, label: 'Inventory', icon: Package }] : []),
   ]);
@@ -638,6 +642,10 @@
       />
     {:else if activeTab === 'annex_vii'}
       <CraAnnexVii assessmentId={assessment.id ?? ''} />
+    {:else if activeTab === 'conformity'}
+      <CraConformityWorkflow assessmentId={assessment.id ?? ''} />
+    {:else if activeTab === 'annex_ii'}
+      <CraAnnexIIChecklist assessmentId={assessment.id ?? ''} />
     {:else if activeTab === 'inventory'}
       <CraInventory
         assessmentId={assessment.id ?? ''}

@@ -38,6 +38,9 @@ import type {
   DeadlinePhase,
   EnisaExport,
   AnnexViiDocument,
+  ConformityChecklist,
+  ConformityChecklistUpdate,
+  AnnexIIChecklist,
 } from '../types/cra';
 import { API_BASE_URL } from '$lib/config';
 import { browser } from '$app/environment';
@@ -458,5 +461,40 @@ export const craApi = {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  },
+
+  // ── Art. 13 Conformity Workflow ────────────────────────────────
+
+  async getConformityChecklist(assessmentId: string): Promise<ConformityChecklist> {
+    const res = await fetch(
+      `${API_BASE_URL}/cra/assessments/${assessmentId}/conformity-checklist`,
+      { headers: getAuthHeaders() },
+    );
+    return handleResponse<ConformityChecklist>(res);
+  },
+
+  async updateConformityChecklist(
+    assessmentId: string,
+    payload: ConformityChecklistUpdate,
+  ): Promise<ConformityChecklist> {
+    const res = await fetch(
+      `${API_BASE_URL}/cra/assessments/${assessmentId}/conformity-checklist`,
+      {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      },
+    );
+    return handleResponse<ConformityChecklist>(res);
+  },
+
+  // ── Annex II User Information Checklist ───────────────────────
+
+  async getAnnexIIChecklist(assessmentId: string): Promise<AnnexIIChecklist> {
+    const res = await fetch(
+      `${API_BASE_URL}/cra/assessments/${assessmentId}/annex-ii`,
+      { headers: getAuthHeaders() },
+    );
+    return handleResponse<AnnexIIChecklist>(res);
   },
 };

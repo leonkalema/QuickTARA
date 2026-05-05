@@ -223,10 +223,33 @@ COST_RANGES: Dict[str, tuple] = {
     "class_i": (5_000, 20_000),
     "class_ii": (20_000, 50_000),
     "critical": (50_000, 150_000),
+    # Stewards have no conformity assessment cost — only attestation effort
+    "steward": (0, 2_000),
 }
 
 FULL_COMPLIANCE_DEADLINE = "2027-12-11"
 REPORTING_DEADLINE = "2026-09-11"
+
+_STEWARD_MODULE = ConformityModule(
+    module_id="security_attestation",
+    name="Security Attestation (Art. 24 steward path)",
+    description=(
+        "Open-source software stewards are not manufacturers under CRA. "
+        "Instead of a conformity assessment, they must publish a security "
+        "attestation — a publicly available document demonstrating due diligence "
+        "over the security of the software. Attestation must cover: vulnerability "
+        "handling policy, responsible disclosure process, and SBOM availability. "
+        "Art. 14 reporting obligations (24h/72h/14d to ENISA) STILL APPLY."
+    ),
+    mandatory=True,
+    alternatives=[],
+    rationale=(
+        "Art. 24 CRA: organisations that supply free/open-source software in the "
+        "course of non-commercial activity are 'open-source software stewards', not "
+        "manufacturers. They are exempt from Arts. 13-16 conformity assessment but "
+        "must publish a security attestation and comply with Art. 14 reporting."
+    ),
+)
 
 
 def classify_product(
@@ -235,6 +258,7 @@ def classify_product(
     category_id: Optional[str] = None,
     uses_harmonised_standard: bool = False,
     is_open_source_public: bool = False,
+    is_open_source_steward: bool = False,
 ) -> ClassificationResult:
     """
     Classify a product based on core functionality category selection.
@@ -245,7 +269,38 @@ def classify_product(
         category_id: Selected product category ID from the catalog.
         uses_harmonised_standard: Whether a harmonised standard is applied.
         is_open_source_public: Whether product is FOSS with public docs.
+        is_open_source_steward: Whether supplier is a non-commercial open-source
+            steward per Art. 24 CRA (exempt from conformity assessment, must publish
+            security attestation instead).
     """
+    # Art. 24 steward path — short-circuit before category matching
+    if is_open_source_steward:
+        scope_warning = (
+            "PROVISIONAL — Open-source steward path selected. Art. 24 CRA exempts "
+            "non-commercial open-source stewards from conformity assessment (Arts. 13-16). "
+            "A security attestation must be published instead. Art. 14 incident reporting "
+            "obligations (24h/72h/14d to ENISA) still apply from 11 Sep 2026. Confirm "
+            "steward status with legal counsel — commercialising the software removes "
+            "this exemption."
+        )
+        return ClassificationResult(
+            classification="steward",
+            category_id=category_id,
+            category_name="Open-source software steward (Art. 24)",
+            conformity_assessment=_STEWARD_MODULE.name,
+            conformity_module=_STEWARD_MODULE,
+            compliance_deadline=FULL_COMPLIANCE_DEADLINE,
+            reporting_deadline=REPORTING_DEADLINE,
+            cost_estimate_min=0,
+            cost_estimate_max=2_000,
+            automotive_exception=False,
+            rationale=(
+                "Supplier identified as non-commercial open-source steward. "
+                "Security attestation required instead of conformity assessment per Art. 24."
+            ),
+            scope_warning=scope_warning,
+        )
+
     if category_id:
         category = get_category_by_id(category_id)
         if category:
@@ -272,14 +327,14 @@ def classify_product(
     )
     cost_min, cost_max = COST_RANGES.get(classification, (0, 5_000))
 
-    # Art. 2(5)(a) CRA: products falling under type-approval Regulation (EU) 2019/2144
+    # Art. 2(2)(c) CRA: products falling under type-approval Regulation (EU) 2019/2144
     # (motor vehicles, UN R155 cybersecurity management system) are excluded from CRA scope.
     # The assessment is retained for documentation but must not be treated as a CRA compliance
     # record until legal applicability is confirmed with a notified body.
     scope_warning = (
         "PROVISIONAL — Automotive exception flagged. Products subject to type-approval "
         "under Regulation (EU) 2019/2144 / UN R155 may be excluded from CRA scope per "
-        "Art. 2(5)(a). This assessment is for internal documentation only. Confirm legal "
+        "Art. 2(2)(c). This assessment is for internal documentation only. Confirm legal "
         "applicability with your notified body or legal counsel before relying on it for "
         "CRA compliance purposes."
     ) if automotive_exception else ""

@@ -87,28 +87,44 @@ REQUIREMENT_TO_CONTROLS: Dict[str, List[str]] = {
 }
 
 
-# Master list of 18 CRA requirements
-# annex_part: "Part I" = product properties (risk-based), "Part II" = vuln handling (mandatory), "Documentation" = conformity docs
-# obligation_type: "risk_based" = manufacturer decides relevance via risk assessment, "mandatory" = always required
+# Master list of 18 CRA requirements — sourced from EU 2024/2847
+#
+# annex_part mapping:
+#   "Part I"             = Annex I Part I: product security properties (risk-based, §1-10)
+#   "Part II"            = Annex I Part II: vulnerability handling capabilities (mandatory, §1-8)
+#   "Art. 14 Obligation" = Art. 14 procedural reporting obligations (NOT in Annex I)
+#   "Documentation"      = conformity assessment, technical docs, CE marking
+#
+# Annex I Part I coverage:  §1(no known exploitable vulns)+§10(update capability) → CRA-09
+#                            §2(secure default) → CRA-01, §3(access ctrl) → CRA-02
+#                            §4(confidentiality) → CRA-03, §5(integrity) → CRA-04
+#                            §6(data minimisation) → CRA-05, §7(availability) → CRA-06
+#                            §8(attack surface) → CRA-07, §9(monitoring) → CRA-08
+# Annex I Part II coverage: §1(SBOM+3rd-party) → CRA-10, §2(remediation) → CRA-11
+#                            §3(testing) → CRA-12, §4+§5+§6(disclosure+CVD+contact) → CRA-13
+#                            §7+§8(update distrib+auto patch) → CRA-09 sub-requirements
+#
+# obligation_type: "risk_based" = manufacturer applies based on risk assessment
+#                  "mandatory"  = applies regardless of risk assessment
 CRA_REQUIREMENTS: List[Dict[str, str]] = [
-    {"id": "CRA-01", "name": "Secure by default configuration", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-02", "name": "Access control and authentication", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-03", "name": "Data confidentiality (encryption)", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-04", "name": "Data integrity protection", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-05", "name": "Data minimization", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-06", "name": "Availability and resilience", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-07", "name": "Attack surface limitation", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-08", "name": "Security monitoring and logging", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-09", "name": "Vulnerability remediation capability", "article": "Art. 13", "category": "technical", "annex_part": "Part I", "obligation_type": "risk_based"},
-    {"id": "CRA-10", "name": "Software Bill of Materials (SBOM)", "article": "Art. 13(6)", "category": "process", "annex_part": "Part II", "obligation_type": "mandatory"},
-    {"id": "CRA-11", "name": "Vulnerability handling process", "article": "Art. 14", "category": "process", "annex_part": "Part II", "obligation_type": "mandatory"},
-    {"id": "CRA-12", "name": "Security testing program", "article": "Art. 14", "category": "process", "annex_part": "Part II", "obligation_type": "mandatory"},
-    {"id": "CRA-13", "name": "Public vulnerability disclosure", "article": "Art. 14", "category": "process", "annex_part": "Part II", "obligation_type": "mandatory"},
-    {"id": "CRA-14", "name": "24-hour vulnerability reporting", "article": "Art. 14(4)", "category": "process", "annex_part": "Part II", "obligation_type": "mandatory"},
-    {"id": "CRA-15", "name": "Technical documentation (Annex VII)", "article": "Art. 28", "category": "documentation", "annex_part": "Documentation", "obligation_type": "mandatory"},
-    {"id": "CRA-16", "name": "EU Declaration of Conformity", "article": "Annex V", "category": "documentation", "annex_part": "Documentation", "obligation_type": "mandatory"},
-    {"id": "CRA-17", "name": "User information and instructions", "article": "Art. 13", "category": "documentation", "annex_part": "Documentation", "obligation_type": "mandatory"},
-    {"id": "CRA-18", "name": "CE marking", "article": "Art. 28", "category": "documentation", "annex_part": "Documentation", "obligation_type": "mandatory"},
+    {"id": "CRA-01", "name": "Secure by default configuration",        "article": "Annex I Part I §2",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-02", "name": "Access control and authentication",      "article": "Annex I Part I §3",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-03", "name": "Data confidentiality (encryption)",      "article": "Annex I Part I §4",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-04", "name": "Data integrity protection",              "article": "Annex I Part I §5",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-05", "name": "Data minimization",                      "article": "Annex I Part I §6",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-06", "name": "Availability and resilience",            "article": "Annex I Part I §7",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-07", "name": "Attack surface limitation",              "article": "Annex I Part I §8",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-08", "name": "Security monitoring and logging",        "article": "Annex I Part I §9",       "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-09", "name": "Vulnerability remediation capability",   "article": "Annex I Part I §1 & §10", "category": "technical",      "annex_part": "Part I",             "obligation_type": "risk_based"},
+    {"id": "CRA-10", "name": "Software Bill of Materials (SBOM)",      "article": "Annex I Part II §1",      "category": "process",        "annex_part": "Part II",            "obligation_type": "mandatory"},
+    {"id": "CRA-11", "name": "Vulnerability handling process",         "article": "Annex I Part II §2",      "category": "process",        "annex_part": "Part II",            "obligation_type": "mandatory"},
+    {"id": "CRA-12", "name": "Security testing program",               "article": "Annex I Part II §3",      "category": "process",        "annex_part": "Part II",            "obligation_type": "mandatory"},
+    {"id": "CRA-13", "name": "Public vulnerability disclosure",        "article": "Annex I Part II §4-6",    "category": "process",        "annex_part": "Part II",            "obligation_type": "mandatory"},
+    {"id": "CRA-14", "name": "24-hour vulnerability reporting",        "article": "Art. 14(4-8)",            "category": "process",        "annex_part": "Art. 14 Obligation", "obligation_type": "mandatory"},
+    {"id": "CRA-15", "name": "Technical documentation (Annex VII)",    "article": "Art. 28 / Annex VII",     "category": "documentation",  "annex_part": "Documentation",      "obligation_type": "mandatory"},
+    {"id": "CRA-16", "name": "EU Declaration of Conformity",           "article": "Art. 28 / Annex V",       "category": "documentation",  "annex_part": "Documentation",      "obligation_type": "mandatory"},
+    {"id": "CRA-17", "name": "User information and instructions",      "article": "Art. 13 / Annex II",      "category": "documentation",  "annex_part": "Documentation",      "obligation_type": "mandatory"},
+    {"id": "CRA-18", "name": "CE marking",                             "article": "Art. 28-30",              "category": "documentation",  "annex_part": "Documentation",      "obligation_type": "mandatory"},
 ]
 
 

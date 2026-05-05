@@ -586,41 +586,58 @@ _CRA_08 = RequirementGuidance(
 _CRA_09 = RequirementGuidance(
     requirement_id="CRA-09",
     annex_section="Part I",
-    cra_article="Annex I, Part I, §9",
+    cra_article="Annex I Part I §1 & §10",
     priority="High",
     deadline_note="Support period declaration needed early. Full compliance by 11 Dec 2027.",
     explanation=(
-        "Products must be placed on the market with no known EXPLOITABLE "
-        "vulnerabilities. 'Exploitable' means effectively usable by an "
-        "adversary under practical operational conditions — NOT theoretical "
-        "or lab-only exploits. Assessment is case-by-case considering: "
-        "extent vulnerable code is invoked, access level required, whether "
-        "compensating controls exist. Products must ensure vulnerabilities "
-        "can be addressed through security updates, with authentication, "
-        "rollback protection, and notification of available updates. "
-        "Security updates should be provided SEPARATELY from functionality "
-        "updates where technically feasible. Support period: minimum 5 years."
+        "This requirement covers two complementary obligations from Annex I Part I:\n\n"
+        "§1 — NO KNOWN EXPLOITABLE VULNERABILITIES AT MARKET PLACEMENT: "
+        "Products must be placed on the market without known exploitable "
+        "vulnerabilities. 'Exploitable' means effectively usable by an adversary "
+        "under practical operational conditions — NOT theoretical or lab-only "
+        "exploits. Assessment is case-by-case: extent vulnerable code is invoked, "
+        "access level required, whether compensating controls exist.\n\n"
+        "§10 — SECURITY UPDATE CAPABILITY: Products must ensure vulnerabilities "
+        "can be addressed through security updates, with authenticated delivery, "
+        "rollback protection, and user notification. Security updates should be "
+        "provided SEPARATELY from functionality updates where technically feasible. "
+        "Support period: minimum 5 years.\n\n"
+        "Annex I Part II §7 & §8 also apply: the manufacturer must provide "
+        "mechanisms to securely distribute updates, and once a patch is available, "
+        "disseminate it without delay and automatically where technically feasible."
     ),
     regulatory_text=(
-        "Products shall ensure that vulnerabilities can be addressed "
-        "through security updates, including automatic updates where "
-        "applicable, with notification to users."
+        "§1: Products shall be placed on the market without any known exploitable "
+        "vulnerabilities. §10: Products shall ensure that vulnerabilities can be "
+        "addressed through security updates. Part II §7: Provide for mechanisms to "
+        "securely distribute updates. Part II §8: Ensure security patches are "
+        "disseminated without delay and, where technically feasible, automatically."
     ),
     sub_requirements=[
         SubRequirement(
-            "Security update mechanism exists",
+            "No known exploitable vulnerabilities at market placement (§1)",
+            "Pre-release security assessment report showing no unmitigated exploitable CVEs",
+            "Product placed on market with known, unmitigated exploitable vulnerabilities",
+        ),
+        SubRequirement(
+            "Security update mechanism exists (§10)",
             "Secure update architecture doc (OTA, USB, or workshop-based)",
-            "No update capability at all — device must be replaced",
+            "No update capability at all — device must be replaced when a flaw is found",
         ),
         SubRequirement(
-            "Update authentication (signature verification)",
+            "Update authentication — signature verification (§10)",
             "Doc showing RSA/ECDSA signature verification of update packages",
-            "Updates not signed — malicious firmware can be injected",
+            "Updates not signed — malicious firmware can be injected via update channel",
         ),
         SubRequirement(
-            "Rollback protection",
+            "Rollback protection (§10)",
             "Anti-rollback mechanism doc and test report",
             "No rollback protection — downgrade attacks possible",
+        ),
+        SubRequirement(
+            "Timely and automatic patch dissemination (Part II §7 & §8)",
+            "Patch distribution process doc showing delay targets and automatic delivery where feasible",
+            "Patches released but not actively pushed — users must manually check for updates",
         ),
         SubRequirement(
             "Support period publicly declared",
@@ -629,35 +646,44 @@ _CRA_09 = RequirementGuidance(
         ),
     ],
     evidence_checklist=[
+        "Pre-release security assessment: no unmitigated exploitable CVEs",
         "Secure update mechanism architecture document",
         "Update signature verification (algorithm, key management)",
         "Anti-rollback mechanism description and test report",
+        "Patch distribution process and delay targets",
+        "Automatic update delivery description (or documented justification why not feasible)",
         "Published support period declaration per product",
         "User notification process for available updates",
     ],
     investigation_prompts=[
+        "Was a security assessment done before market placement? Any unmitigated CVEs?",
         "Can the product receive security patches? OTA or manual?",
         "Are updates signed and verified before installation? What algorithm?",
         "What happens if an update fails mid-install? Is there rollback?",
+        "How quickly are patches pushed after release? Is there automatic delivery?",
         "How long will the manufacturer provide security updates?",
         "For automotive: is update OEM-dependent? Document OEM responsibility.",
     ],
     common_gaps=[
-        "No OTA capability — requires physical access to patch",
+        "Product placed on market with known but 'low priority' CVEs in components",
+        "No OTA capability — requires physical access or workshop visit to patch",
         "Updates not signed, allowing malicious firmware injection",
         "No rollback mechanism if an update bricks the device",
+        "Patches available but only via manual download — no push delivery",
         "No published support period commitment",
     ],
     remediation_actions=[
+        RemediationAction("Pre-release security assessment: clear all exploitable CVEs", "Security", 5),
         RemediationAction("Define and publish support periods per product", "Product Management", 2),
         RemediationAction("Document update mechanism with signature verification", "Engineering", 3),
+        RemediationAction("Implement or document automatic patch delivery where feasible", "Engineering", 3),
         RemediationAction("Test and document rollback protection", "QA", 2),
         RemediationAction("Document OEM responsibility for update notification (if applicable)", "Security", 1),
     ],
-    effort_estimate="5-8 days (documentation); support period is a business decision",
+    effort_estimate="8-12 days (documentation + pre-release assessment); support period is a business decision",
     mapped_controls=["Secure Update"],
     mapped_standards=["ISO 21434 §13", "UN R156 (SUMS)", "IEC 62443-4-2 CR 7.5"],
-    tara_link="Damage and threat scenarios related to update mechanisms.",
+    tara_link="Damage and threat scenarios related to update mechanisms and known vulnerability exploitation.",
 )
 
 

@@ -6,7 +6,7 @@
   <div class="px-5 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <span class="text-xs font-medium" style="color: var(--color-text-tertiary);">QuickTARA</span>
-      <span class="text-[10px]" style="color: var(--color-text-tertiary); opacity: 0.5;">v2.1.0</span>
+      <span class="text-[10px]" style="color: var(--color-text-tertiary); opacity: 0.5;">v2.2.0</span>
     </div>
     <div class="text-[10px]" style="color: var(--color-text-tertiary); opacity: 0.5;">
       © {currentYear}

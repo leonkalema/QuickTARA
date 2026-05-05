@@ -1,15 +1,21 @@
 #!/bin/bash
 set -e
 
+# All logic lives inside main() so a truncated `curl | bash` cannot execute
+# partial commands — the trailing `main "$@"` only runs when the entire
+# script has been received and parsed successfully.
+main() {
+
 echo "🚀 QuickTARA Office Deployment Script"
 echo "======================================"
 
 # Configuration
 FRONTEND_PORT=${FRONTEND_PORT:-4173}
 API_PORT=${API_PORT:-8080}
-# TLS is opt-in. Set QUICKTARA_ENABLE_TLS=1 to generate/use a self-signed cert.
-# Default is plain HTTP — no browser cert warnings, works out of the box on a LAN.
-ENABLE_TLS=${QUICKTARA_ENABLE_TLS:-0}
+# TLS is ON by default (CRA Annex I 1(b) — secure by default).
+# Set QUICKTARA_DISABLE_TLS=1 only if you intentionally want plain HTTP
+# (e.g. behind a reverse proxy that terminates TLS for you).
+DISABLE_TLS=${QUICKTARA_DISABLE_TLS:-0}
 SSL_DIR="${SSL_DIR:-./certs}"
 SSL_CERT="${QUICKTARA_SSL_CERTFILE:-$SSL_DIR/quicktara.crt}"
 SSL_KEY="${QUICKTARA_SSL_KEYFILE:-$SSL_DIR/quicktara.key}"
@@ -68,9 +74,9 @@ echo "✅ Admin email: $QUICKTARA_ADMIN_EMAIL"
 echo ""
 
 # ------------------------------------------------------------------
-# TLS certificate — only when QUICKTARA_ENABLE_TLS=1
+# TLS certificate — ON by default; set QUICKTARA_DISABLE_TLS=1 to opt out
 # ------------------------------------------------------------------
-if [ "$ENABLE_TLS" = "1" ]; then
+if [ "$DISABLE_TLS" != "1" ]; then
   if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
     if command -v openssl >/dev/null 2>&1; then
       echo "🔐 Generating self-signed TLS certificate (valid 2 years)..."
@@ -81,13 +87,15 @@ if [ "$ENABLE_TLS" = "1" ]; then
         -addext "subjectAltName=IP:127.0.0.1,IP:${LAN_IP},DNS:localhost,DNS:quicktara.local" \
         2>/dev/null
       echo "   Certificate: $SSL_CERT"
-      echo "   ⚠️  Self-signed — browsers will show a security warning."
-      echo "      Visit https://localhost:${API_PORT} once and accept the warning,"
-      echo "      or install the cert in your OS trust store."
+      echo "   ⚠️  Self-signed — browsers will show a security warning on first visit."
+      echo "      Accept the warning once, or install the cert in your OS trust store,"
+      echo "      or supply your own cert via QUICKTARA_SSL_CERTFILE / QUICKTARA_SSL_KEYFILE."
     else
-      echo "⚠️  openssl not found — TLS disabled. Install openssl for HTTPS support."
-      SSL_CERT=""
-      SSL_KEY=""
+      echo "❌ openssl not found — cannot generate TLS certificate."
+      echo "   Install openssl, OR re-run with QUICKTARA_DISABLE_TLS=1 to explicitly"
+      echo "   opt out of HTTPS (NOT recommended; only safe behind a reverse proxy"
+      echo "   that terminates TLS for you)."
+      exit 1
     fi
   else
     echo "🔐 Using existing TLS certificate: $SSL_CERT"
@@ -98,7 +106,10 @@ if [ "$ENABLE_TLS" = "1" ]; then
     SSL_KEY="$(cd "$(dirname "$SSL_KEY")" && pwd)/$(basename "$SSL_KEY")"
   fi
 else
-  echo "🔓 Running in HTTP mode (default). Set QUICKTARA_ENABLE_TLS=1 before running to enable HTTPS."
+  echo "⚠️  QUICKTARA_DISABLE_TLS=1 — running in plain HTTP mode."
+  echo "   This is only safe behind a reverse proxy that terminates TLS for you,"
+  echo "   or on a fully trusted local development machine. Do NOT use this on a LAN"
+  echo "   or any network where credentials could be observed in transit."
   SSL_CERT=""
   SSL_KEY=""
 fi
@@ -238,3 +249,9 @@ echo ""
 # Start server with LAN access
 # shellcheck disable=SC2086
 python quicktara_web.py --host 0.0.0.0 --port ${API_PORT} ${_SSL_ARGS}
+
+}
+
+# Single trailing call — guarantees the script is fully downloaded before any
+# command runs, so a partial `curl | bash` cannot execute partially.
+main "$@"

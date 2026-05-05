@@ -133,24 +133,29 @@ _CRA_11 = RequirementGuidance(
     ),
     sub_requirements=[
         SubRequirement(
-            "Formal vulnerability handling process documented",
+            "Formal vulnerability handling process documented (§2)",
             "Written procedure: intake → triage → classify → remediate → verify → disclose",
             "Informal or ad-hoc handling with no written procedure",
         ),
         SubRequirement(
-            "CVSS-based severity classification",
+            "CVSS-based severity classification (§2)",
             "Severity matrix: Critical (9.0+), High (7.0-8.9), Medium (4.0-6.9), Low (<4.0)",
             "No severity classification — everything treated the same",
         ),
         SubRequirement(
-            "Remediation SLAs defined per severity",
+            "Remediation SLAs defined per severity (§2)",
             "SLA document: Critical 24h response/72h patch, High 48h/7d, Medium 1w/30d, Low 2w/90d",
             "No defined timeline for fix delivery",
         ),
         SubRequirement(
-            "Vulnerability tracking system operational",
+            "Vulnerability tracking system operational (§2)",
             "Jira/GitLab board with vulnerability tickets, severity labels, SLA tracking",
             "Vulnerabilities tracked in email or not tracked at all",
+        ),
+        SubRequirement(
+            "Public contact address for vulnerability reporting (§6)",
+            "Published security contact — security.txt (RFC 9116), security@ email, or HackerOne programme",
+            "No public way for security researchers to report vulnerabilities to you",
         ),
     ],
     evidence_checklist=[
@@ -158,7 +163,8 @@ _CRA_11 = RequirementGuidance(
         "Severity classification matrix (CVSS-based)",
         "Remediation SLA targets per severity level",
         "Vulnerability tracking system (Jira, GitLab, etc.)",
-        "Public contact point for external reports (e.g. security@ or security.txt)",
+        "Public contact point for external reports — security.txt or equivalent",
+        "Security.txt file on company website (RFC 9116 format)",
         "Sample vulnerability records showing full lifecycle",
     ],
     investigation_prompts=[
@@ -166,11 +172,13 @@ _CRA_11 = RequirementGuidance(
         "Who triages incoming reports? What criteria do they use?",
         "What are your target fix times? Critical: 72h? High: 7 days?",
         "How do external researchers report vulnerabilities to you?",
-        "Do you have a security.txt file on your website?",
+        "Is there a security.txt file on the company website? (RFC 9116 requires: Contact, Expires, Preferred-Languages)",
+        "Is the security contact actively monitored? Who is on-call?",
     ],
     common_gaps=[
         "No written vulnerability handling procedure",
-        "No public contact point for security researchers",
+        "No public contact point for security researchers (Annex I Part II §6 requires this)",
+        "No security.txt file — researchers cannot find where to report",
         "No defined SLA for patch delivery by severity",
         "Triage done ad-hoc with no documented criteria",
         "No tracking system — vulnerabilities lost in email",
@@ -180,11 +188,11 @@ _CRA_11 = RequirementGuidance(
         RemediationAction("Define CVSS-based severity classification matrix", "Security", 1),
         RemediationAction("Establish remediation SLAs per severity level", "Management", 1),
         RemediationAction("Set up vulnerability tracking in Jira/GitLab", "DevOps", 2),
-        RemediationAction("Create public security contact (security.txt)", "Security", 1),
+        RemediationAction("Publish security.txt per RFC 9116 with Contact and Expires", "Security", 1),
     ],
     effort_estimate="10 days. Must be done before Aug 2026 reporting deadline.",
     mapped_controls=[],
-    mapped_standards=["ISO 21434 §8 (Vulnerability management)", "ISO 30111", "ISO 29147"],
+    mapped_standards=["ISO 21434 §8 (Vulnerability management)", "ISO 30111", "ISO 29147", "RFC 9116 (security.txt)"],
     tara_link="TARA damage scenarios define impact levels for vulnerability triage.",
 )
 
@@ -267,7 +275,7 @@ _CRA_12 = RequirementGuidance(
 _CRA_13 = RequirementGuidance(
     requirement_id="CRA-13",
     annex_section="Part II",
-    cra_article="Art. 14(1) / Annex I Part II §4",
+    cra_article="Annex I Part II §4-6",
     priority="High",
     deadline_note="Disclosure policy should be published by Q1 2026.",
     explanation=(
@@ -291,46 +299,47 @@ _CRA_13 = RequirementGuidance(
     ),
     sub_requirements=[
         SubRequirement(
-            "Public vulnerability disclosure policy on company website",
-            "URL to published policy page with reporting instructions",
-            "No public disclosure policy exists",
+            "Security advisory published for every fixed vulnerability (§4)",
+            "Advisory template with: CVE ID, affected versions, CVSS score, impact, fix instructions, timeline",
+            "Vulnerabilities fixed silently in release notes with no advisory",
         ),
         SubRequirement(
-            "Security advisory template and publication channel",
-            "Template with: CVE, affected versions, CVSS, impact, fix, timeline",
-            "Vulnerabilities fixed silently with no advisory",
-        ),
-        SubRequirement(
-            "CVE assignment process",
+            "CVE assignment process (§4)",
             "CNA registration or partnership with MITRE/CERT for CVE assignment",
-            "No CVE IDs assigned to disclosed vulnerabilities",
+            "No CVE IDs assigned — disclosed vulnerabilities have no trackable identifier",
         ),
         SubRequirement(
-            "Coordinated disclosure with reporters",
-            "Process doc: acknowledge within 48h, coordinate timeline, credit researcher",
-            "No coordination with reporter before public disclosure",
+            "Coordinated Vulnerability Disclosure (CVD) policy published (§5)",
+            "Public CVD policy page: URL on company website, covering scope, timelines, and researcher credits",
+            "No public CVD policy — researchers don't know the rules of engagement",
+        ),
+        SubRequirement(
+            "Coordinated disclosure with reporters (§5)",
+            "Process doc: acknowledge within 48h, agree coordinated timeline, credit researcher in advisory",
+            "No coordination with reporter before public disclosure — creates legal risk and researcher hostility",
         ),
     ],
     evidence_checklist=[
-        "Public vulnerability disclosure policy (URL)",
-        "Security advisory template (CVE, CVSS, affected versions, fix)",
-        "CVE assignment process (CNA or partner)",
-        "Publication channel (website, mailing list, security bulletin)",
-        "security.txt file on company website",
+        "Security advisory template (CVE ID, CVSS, affected versions, impact, fix)",
+        "CVE assignment process (CNA registration or MITRE/CERT partnership)",
+        "Public CVD policy page (URL) — covers scope, response timeline, researcher credits",
+        "Publication channel (website security bulletin, mailing list)",
+        "Coordinated disclosure process document",
         "Past advisories as examples (if any)",
     ],
     investigation_prompts=[
-        "Is there a public page describing how to report vulnerabilities?",
-        "Do you publish security advisories when you fix issues?",
-        "Do you request CVE IDs for disclosed vulnerabilities?",
-        "Do you have a security.txt file? (RFC 9116)",
+        "Do you publish security advisories when you fix issues? Where?",
+        "Do you assign CVE IDs to disclosed vulnerabilities?",
+        "Is there a public CVD policy on the company website? Does it cover timelines?",
         "Do you coordinate with the reporter before public disclosure?",
+        "Do you credit security researchers in advisories?",
     ],
     common_gaps=[
-        "No public disclosure policy at all",
+        "No public CVD policy — Annex I Part II §5 explicitly requires this",
         "Vulnerabilities fixed silently in release notes with no advisory",
         "No CVE assignment — vulnerabilities have no trackable identifier",
-        "No coordination with researchers — creates reputation risk",
+        "No coordination with researchers — creates reputation and legal risk",
+        "CVD policy exists but has no SLA commitment (e.g. 90-day disclosure window)",
     ],
     remediation_actions=[
         RemediationAction("Draft and publish vulnerability disclosure policy", "Security + Legal", 3),
@@ -347,7 +356,7 @@ _CRA_13 = RequirementGuidance(
 
 _CRA_14 = RequirementGuidance(
     requirement_id="CRA-14",
-    annex_section="Part II",
+    annex_section="Art. 14 Obligation",
     cra_article="Art. 14(4-8)",
     priority="Critical",
     deadline_note="MANDATORY from 11 Sep 2026. Internal readiness by Mar 2026 recommended.",

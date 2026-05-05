@@ -9,8 +9,8 @@
     # Basic HTTP deploy (recommended for LAN):
     .\office-deploy.ps1
 
-    # With HTTPS (self-signed cert):
-    $env:QUICKTARA_ENABLE_TLS = "1"; .\office-deploy.ps1
+    # With plain HTTP (NOT recommended; only safe behind a TLS-terminating proxy):
+    $env:QUICKTARA_DISABLE_TLS = "1"; .\office-deploy.ps1
 
     # Pre-set admin email to skip the prompt:
     $env:QUICKTARA_ADMIN_EMAIL = "admin@yourcompany.com"; .\office-deploy.ps1
@@ -27,7 +27,10 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 $FrontendPort = if ($env:FRONTEND_PORT) { $env:FRONTEND_PORT } else { "4173" }
 $ApiPort      = if ($env:API_PORT)      { $env:API_PORT }      else { "8080"  }
-$EnableTLS    = ($env:QUICKTARA_ENABLE_TLS -eq "1")
+# TLS is ON by default (CRA Annex I 1(b) -- secure by default).
+# Set QUICKTARA_DISABLE_TLS=1 only if you intentionally want plain HTTP
+# (e.g. behind a reverse proxy that terminates TLS for you).
+$DisableTLS   = ($env:QUICKTARA_DISABLE_TLS -eq "1")
 $SslDir       = if ($env:SSL_DIR) { $env:SSL_DIR } else { ".\certs" }
 $SslCert      = if ($env:QUICKTARA_SSL_CERTFILE) { $env:QUICKTARA_SSL_CERTFILE } else { "$SslDir\quicktara.crt" }
 $SslKey       = if ($env:QUICKTARA_SSL_KEYFILE)  { $env:QUICKTARA_SSL_KEYFILE  } else { "$SslDir\quicktara.key" }
@@ -115,9 +118,9 @@ Write-Host "Admin email: $($env:QUICKTARA_ADMIN_EMAIL)" -ForegroundColor Green
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# TLS certificate (opt-in)
+# TLS certificate -- ON by default; set QUICKTARA_DISABLE_TLS=1 to opt out
 # ---------------------------------------------------------------------------
-if ($EnableTLS) {
+if (-not $DisableTLS) {
     if (-not (Test-Path $SslCert) -or -not (Test-Path $SslKey)) {
         Write-Host "Generating self-signed TLS certificate..." -ForegroundColor Cyan
         New-Item -ItemType Directory -Force -Path $SslDir | Out-Null
@@ -168,7 +171,10 @@ if ($EnableTLS) {
         $SslKey  = (Resolve-Path $SslKey).Path
     }
 } else {
-    Write-Host "Running in HTTP mode (default). Set `$env:QUICKTARA_ENABLE_TLS = '1' to enable HTTPS." -ForegroundColor Yellow
+    Write-Host "WARNING: QUICKTARA_DISABLE_TLS=1 -- running in plain HTTP mode." -ForegroundColor Red
+    Write-Host "  This is only safe behind a reverse proxy that terminates TLS for you," -ForegroundColor Red
+    Write-Host "  or on a fully trusted local development machine. Do NOT use this on a LAN" -ForegroundColor Red
+    Write-Host "  or any network where credentials could be observed in transit." -ForegroundColor Red
     $SslCert = ""; $SslKey = ""
 }
 Write-Host ""
