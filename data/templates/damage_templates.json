@@ -1,0 +1,72 @@
+{
+  "version": "1.0.0",
+  "description": "CIA-based damage scenario templates for automotive assets. Each template generates a damage scenario when the corresponding CIA property is rated Medium or High.",
+  "templates": {
+    "confidentiality": [
+      {
+        "name_template": "Unauthorized disclosure of {asset_name} data",
+        "description_template": "An attacker gains unauthorized access to {asset_name}, leading to exposure of sensitive {asset_type} data within the {product_name} system.",
+        "damage_category": "Privacy",
+        "impact_type": "Direct",
+        "safety_impact": "negligible",
+        "financial_impact": "moderate",
+        "operational_impact": "negligible",
+        "privacy_impact": "severe"
+      },
+      {
+        "name_template": "Extraction of {asset_name} intellectual property",
+        "description_template": "Proprietary {asset_type} information from {asset_name} is exfiltrated, compromising trade secrets or calibration data of the {product_name}.",
+        "damage_category": "Financial",
+        "impact_type": "Direct",
+        "safety_impact": "negligible",
+        "financial_impact": "major",
+        "operational_impact": "moderate",
+        "privacy_impact": "moderate"
+      }
+    ],
+    "integrity": [
+      {
+        "name_template": "Unauthorized modification of {asset_name}",
+        "description_template": "An attacker tampers with {asset_name} ({asset_type}), causing the {product_name} to operate with corrupted data or logic, potentially leading to unsafe behavior.",
+        "damage_category": "Safety",
+        "impact_type": "Direct",
+        "safety_impact": "severe",
+        "financial_impact": "major",
+        "operational_impact": "major",
+        "privacy_impact": "negligible"
+      },
+      {
+        "name_template": "Spoofing of {asset_name} data",
+        "description_template": "False or manipulated data is injected into {asset_name}, causing downstream systems in {product_name} to make decisions based on incorrect information.",
+        "damage_category": "Operational",
+        "impact_type": "Cascading",
+        "safety_impact": "major",
+        "financial_impact": "moderate",
+        "operational_impact": "severe",
+        "privacy_impact": "negligible"
+      }
+    ],
+    "availability": [
+      {
+        "name_template": "Denial of service affecting {asset_name}",
+        "description_template": "An attacker renders {asset_name} ({asset_type}) unavailable, causing loss of function in the {product_name} system.",
+        "damage_category": "Operational",
+        "impact_type": "Direct",
+        "safety_impact": "major",
+        "financial_impact": "moderate",
+        "operational_impact": "severe",
+        "privacy_impact": "negligible"
+      },
+      {
+        "name_template": "Degraded performance of {asset_name}",
+        "description_template": "Partial disruption of {asset_name} causes degraded operation of {product_name}, potentially affecting safety-critical functions.",
+        "damage_category": "Safety",
+        "impact_type": "Cascading",
+        "safety_impact": "major",
+        "financial_impact": "moderate",
+        "operational_impact": "major",
+        "privacy_impact": "negligible"
+      }
+    ]
+  }
+}

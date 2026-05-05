@@ -9,7 +9,8 @@ evidence_uploads/*
 # Project-specific
 # Do NOT track the local data directory or its contents
 # (analysis results, sample datasets, etc.)
-data/
+# Use data/* (not data/) so git descends into the dir and honours the exceptions below.
+data/*
 # Exception: curated data that ships with the app
 !data/threat_catalogs/
 !data/threat_catalogs/**
