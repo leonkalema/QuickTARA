@@ -2,12 +2,11 @@
 SQLAlchemy models definitions
 """
 from sqlalchemy import Column, String, Enum, ForeignKey, Table, DateTime, Integer, Float, Text, Boolean
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import JSON, ARRAY
 from datetime import datetime
 
-Base = declarative_base()
+from db.product_asset_models import Base  # single shared Base for all models
 
 # Association tables for many-to-many relationships
 component_connections = Table(
@@ -173,7 +172,6 @@ class SystemScope(Base):
     
     # Relationships
     components = relationship("Component", back_populates="scope")
-    damage_scenarios = relationship("DamageScenario", back_populates="scope")
 
 
 class RiskFramework(Base):

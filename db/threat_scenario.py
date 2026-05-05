@@ -2,11 +2,10 @@
 Database model for threat scenarios
 """
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from .base import Base
+from db.product_asset_models import Base
 
 
 class ThreatScenario(Base):
@@ -16,7 +15,7 @@ class ThreatScenario(Base):
     # Primary key and identifiers
     id = Column(Integer, primary_key=True, index=True)
     threat_scenario_id = Column(String(50), unique=True, index=True, nullable=False)
-    damage_scenario_id = Column(String(50), index=True, nullable=True)
+    damage_scenario_id = Column(String(50), ForeignKey("damage_scenarios.scenario_id"), index=True, nullable=True)
     
     # Basic information
     name = Column(String(255), nullable=False)
@@ -37,5 +36,12 @@ class ThreatScenario(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
+    # Relationship back to the damage scenario that this threat scenario belongs to
+    damage_scenario = relationship(
+        "DamageScenario",
+        back_populates="threat_scenarios",
+        foreign_keys=[damage_scenario_id]
+    )
+
     def __repr__(self):
         return f"<ThreatScenario(id='{self.threat_scenario_id}', name='{self.name}')>"

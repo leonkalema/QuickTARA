@@ -15,17 +15,17 @@ chain_paths = Table(
     'attack_chain_paths',
     Base.metadata,
     Column('chain_id', String, ForeignKey('attack_chains.chain_id'), primary_key=True),
-    Column('path_id', String, ForeignKey('attack_paths.path_id'), primary_key=True)
+    Column('path_id', String, ForeignKey('legacy_attack_paths.path_id'), primary_key=True)
 )
 
 
 class AttackStep(Base):
-    """SQLAlchemy model for attack steps"""
+    """SQLAlchemy model for attack steps (legacy analysis)"""
     __tablename__ = "attack_steps"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     step_id = Column(String, unique=True, index=True, default=lambda: f"step_{uuid4().hex}")
-    path_id = Column(String, ForeignKey("attack_paths.path_id"), nullable=False)
+    path_id = Column(String, ForeignKey("legacy_attack_paths.path_id"), nullable=False)
     component_id = Column(String, ForeignKey("components.component_id"), nullable=False)
     step_type = Column(String, nullable=False)
     description = Column(Text, nullable=False)
@@ -34,16 +34,23 @@ class AttackStep(Base):
     threat_ids = Column(JSON, nullable=True)
     order = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
-    
+
     # Relationships
     path = relationship("AttackPath", back_populates="steps")
     component = relationship("Component")
 
 
 class AttackPath(Base):
-    """SQLAlchemy model for attack paths"""
-    __tablename__ = "attack_paths"
-    
+    """SQLAlchemy model for attack paths (legacy analysis — table: legacy_attack_paths).
+
+    The active attack-path model used by API routes is AttackPathDB in
+    api/models/simple_attack_path.py which stores its rows in the ``attack_paths``
+    table with attack_path_id as the string PK.  This legacy model is kept for
+    the attack_path_service (graph analysis) and renamed to avoid a table-name
+    collision in the now-unified SQLAlchemy metadata.
+    """
+    __tablename__ = "legacy_attack_paths"
+
     id = Column(Integer, primary_key=True, index=True)
     path_id = Column(String, unique=True, index=True, default=lambda: f"path_{uuid4().hex}")
     analysis_id = Column(String, ForeignKey("analyses.id"), nullable=False)
@@ -59,9 +66,9 @@ class AttackPath(Base):
     risk_score = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
+
     # Relationships
-    analysis = relationship("Analysis", backref="attack_paths")
+    analysis = relationship("Analysis", backref="legacy_attack_paths")
     scope = relationship("SystemScope")
     entry_point = relationship("Component", foreign_keys=[entry_point_id])
     target = relationship("Component", foreign_keys=[target_id])

@@ -282,83 +282,17 @@ class AssetHistory(Base):
     )
 
 
-# Update DamageScenario to work with assets instead of components
-class DamageScenario(Base):
-    """SQLAlchemy model for damage scenarios (updated for asset-based model)"""
-    __tablename__ = "damage_scenarios"
-    
-    # Primary Key
-    scenario_id = Column(String, primary_key=True, index=True)
-    
-    # Basic Information
-    name = Column(String, nullable=False)
-    description = Column(Text, nullable=False)
-    
-    # Relationships
-    scope_id = Column(String, ForeignKey("product_scopes.scope_id"), nullable=False)
-    
-    # Security Properties being violated
-    violated_properties = Column(JSON, nullable=False)
-    
-    # Categorization (new column)
-    category = Column(String, nullable=True)
+# ---------------------------------------------------------------------------
+# Re-exports so that ``from db.product_asset_models import DamageScenario``
+# and ``from db.product_asset_models import ThreatScenario`` continue to work
+# after the stubs above were removed.  The canonical definitions now live in
+# db/damage_scenario.py and db/threat_scenario.py respectively.
+#
+# These imports are placed at the bottom of the module to avoid circular-import
+# issues: product_asset_models defines Base; db.base re-imports Base from here;
+# damage_scenario imports Base from db.base.  By the time Python reaches these
+# lines, Base is already in this module's namespace and the chain resolves.
+# ---------------------------------------------------------------------------
+from db.damage_scenario import DamageScenario  # noqa: E402, F401
+from db.threat_scenario import ThreatScenario  # noqa: E402, F401
 
-    # Legacy columns kept for backward compatibility (NOT NULL constraints in existing DB)
-    damage_category = Column(String, nullable=False)
-    impact_type = Column(String, nullable=False, default="Direct")
-    severity = Column(String, nullable=False, default="Medium")
-    confidentiality_impact = Column(Boolean, default=False)
-    integrity_impact = Column(Boolean, default=False)
-    availability_impact = Column(Boolean, default=False)
-    primary_component_id = Column(String, nullable=True)
-    
-    # SFOP Impact Ratings (severity levels)
-    safety_impact = Column(String, default="negligible")
-    financial_impact = Column(String, default="negligible")
-    operational_impact = Column(String, default="negligible")
-    privacy_impact = Column(String, default="negligible")
-    
-    # Review status: draft (auto-generated) or accepted (reviewed by analyst)
-    status = Column(String, default="accepted", nullable=False)
-    
-    # Versioning & Traceability
-    version = Column(Integer, default=1, nullable=False)
-    is_current = Column(Boolean, default=True, nullable=False)
-    revision_notes = Column(Text, nullable=True)
-    
-    # Timestamps and audit
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationships
-    product_scope = relationship("ProductScope", back_populates="damage_scenarios")
-    threat_scenarios = relationship("ThreatScenario", back_populates="damage_scenario")
-    
-    # Many-to-many relationship with assets
-    affected_assets = relationship(
-        "Asset",
-        secondary=asset_damage_scenario,
-        back_populates="damage_scenarios"
-    )
-
-
-# Compatibility with existing ThreatScenario model
-class ThreatScenario(Base):
-    """SQLAlchemy model for threat scenarios (updated for compatibility)"""
-    __tablename__ = "threat_scenarios"
-    
-    # Primary Key
-    scenario_id = Column(String, primary_key=True, index=True)
-    
-    # Link to damage scenario
-    damage_scenario_id = Column(String, ForeignKey("damage_scenarios.scenario_id"))
-    
-    # Basic Information
-    name = Column(String, nullable=False)
-    description = Column(Text, nullable=False)
-    
-    # Additional fields (preserved from existing model)
-    # Add any fields that are currently in your ThreatScenario model
-    
-    # Relationships
-    damage_scenario = relationship("DamageScenario", back_populates="threat_scenarios")

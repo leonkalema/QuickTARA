@@ -9,30 +9,6 @@ longer than ~10 entries** — if it does, schedule a debt sprint.
 
 ---
 
-## 1. Two `declarative_base()` instances with overlapping table names
-
-**Where:** `db/base.py` declares `Base` for the legacy model family
-(`SystemScope`, `DamageScenario`, `Component`, ...). `db/product_asset_models.py`
-declares its **own** `Base` for the product-asset family (`ProductScope`,
-`Asset`, a *second* `DamageScenario`, ...).
-
-**Symptom:** Both Bases register a table named `damage_scenarios` with
-**different schemas**. Whichever `create_all` runs first wins; the second is
-silently skipped (SQLAlchemy treats `create_all` as idempotent per-table-name).
-Caught by integration tests in `tests/api/conftest.py:52-58`, which now
-explicitly runs the product-asset metadata first as a workaround.
-
-**Impact:** Latent runtime error if a query targets `db.product_asset_models.DamageScenario`
-columns (e.g. `violated_properties`) but the legacy schema is in the DB.
-Schema migrations cannot reason about a single source of truth.
-
-**Remediation:** Unify under a single `Base`. The product-asset family is the
-newer, richer schema and should win. Move legacy models to use it; rename or
-delete the duplicate `DamageScenario` in `db/damage_scenario.py`.
-
-**Effort:** Medium (1–2 days; touches imports across `db/` and several routes).
-
----
 
 ## 2. Alembic migrations do not cover all SQLAlchemy tables
 

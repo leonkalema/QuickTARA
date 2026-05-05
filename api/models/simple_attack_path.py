@@ -5,11 +5,10 @@ from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field
 from sqlalchemy import Column, String, Text, Float, Integer, DateTime, JSON, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import uuid
 
-Base = declarative_base()
+from db.product_asset_models import Base
 
 class FeasibilityRating(BaseModel):
     """Feasibility rating for attack paths"""

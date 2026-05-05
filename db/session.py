@@ -2,7 +2,6 @@
 Database session handling
 """
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pathlib import Path
 import logging
@@ -98,39 +97,28 @@ def get_session_factory(settings=None):
 
 
 def _create_all_tables(engine):
-    """Create all tables across every SQLAlchemy Base in the project (idempotent).
+    """Create all tables in the project (idempotent).
 
-    SQLAlchemy only creates tables whose ORM models have been imported *before*
-    metadata.create_all() is called.  Explicitly import every model module here
-    so nothing is silently skipped.
+    All ORM models now share a single Base (from db.product_asset_models).
+    Import every model module so their classes are registered with Base.metadata
+    before calling create_all once.
     """
-    # --- Simple Attack Path Base (api/models/simple_attack_path.py) ---
-    # Must be created FIRST: risk_treatment has a FK to attack_paths.attack_path_id
-    # which is defined here (not in db/attack_path.py which uses a different schema).
-    from api.models.simple_attack_path import Base as SimpleAttackPathBase  # noqa: F401
-
-    # --- Legacy Base (db/base.py) ---
-    from db.base import Base as LegacyBase  # noqa: F401
-    import db.damage_scenario   # noqa: F401 — registers DamageScenario against LegacyBase
-    import db.threat_scenario   # noqa: F401 — registers ThreatScenario against LegacyBase
-    import db.threat_catalog    # noqa: F401
-    import db.attack_path       # noqa: F401 — registers AttackPath/AttackStep/AttackChain
-    import db.risk_treatment    # noqa: F401 — registers RiskTreatment (FK uses use_alter)
-    import db.audit_models      # noqa: F401 — registers AuditLog/ApprovalWorkflow/Evidence/Snapshot
-
-    # --- User/Auth Base (api/models/user.py) ---
-    from api.models.user import Base as UserBase  # noqa: F401
-
-    # --- Product/CRA Base (db/product_asset_models.py) ---
-    from db.product_asset_models import Base as ProductBase  # noqa: F401
-    import db.cra_models          # noqa: F401
+    # Import all model modules to register them with the shared Base metadata.
+    # Order does not matter — there is now one Base.metadata.
+    from db.product_asset_models import Base  # noqa: F401
+    import db.damage_scenario      # noqa: F401
+    import db.threat_scenario      # noqa: F401
+    import db.threat_catalog       # noqa: F401
+    import db.attack_path          # noqa: F401
+    import db.risk_treatment       # noqa: F401
+    import db.audit_models         # noqa: F401
+    import db.cra_models           # noqa: F401
     import db.cra_incident_models  # noqa: F401
     import db.cra_sbom_models      # noqa: F401
+    from api.models import simple_attack_path  # noqa: F401
+    from api.models import user as user_models  # noqa: F401
 
-    SimpleAttackPathBase.metadata.create_all(bind=engine)
-    LegacyBase.metadata.create_all(bind=engine)
-    UserBase.metadata.create_all(bind=engine)
-    ProductBase.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
 
 
 def init_db(settings=None):

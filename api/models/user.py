@@ -1,11 +1,10 @@
 from sqlalchemy import Column, String, Boolean, DateTime, Enum, ForeignKey, Table
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import enum
 import uuid
 
-Base = declarative_base()
+from db.product_asset_models import Base
 
 class UserRole(str, enum.Enum):
     TOOL_ADMIN = "tool_admin"      # System administration only
