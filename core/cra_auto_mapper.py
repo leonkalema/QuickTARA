@@ -371,7 +371,22 @@ def analyze_gaps(
             
             if any(n in ["process", "declaration", "documentation", "sbom"] for n in needs):
                 gap_severity = "medium"
-                rationale = "Process/documentation gap - requires organizational action"
+                _tab_hint = {
+                    "CRA-10": "SBOM tab",
+                    "CRA-11": "Gap Analysis — add a vulnerability disclosure policy as evidence",
+                    "CRA-12": "Gap Analysis — add security testing records as evidence",
+                    "CRA-13": "Gap Analysis — add CVD policy and contact address as evidence",
+                    "CRA-14": "Incident Reporting tab",
+                    "CRA-15": "Annex VII tab",
+                    "CRA-16": "Conformity tab",
+                    "CRA-17": "Annex II tab",
+                    "CRA-18": "Conformity tab",
+                }.get(req_id, "dedicated tab")
+                rationale = (
+                    f"TARA evidence does not satisfy this requirement. "
+                    f"This is a process obligation — it requires organisational "
+                    f"documentation independent of the TARA. Address it via the {_tab_hint}."
+                )
             else:
                 gap_severity = base_severity
                 rationale = severity_rationale

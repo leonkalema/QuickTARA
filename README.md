@@ -42,7 +42,7 @@ ISO 21434, UN R155, and the CRA specifically.
 Requirements are mapped to exact Annex I section references (§1–§10 Part I, §1–§8 Part II) per Regulation (EU) 2024/2847.
 
 - **Product classification** — wizard determines Default / Class I / Class II / Critical / **Art. 24 open-source steward**; maps to conformity module (A, B+C, H, or security attestation); automotive exclusion per Art. 2(2)(c) flagged as provisional
-- **Auto-mapping** — existing TARA artefacts (assets, damage scenarios, controls) are mapped to the **18 CRA requirements** (9 Part I, 5 Part II, 4 documentation); CRA-09 covers Annex I Part I §1 (no known exploitable vulns) + §10 (update capability) + Part II §7–§8 (update distribution); CRA-13 covers §4–§6 (disclosure, CVD policy, contact address)
+- **Auto-mapping** — existing TARA artefacts (assets, damage scenarios, controls) are mapped to the **9 Annex I Part I technical requirements** (CRA-01 to CRA-09); CRA-09 covers §1 (no known exploitable vulns) + §10 (update capability); CRA-13 covers §4–§6 (disclosure, CVD policy, contact address). Part II process obligations (CRA-10 to CRA-14: SBOM, VDP, update mechanism, disclosure, reporting) are tracked separately and require organisational documentation, not TARA output — each has a dedicated tab
 - **Gap analysis** — per-requirement status, evidence, owner, target date, gap severity, residual risk
 - **Compensating controls** — catalog and workflow for legacy products that cannot be redesigned (Art. 5(3))
 - **SBOM ingestion (Art. 13(6))** — upload CycloneDX 1.4+/1.5 or SPDX 2.3; parse components, versions, `purl`, supplier, licenses, hashes; auto-map to CRA-10
