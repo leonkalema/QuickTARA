@@ -46,20 +46,13 @@ def ephemeral_db(tmp_path: Path):
 
 
 def test_upgrade_head_creates_core_tables(ephemeral_db: Path) -> None:
-    """Verify all core TARA tables exist after a fresh head upgrade.
-
-    Only checks tables that Alembic migrations actually create. Tables such as
-    product_scopes, assets, attack_paths, risk_treatments, and threat_scenarios
-    are ORM-only and created by _create_all_tables() / create_all() at runtime
-    — they are NOT part of the migration chain and are tested separately in the
-    API integration suite.
-    """
+    """Verify all core TARA tables exist after a fresh head upgrade."""
     command.upgrade(_make_config(ephemeral_db), "head")
 
     engine = create_engine(f"sqlite:///{ephemeral_db}")
     tables = set(inspect(engine).get_table_names())
 
-    # Tables guaranteed by Alembic migrations
+    # Tables guaranteed by Alembic migrations (including i9j0k1l2m3n4)
     core = {
         "analyses",
         "components",
@@ -68,6 +61,15 @@ def test_upgrade_head_creates_core_tables(ephemeral_db: Path) -> None:
         "users",
         "organizations",
         "risk_frameworks",
+        "product_scopes",
+        "assets",
+        "risk_treatments",
+        "threat_scenarios",
+        "threat_catalog",
+        "cra_assessments",
+        "permissions",
+        "approval_workflows",
+        "audit_logs",
     }
     missing = core - tables
     assert not missing, f"Missing tables after upgrade head: {missing}"
@@ -183,18 +185,17 @@ def test_upgrade_head_is_idempotent(ephemeral_db: Path) -> None:
 
 
 def test_full_head_to_base_to_head_round_trip(ephemeral_db: Path) -> None:
-    """Upgrade → downgrade to base → upgrade again must be lossless for schema."""
+    """Upgrade → downgrade one step → upgrade again must be lossless for schema."""
     cfg = _make_config(ephemeral_db)
 
     command.upgrade(cfg, "head")
 
-    # Downgrade to a1c2d3e4f5g6 (one step before b2d3e4f5g6h7 which adds
-    # cra_incidents). This exercises real downgrade logic in b2d3e4f5g6h7.
-    command.downgrade(cfg, "a1c2d3e4f5g6")
+    # Downgrade one step (i9j0k1l2m3n4 → h8i9j0k1l2m3): drops the 22 new tables
+    command.downgrade(cfg, "-1")
     engine = create_engine(f"sqlite:///{ephemeral_db}")
     tables_mid = set(inspect(engine).get_table_names())
-    assert "cra_incidents" not in tables_mid  # downgraded away
-    assert "cra_sboms" in tables_mid           # still present
+    assert "product_scopes" not in tables_mid  # downgraded away
+    assert "analyses" in tables_mid             # still present
 
     command.upgrade(cfg, "head")
     engine2 = create_engine(f"sqlite:///{ephemeral_db}")
@@ -207,6 +208,10 @@ def test_full_head_to_base_to_head_round_trip(ephemeral_db: Path) -> None:
         "cra_sboms",
         "cra_sbom_components",
         "cra_incidents",
+        "product_scopes",
+        "assets",
+        "risk_treatments",
+        "threat_scenarios",
     }
     missing = required - tables_final
     assert not missing, f"Tables missing after round-trip: {missing}"

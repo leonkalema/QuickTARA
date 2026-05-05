@@ -10,35 +10,6 @@ longer than ~10 entries** — if it does, schedule a debt sprint.
 ---
 
 
-## 2. Alembic migrations do not cover all SQLAlchemy tables
-
-**Where:** `db/migrations/versions/` contains migrations for SBOM
-(`a1c2d3e4f5g6`), incidents (`b2d3e4f5g6h7`), and a small initial set, but
-**most production tables are created by `Base.metadata.create_all()`** in
-`db/session.py:142-145` as a fallback when migrations don't bring the schema
-to the expected shape.
-
-**Impact:**
-- Fresh dev environments rely on app startup to fill the schema; running
-  alembic alone produces an incomplete DB.
-- Schema changes outside the SBOM/incident path are not version-controlled —
-  rollback is impossible, drift between environments is undetectable.
-- The app cannot run on a strict "migrations only" Postgres deployment.
-
-**Partial progress (May 2026):** CI now round-trips the *existing* migrations
-(`upgrade head → downgrade -1 → upgrade head`) on every push. This gates
-bad migrations but does not increase migration coverage — `create_all` is
-still the primary schema bootstrap path.
-
-**Remediation:** Generate alembic migrations for every existing table (use
-`alembic revision --autogenerate` against a fresh DB built from `create_all`).
-Lock down `init_db` to migrations-only after that. Add a CI check that
-forbids `create_all` outside tests.
-
-**Effort:** Medium (one focused day to autogenerate, review, and verify).
-
----
-
 ## 3. Pydantic v1 ↔ v2 mixed validators
 
 **Where:** `api/models/component.py` (and possibly siblings) still uses the

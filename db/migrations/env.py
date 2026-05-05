@@ -18,11 +18,20 @@ fileConfig(config.config_file_name)
 # Add the parent directory to sys.path so we can import our modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-# Import Base and models to ensure they're all included in the metadata
-from db.base import Base
-# Import all models that extend Base
-from db.base import Component, Analysis, ComponentAnalysis, Report, ReviewDecision, SystemScope, RiskFramework
-from db.base import Vulnerability, VulnerabilityCWEMapping, VulnerabilityCVEMapping, VulnerabilityAssessment, VulnerabilityMitigation
+# Import shared Base and every model module so Base.metadata is fully populated.
+from db.product_asset_models import Base  # noqa: F401 — single shared Base
+import db.base              # noqa: F401 — Component, Analysis, SystemScope, Vulnerability*, ...
+import db.damage_scenario   # noqa: F401
+import db.threat_scenario   # noqa: F401
+import db.threat_catalog    # noqa: F401
+import db.attack_path       # noqa: F401
+import db.risk_treatment    # noqa: F401
+import db.audit_models      # noqa: F401
+import db.cra_models        # noqa: F401
+import db.cra_incident_models  # noqa: F401
+import db.cra_sbom_models   # noqa: F401
+from api.models import simple_attack_path  # noqa: F401
+from api.models import user as _user_models  # noqa: F401
 
 # Update the SQLAlchemy URL based on current database config
 try:
@@ -65,6 +74,23 @@ except Exception:
 
 target_metadata = Base.metadata
 
+# Legacy attack-path tables are managed by create_all only (not Alembic).
+# They exist in the production DB under old names that conflict with the
+# renamed ORM table, so excluding them prevents FK-resolution errors during
+# autogenerate and avoids generating DROP/CREATE statements for live tables.
+_LEGACY_TABLES = {
+    "attack_paths",        # old name in production DB — ORM renamed to legacy_attack_paths
+    "legacy_attack_paths",
+    "attack_steps",
+    "attack_chains",
+    "attack_chain_paths",
+}
+
+def include_object(obj, name, type_, reflected, compare_to):
+    if type_ == "table" and name in _LEGACY_TABLES:
+        return False
+    return True
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -104,15 +130,11 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, 
+            connection=connection,
             target_metadata=target_metadata,
-            # Add 'compare_type' to detect column type changes
             compare_type=True,
-            # Add render_as_batch for better SQLite support with ALTER
             render_as_batch=True,
-            # Skip objects that already exist in the database
-            include_object=lambda obj, name, type_, reflected, compare_to:
-                not reflected or type_ != "table" or obj.name not in connection.engine.table_names()
+            include_object=include_object,
         )
 
         with context.begin_transaction():
