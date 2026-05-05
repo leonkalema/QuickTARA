@@ -49,6 +49,11 @@ to the expected shape.
   rollback is impossible, drift between environments is undetectable.
 - The app cannot run on a strict "migrations only" Postgres deployment.
 
+**Partial progress (May 2026):** CI now round-trips the *existing* migrations
+(`upgrade head → downgrade -1 → upgrade head`) on every push. This gates
+bad migrations but does not increase migration coverage — `create_all` is
+still the primary schema bootstrap path.
+
 **Remediation:** Generate alembic migrations for every existing table (use
 `alembic revision --autogenerate` against a fresh DB built from `create_all`).
 Lock down `init_db` to migrations-only after that. Add a CI check that
@@ -107,6 +112,13 @@ regeneration. Re-bless intentionally with a script.
 human clicks the UI. The CRA module — classification wizard → requirements
 table → Annex VII export — is exactly the multi-step workflow that benefits
 most from E2E.
+
+**Partial progress (May 2026):** Component tests exist for
+`CraClassificationWizard` (15 tests) and `CraAnnexVii` (27 tests) using
+`@testing-library/svelte` with Playwright as the browser runtime. These test
+each component in isolation with the API mocked — they are **not** E2E.
+A real E2E test would spin up the FastAPI backend and drive a real browser
+through the full flow with no mocks.
 
 **Remediation:** Add Playwright with one happy-path test per shipped CRA
 sub-feature (SBOM upload, incident create + submit, Annex VII download).
