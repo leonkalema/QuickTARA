@@ -98,7 +98,12 @@ def get_session_factory(settings=None):
 
 
 def init_db(settings=None):
-    """Initialize database by running Alembic migrations to head."""
+    """Initialize database by running Alembic migrations to head.
+
+    If migrations fail because tables already exist (common when the DB
+    was bootstrapped via create_all before migrations were added), the
+    DB is stamped to *head* so future migrations pick up cleanly.
+    """
     import subprocess
     import sys
     from pathlib import Path
@@ -106,19 +111,27 @@ def init_db(settings=None):
     project_dir = Path(__file__).parent.parent.absolute()
 
     logger.info("Running database migrations...")
-    try:
-        result = subprocess.run(
-            [sys.executable, "-m", "alembic", "upgrade", "head"],
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        cwd=str(project_dir),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        logger.info("Database migrations completed successfully")
+        return
+    if "already exists" in result.stderr:
+        logger.warning("Tables already exist — stamping DB to migration head")
+        stamp = subprocess.run(
+            [sys.executable, "-m", "alembic", "stamp", "head"],
             cwd=str(project_dir),
             capture_output=True,
             text=True,
             check=False,
         )
-        if result.returncode == 0:
-            logger.info("Database migrations completed successfully")
-        else:
-            logger.error(f"Migration failed:\n{result.stderr}")
-            raise RuntimeError(f"alembic upgrade head failed: {result.stderr}")
-    except Exception as e:
-        logger.error(f"Error running migrations: {e}")
-        raise
+        if stamp.returncode == 0:
+            logger.info("Database stamped to head successfully")
+            return
+    logger.error("Migration failed:\n%s", result.stderr)
+    raise RuntimeError(f"alembic upgrade head failed: {result.stderr}")

@@ -1,6 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import { browser } from '$app/environment';
 
+export const prerender = false;
+export const ssr = false;
+
 export async function load({ url }) {
 	// Only redirect on client side to avoid SSR issues
 	if (browser) {

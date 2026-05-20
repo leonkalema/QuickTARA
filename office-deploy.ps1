@@ -4,13 +4,19 @@
     QuickTARA Office Deployment Script for Windows
 .DESCRIPTION
     Deploys QuickTARA on a Windows machine for LAN office use.
+    Single port serves both API and frontend. HTTP by default.
     Run from PowerShell as a normal user (no admin required unless installing Python/Node).
 .EXAMPLE
-    # Basic HTTP deploy (recommended for LAN):
+    # Default HTTP deploy (recommended for localhost / office LAN):
     .\office-deploy.ps1
 
-    # With plain HTTP (NOT recommended; only safe behind a TLS-terminating proxy):
-    $env:QUICKTARA_DISABLE_TLS = "1"; .\office-deploy.ps1
+    # With self-signed TLS for testing:
+    $env:QUICKTARA_ENABLE_TLS = "1"; .\office-deploy.ps1
+
+    # With your own TLS cert:
+    $env:QUICKTARA_SSL_CERTFILE = "C:\certs\my.crt"
+    $env:QUICKTARA_SSL_KEYFILE  = "C:\certs\my.key"
+    .\office-deploy.ps1
 
     # Pre-set admin email to skip the prompt:
     $env:QUICKTARA_ADMIN_EMAIL = "admin@yourcompany.com"; .\office-deploy.ps1
@@ -23,17 +29,16 @@ Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# Configuration
+# Configuration — single port serves both API and frontend
 # ---------------------------------------------------------------------------
-$FrontendPort = if ($env:FRONTEND_PORT) { $env:FRONTEND_PORT } else { "4173" }
-$ApiPort      = if ($env:API_PORT)      { $env:API_PORT }      else { "8080"  }
-# TLS is ON by default (CRA Annex I 1(b) -- secure by default).
-# Set QUICKTARA_DISABLE_TLS=1 only if you intentionally want plain HTTP
-# (e.g. behind a reverse proxy that terminates TLS for you).
-$DisableTLS   = ($env:QUICKTARA_DISABLE_TLS -eq "1")
-$SslDir       = if ($env:SSL_DIR) { $env:SSL_DIR } else { ".\certs" }
-$SslCert      = if ($env:QUICKTARA_SSL_CERTFILE) { $env:QUICKTARA_SSL_CERTFILE } else { "$SslDir\quicktara.crt" }
-$SslKey       = if ($env:QUICKTARA_SSL_KEYFILE)  { $env:QUICKTARA_SSL_KEYFILE  } else { "$SslDir\quicktara.key" }
+$Port = if ($env:QUICKTARA_PORT) { $env:QUICKTARA_PORT } else { "8080" }
+
+# TLS is opt-in. For production, provide your own cert or use a reverse proxy.
+# Set QUICKTARA_ENABLE_TLS=1 to generate a self-signed cert for testing.
+$EnableTLS = ($env:QUICKTARA_ENABLE_TLS -eq "1")
+$SslDir    = if ($env:SSL_DIR) { $env:SSL_DIR } else { ".\certs" }
+$SslCert   = if ($env:QUICKTARA_SSL_CERTFILE) { $env:QUICKTARA_SSL_CERTFILE } else { "" }
+$SslKey    = if ($env:QUICKTARA_SSL_KEYFILE)  { $env:QUICKTARA_SSL_KEYFILE  } else { "" }
 
 # ---------------------------------------------------------------------------
 # Helper: get LAN IPv4 address (first non-loopback, non-APIPA)
@@ -118,64 +123,37 @@ Write-Host "Admin email: $($env:QUICKTARA_ADMIN_EMAIL)" -ForegroundColor Green
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# TLS certificate -- ON by default; set QUICKTARA_DISABLE_TLS=1 to opt out
+# TLS — opt-in; HTTP is the default for local/office use
 # ---------------------------------------------------------------------------
-if (-not $DisableTLS) {
+if ($EnableTLS -and (-not $SslCert) -and (-not $SslKey)) {
+    $SslCert = "$SslDir\quicktara.crt"
+    $SslKey  = "$SslDir\quicktara.key"
     if (-not (Test-Path $SslCert) -or -not (Test-Path $SslKey)) {
-        Write-Host "Generating self-signed TLS certificate..." -ForegroundColor Cyan
         New-Item -ItemType Directory -Force -Path $SslDir | Out-Null
-
         if (Get-Command "openssl" -ErrorAction SilentlyContinue) {
-            # Prefer openssl if available (cross-platform cert format)
-            $AbsSslDir  = (Resolve-Path $SslDir).Path
-            $SslCert    = "$AbsSslDir\quicktara.crt"
-            $SslKey     = "$AbsSslDir\quicktara.key"
+            Write-Host "Generating self-signed TLS certificate..." -ForegroundColor Cyan
+            $AbsSslDir = (Resolve-Path $SslDir).Path
+            $SslCert   = "$AbsSslDir\quicktara.crt"
+            $SslKey    = "$AbsSslDir\quicktara.key"
             openssl req -x509 -newkey rsa:4096 -sha256 -days 730 -nodes `
                 -keyout $SslKey -out $SslCert `
                 -subj "/CN=quicktara.local" `
                 -addext "subjectAltName=IP:127.0.0.1,IP:${LanIP},DNS:localhost,DNS:quicktara.local" 2>$null
-        } else {
-            # Fall back to PowerShell's built-in cert (Windows only, no separate key file)
-            Write-Host "  openssl not found. Using Windows New-SelfSignedCertificate..." -ForegroundColor Yellow
-            $cert = New-SelfSignedCertificate `
-                -DnsName "quicktara.local","localhost" `
-                -CertStoreLocation "Cert:\CurrentUser\My" `
-                -NotAfter (Get-Date).AddYears(2)
-            $AbsSslDir = (Resolve-Path $SslDir).Path
-            $SslCert   = "$AbsSslDir\quicktara.crt"
-            $SslKey    = "$AbsSslDir\quicktara.key"
-            # Export PEM cert
-            $certBytes = $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert)
-            $b64 = [Convert]::ToBase64String($certBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
-            "-----BEGIN CERTIFICATE-----`n$b64`n-----END CERTIFICATE-----" | Set-Content $SslCert
-
-            # Export PEM private key (requires .NET 5+ or Windows 10 1809+)
-            try {
-                $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
-                $keyBytes = $rsa.ExportRSAPrivateKey()
-                $kb64 = [Convert]::ToBase64String($keyBytes, [System.Base64FormattingOptions]::InsertLineBreaks)
-                "-----BEGIN RSA PRIVATE KEY-----`n$kb64`n-----END RSA PRIVATE KEY-----" | Set-Content $SslKey
-            } catch {
-                Write-Host "  WARNING: Could not export private key. TLS disabled." -ForegroundColor Yellow
-                $SslCert = ""; $SslKey = ""
-            }
-        }
-
-        if ($SslCert -and (Test-Path $SslCert)) {
             Write-Host "  Certificate: $SslCert" -ForegroundColor Green
-            Write-Host "  WARNING: Self-signed cert -- browsers will show a security warning." -ForegroundColor Yellow
+            Write-Host "  Self-signed — browsers will show a security warning." -ForegroundColor Yellow
+        } else {
+            Write-Host "  openssl not found — falling back to HTTP." -ForegroundColor Yellow
+            $SslCert = ""; $SslKey = ""
         }
     } else {
         Write-Host "Using existing TLS certificate: $SslCert" -ForegroundColor Green
         $SslCert = (Resolve-Path $SslCert).Path
         $SslKey  = (Resolve-Path $SslKey).Path
     }
-} else {
-    Write-Host "WARNING: QUICKTARA_DISABLE_TLS=1 -- running in plain HTTP mode." -ForegroundColor Red
-    Write-Host "  This is only safe behind a reverse proxy that terminates TLS for you," -ForegroundColor Red
-    Write-Host "  or on a fully trusted local development machine. Do NOT use this on a LAN" -ForegroundColor Red
-    Write-Host "  or any network where credentials could be observed in transit." -ForegroundColor Red
-    $SslCert = ""; $SslKey = ""
+}
+if ($SslCert -and $SslKey -and (Test-Path $SslCert) -and (Test-Path $SslKey)) {
+    $SslCert = (Resolve-Path $SslCert).Path
+    $SslKey  = (Resolve-Path $SslKey).Path
 }
 Write-Host ""
 
@@ -215,43 +193,17 @@ Write-Host "  Python deps installed" -ForegroundColor Green
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# Frontend build + start (background)
+# Build frontend (served by FastAPI on the same port)
 # ---------------------------------------------------------------------------
-$FrontendPID = $null
 if (Test-Path "tara-web") {
-    Write-Host "Building QuickTARA frontend..." -ForegroundColor Cyan
+    Write-Host "Building frontend..." -ForegroundColor Cyan
     Push-Location "tara-web"
-
-    # Write .env.local
-    $ApiScheme = if ($SslCert -and $SslKey) { "https" } else { "http" }
-    @"
-# Auto-generated by QuickTARA installer
-VITE_API_BASE_URL="${ApiScheme}://localhost:${ApiPort}/api"
-"@ | Set-Content ".env.local" -Encoding UTF8
-
-    # Set TLS env for vite preview if needed
-    if ($SslCert -and $SslKey) {
-        $env:QUICKTARA_SSL_CERTFILE = $SslCert
-        $env:QUICKTARA_SSL_KEYFILE  = $SslKey
-    }
-
     npm install --silent
     npm run build --silent
-
-    Write-Host "Starting QuickTARA frontend (background)..." -ForegroundColor Cyan
-    $FrontendLog = "$env:USERPROFILE\quicktara-frontend.log"
-    $FrontendProc = Start-Process -FilePath "npm" `
-        -ArgumentList "run", "preview", "--", "--host", "0.0.0.0", "--port", $FrontendPort `
-        -NoNewWindow -PassThru `
-        -RedirectStandardOutput $FrontendLog `
-        -RedirectStandardError  "$env:USERPROFILE\quicktara-frontend-err.log"
-    $FrontendPID = $FrontendProc.Id
-    Write-Host "  Frontend started (PID $FrontendPID)" -ForegroundColor Green
-    Write-Host "  Log: $FrontendLog" -ForegroundColor Gray
-
     Pop-Location
+    Write-Host "  Frontend built (will be served at /)" -ForegroundColor Green
 } else {
-    Write-Host "WARNING: 'tara-web' directory not found. Skipping frontend." -ForegroundColor Yellow
+    Write-Host "WARNING: tara-web/ not found — API-only mode" -ForegroundColor Yellow
 }
 Write-Host ""
 
@@ -265,7 +217,7 @@ if (-not (Test-Path "quicktara.db")) {
     $env:QUICKTARA_SSL_CERTFILE = ""
     $env:QUICKTARA_SSL_KEYFILE  = ""
     $initProc = Start-Process -FilePath $PythonVenv `
-        -ArgumentList "quicktara_web.py", "--db", ".\quicktara.db", "--host", "127.0.0.1", "--port", $ApiPort `
+        -ArgumentList "quicktara_web.py", "--db", ".\quicktara.db", "--host", "127.0.0.1", "--port", $Port `
         -NoNewWindow -PassThru
     Start-Sleep -Seconds 6
     $initProc | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -286,12 +238,9 @@ if (Test-Path "alembic.ini") {
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# Summary
+# Summary and startup
 # ---------------------------------------------------------------------------
-$Scheme   = if ($SslCert -and $SslKey) { "https" } else { "http" }
-$FeScheme = if ($SslCert -and $SslKey) { "https" } else { "http" }
-
-$env:QUICKTARA_CORS_ORIGINS = "${FeScheme}://localhost:${FrontendPort},${FeScheme}://${LanIP}:${FrontendPort}"
+$Scheme = if ($SslCert -and $SslKey) { "https" } else { "http" }
 
 if (Test-Path "quicktara-initial-credentials.txt") {
     Write-Host "Initial admin credentials written to:" -ForegroundColor Yellow
@@ -302,21 +251,20 @@ if (Test-Path "quicktara-initial-credentials.txt") {
 
 Write-Host "Setup complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "QuickTARA is starting..." -ForegroundColor Cyan
-Write-Host "  Backend (API):"
-Write-Host "    Local : ${Scheme}://localhost:${ApiPort}"
-Write-Host "    LAN   : ${Scheme}://${LanIP}:${ApiPort}"
-if ($FrontendPID) {
-    Write-Host "  Frontend (SvelteKit):"
-    Write-Host "    Local : ${FeScheme}://localhost:${FrontendPort}"
-    Write-Host "    LAN   : ${FeScheme}://${LanIP}:${FrontendPort}"
+Write-Host "QuickTARA is running at:" -ForegroundColor Cyan
+Write-Host "    Local : ${Scheme}://localhost:${Port}"
+Write-Host "    LAN   : ${Scheme}://${LanIP}:${Port}"
+Write-Host ""
+if ($Scheme -eq "http") {
+    Write-Host "  Running over HTTP (fine for localhost and trusted office networks)." -ForegroundColor Gray
+    Write-Host "  For HTTPS, see: https://github.com/leonkalema/QuickTARA#securing-your-deployment" -ForegroundColor Gray
 }
 Write-Host ""
-Write-Host "Press Ctrl+C to stop the backend server." -ForegroundColor Gray
+Write-Host "Press Ctrl+C to stop the server." -ForegroundColor Gray
 Write-Host ""
 
 # ---------------------------------------------------------------------------
-# Start backend (foreground)
+# Start server (foreground — single port serves API + frontend)
 # ---------------------------------------------------------------------------
 $SslArgs = @()
 if ($SslCert -and $SslKey) {
@@ -328,4 +276,4 @@ if ($SslCert -and $SslKey) {
     $env:QUICKTARA_SSL_KEYFILE  = ""
 }
 
-& $PythonVenv quicktara_web.py --host 0.0.0.0 --port $ApiPort @SslArgs
+& $PythonVenv quicktara_web.py --host 0.0.0.0 --port $Port @SslArgs

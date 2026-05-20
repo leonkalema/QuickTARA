@@ -9,16 +9,17 @@ main() {
 echo "🚀 QuickTARA Office Deployment Script"
 echo "======================================"
 
-# Configuration
-FRONTEND_PORT=${FRONTEND_PORT:-4173}
-API_PORT=${API_PORT:-8080}
-# TLS is ON by default (CRA Annex I 1(b) — secure by default).
-# Set QUICKTARA_DISABLE_TLS=1 only if you intentionally want plain HTTP
-# (e.g. behind a reverse proxy that terminates TLS for you).
-DISABLE_TLS=${QUICKTARA_DISABLE_TLS:-0}
+# Configuration — single port serves both API and frontend
+PORT=${QUICKTARA_PORT:-8080}
+
+# TLS is opt-in. For production / internet-facing deployments, provide your own
+# certificate via QUICKTARA_SSL_CERTFILE + QUICKTARA_SSL_KEYFILE, or run behind
+# a reverse proxy (nginx/caddy) that terminates TLS.
+# Set QUICKTARA_ENABLE_TLS=1 to generate a self-signed cert for testing.
+ENABLE_TLS=${QUICKTARA_ENABLE_TLS:-0}
 SSL_DIR="${SSL_DIR:-./certs}"
-SSL_CERT="${QUICKTARA_SSL_CERTFILE:-$SSL_DIR/quicktara.crt}"
-SSL_KEY="${QUICKTARA_SSL_KEYFILE:-$SSL_DIR/quicktara.key}"
+SSL_CERT="${QUICKTARA_SSL_CERTFILE:-}"
+SSL_KEY="${QUICKTARA_SSL_KEYFILE:-}"
 
 # Get local IP for LAN access
 get_lan_ip() {
@@ -35,7 +36,9 @@ LAN_IP="$(get_lan_ip)"
 echo "📍 Detected LAN IP: $LAN_IP"
 echo ""
 
+# ------------------------------------------------------------------
 # Check prerequisites
+# ------------------------------------------------------------------
 echo "🔍 Checking prerequisites..."
 
 if ! command -v python3 &> /dev/null; then
@@ -64,7 +67,6 @@ if [ -z "${QUICKTARA_ADMIN_EMAIL:-}" ]; then
   read -r QUICKTARA_ADMIN_EMAIL </dev/tty
   QUICKTARA_ADMIN_EMAIL="${QUICKTARA_ADMIN_EMAIL:-admin@quicktara.local}"
 fi
-# Basic validation
 case "$QUICKTARA_ADMIN_EMAIL" in
   *@*.*) ;;
   *) echo "❌ '$QUICKTARA_ADMIN_EMAIL' doesn't look like a valid email. Aborting."; exit 1 ;;
@@ -74,9 +76,11 @@ echo "✅ Admin email: $QUICKTARA_ADMIN_EMAIL"
 echo ""
 
 # ------------------------------------------------------------------
-# TLS certificate — ON by default; set QUICKTARA_DISABLE_TLS=1 to opt out
+# TLS — opt-in only; HTTP is the default for local/office use
 # ------------------------------------------------------------------
-if [ "$DISABLE_TLS" != "1" ]; then
+if [ "$ENABLE_TLS" = "1" ] && [ -z "$SSL_CERT" ] && [ -z "$SSL_KEY" ]; then
+  SSL_CERT="$SSL_DIR/quicktara.crt"
+  SSL_KEY="$SSL_DIR/quicktara.key"
   if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
     if command -v openssl >/dev/null 2>&1; then
       echo "🔐 Generating self-signed TLS certificate (valid 2 years)..."
@@ -88,34 +92,26 @@ if [ "$DISABLE_TLS" != "1" ]; then
         2>/dev/null
       echo "   Certificate: $SSL_CERT"
       echo "   ⚠️  Self-signed — browsers will show a security warning on first visit."
-      echo "      Accept the warning once, or install the cert in your OS trust store,"
-      echo "      or supply your own cert via QUICKTARA_SSL_CERTFILE / QUICKTARA_SSL_KEYFILE."
     else
-      echo "❌ openssl not found — cannot generate TLS certificate."
-      echo "   Install openssl, OR re-run with QUICKTARA_DISABLE_TLS=1 to explicitly"
-      echo "   opt out of HTTPS (NOT recommended; only safe behind a reverse proxy"
-      echo "   that terminates TLS for you)."
-      exit 1
+      echo "⚠️  openssl not found — falling back to HTTP."
+      SSL_CERT=""
+      SSL_KEY=""
     fi
   else
     echo "🔐 Using existing TLS certificate: $SSL_CERT"
   fi
-  # Resolve to absolute paths now — the script changes directory later and relative paths break
-  if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
-    SSL_CERT="$(cd "$(dirname "$SSL_CERT")" && pwd)/$(basename "$SSL_CERT")"
-    SSL_KEY="$(cd "$(dirname "$SSL_KEY")" && pwd)/$(basename "$SSL_KEY")"
-  fi
-else
-  echo "⚠️  QUICKTARA_DISABLE_TLS=1 — running in plain HTTP mode."
-  echo "   This is only safe behind a reverse proxy that terminates TLS for you,"
-  echo "   or on a fully trusted local development machine. Do NOT use this on a LAN"
-  echo "   or any network where credentials could be observed in transit."
-  SSL_CERT=""
-  SSL_KEY=""
+fi
+
+# Resolve cert paths to absolute (the script cds later)
+if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
+  SSL_CERT="$(cd "$(dirname "$SSL_CERT")" && pwd)/$(basename "$SSL_CERT")"
+  SSL_KEY="$(cd "$(dirname "$SSL_KEY")" && pwd)/$(basename "$SSL_KEY")"
 fi
 echo ""
 
+# ------------------------------------------------------------------
 # Clone or update repository
+# ------------------------------------------------------------------
 if [ -d "QuickTARA" ]; then
     echo "📁 Updating existing QuickTARA..."
     cd QuickTARA
@@ -124,104 +120,81 @@ else
     echo "📥 Cloning QuickTARA..."
     git clone --depth=1 https://github.com/leonkalema/QuickTARA.git
     cd QuickTARA
-    # Remove dev-only files not needed at runtime
     rm -rf tests/ docs/ TECH_DEBT.md CONTRIBUTING.md .github/
 fi
 
 echo ""
 
-# Create virtual environment
+# ------------------------------------------------------------------
+# Python environment
+# ------------------------------------------------------------------
 echo "🐍 Setting up Python environment..."
 if [ ! -d ".venv" ]; then
     python3 -m venv .venv
 fi
-
-# Activate virtual environment
 source .venv/bin/activate
-
-# Install Python dependencies
 echo "📦 Installing Python dependencies..."
-pip install -r requirements.txt
+pip install -r requirements.txt --quiet
 
 echo ""
 
-# Build and start frontend
-echo "🧩 Building QuickTARA frontend..."
+# ------------------------------------------------------------------
+# Build frontend (served by FastAPI on the same port)
+# ------------------------------------------------------------------
+echo "🧩 Building frontend..."
 if [ -d "tara-web" ]; then
   cd tara-web
-  
-  # Create .env.local file for frontend API connection (secure, not committed to git)
-  echo "⚙️  Configuring frontend environment..."
-  _API_SCHEME="http"
-  if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then _API_SCHEME="https"; fi
-  cat > .env.local << EOF
-# Auto-generated by QuickTARA installer
-VITE_API_BASE_URL="${_API_SCHEME}://localhost:${API_PORT}/api"
-EOF
-
-  # Export TLS paths so vite preview can pick them up (already absolute, set before any cd)
-  if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
-    export QUICKTARA_SSL_CERTFILE="$SSL_CERT"
-    export QUICKTARA_SSL_KEYFILE="$SSL_KEY"
-  fi
-
   npm install --silent
   npm run build --silent
-  echo "🌐 Starting QuickTARA frontend..."
-  nohup npm run preview -- --host 0.0.0.0 --port "${FRONTEND_PORT}" > "$HOME/quicktara-frontend.log" 2>&1 &
-  FRONTEND_PID=$!
   cd ..
-  echo "Frontend started with PID: $FRONTEND_PID"
+  echo "✅ Frontend built (will be served at /)"
 else
-  echo "⚠️ 'tara-web' directory not found. Skipping frontend."
-  FRONTEND_PID=""
+  echo "⚠️  tara-web/ not found — API-only mode"
 fi
 
 echo ""
 
-# Create default SQLite database (no config needed)
+# ------------------------------------------------------------------
+# Database setup
+# ------------------------------------------------------------------
 echo "🗄️  Setting up database..."
 if [ ! -f "quicktara.db" ]; then
     echo "Creating new database..."
-    QUICKTARA_SSL_CERTFILE="" QUICKTARA_SSL_KEYFILE="" python quicktara_web.py --db ./quicktara.db --host 127.0.0.1 --port ${API_PORT} &
+    QUICKTARA_SSL_CERTFILE="" QUICKTARA_SSL_KEYFILE="" \
+      python quicktara_web.py --db ./quicktara.db --host 127.0.0.1 --port "${PORT}" &
     SERVER_PID=$!
     sleep 5
     kill $SERVER_PID 2>/dev/null || true
     echo "✅ Database initialized"
 else
-    echo "✅ Existing database found - preserving data"
+    echo "✅ Existing database found — preserving data"
 fi
 
-# Apply any new schema migrations (safe to re-run; alembic is idempotent)
 if [ -f "alembic.ini" ]; then
     echo "🛠️  Applying database migrations..."
-    if alembic upgrade head; then
+    if python -m alembic upgrade head 2>/dev/null; then
         echo "✅ Migrations up to date"
     else
-        echo "⚠️  alembic upgrade head failed — check the log above. Server will still start."
+        echo "⚠️  Migration failed — tables may already exist. Stamping to head..."
+        python -m alembic stamp head 2>/dev/null || true
     fi
 fi
 
 echo ""
+
+# ------------------------------------------------------------------
+# Prepare startup
+# ------------------------------------------------------------------
 _SCHEME="http"
 _SSL_ARGS=""
 if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then
   _SCHEME="https"
   _SSL_ARGS="--ssl-certfile $SSL_CERT --ssl-keyfile $SSL_KEY"
 else
-  # Explicitly clear TLS env vars so stale values from a previous HTTPS install
-  # don't cause quicktara_web.py to silently re-enable TLS (its argparse defaults
-  # to QUICKTARA_SSL_CERTFILE / QUICKTARA_SSL_KEYFILE if set in the environment).
-  unset QUICKTARA_SSL_CERTFILE QUICKTARA_SSL_KEYFILE
+  unset QUICKTARA_SSL_CERTFILE QUICKTARA_SSL_KEYFILE 2>/dev/null || true
 fi
 
-# Export CORS origins so the backend allows the frontend origin
-_FE_SCHEME="http"
-if [ -n "$SSL_CERT" ] && [ -n "$SSL_KEY" ]; then _FE_SCHEME="https"; fi
-export QUICKTARA_CORS_ORIGINS="${_FE_SCHEME}://localhost:${FRONTEND_PORT},${_FE_SCHEME}://${LAN_IP}:${FRONTEND_PORT}"
-
 if [ -f "./quicktara-initial-credentials.txt" ]; then
-  echo ""
   echo "🔐 Initial admin credentials written to:"
   echo "   $(pwd)/quicktara-initial-credentials.txt (mode 0600)"
   echo "   ⚠️  Sign in once, change the password, then DELETE this file."
@@ -230,25 +203,20 @@ fi
 
 echo "🎉 Setup complete!"
 echo ""
-echo "🚀 QuickTARA is starting..."
-echo "   🖥️  Backend (API):"
-echo "      • Local:  ${_SCHEME}://localhost:${API_PORT}"
-echo "      • LAN:    ${_SCHEME}://${LAN_IP}:${API_PORT}"
-if [ -n "${FRONTEND_PID:-}" ]; then
-  echo "   🌐 Frontend (SvelteKit preview):"
-  echo "      • Local:  ${_FE_SCHEME}://localhost:${FRONTEND_PORT}"
-  echo "      • LAN:    ${_FE_SCHEME}://${LAN_IP}:${FRONTEND_PORT}"
-  echo "      (log: $HOME/quicktara-frontend.log)"
-else
-  echo "   🌐 Frontend: Not started (tara-web missing)"
+echo "🚀 QuickTARA is running at:"
+echo "   • Local:  ${_SCHEME}://localhost:${PORT}"
+echo "   • LAN:    ${_SCHEME}://${LAN_IP}:${PORT}"
+echo ""
+if [ "$_SCHEME" = "http" ]; then
+  echo "   ℹ️  Running over HTTP (fine for localhost and trusted office networks)."
+  echo "   For HTTPS, see: https://github.com/leonkalema/QuickTARA#securing-your-deployment"
 fi
 echo ""
-echo "Press Ctrl+C to stop the backend server."
+echo "Press Ctrl+C to stop the server."
 echo ""
 
-# Start server with LAN access
 # shellcheck disable=SC2086
-python quicktara_web.py --host 0.0.0.0 --port ${API_PORT} ${_SSL_ARGS}
+python quicktara_web.py --host 0.0.0.0 --port "${PORT}" ${_SSL_ARGS}
 
 }
 

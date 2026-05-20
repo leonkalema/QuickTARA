@@ -65,10 +65,9 @@ Requirements are mapped to exact Annex I section references (§1–§10 Part I, 
 
 ## Install
 
-### Recommended (review before running)
+### Quick start (review before running)
 
-Download the installer, inspect it, then run it. This is the right pattern
-for any install script you don't already trust.
+Download the installer, inspect it, then run it:
 
 **macOS / Linux:**
 ```bash
@@ -84,64 +83,29 @@ Get-Content office-deploy.ps1 | more   # review what it does
 .\office-deploy.ps1
 ```
 
-### One-liner (convenience only)
-
-For demo / throwaway environments. Equivalent trust model to `git clone &&
-./install.sh` — you are running unreviewed code from this repository:
-
-```bash
-# macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-deploy.sh | bash
-```
-
-```powershell
-# Windows
-irm https://raw.githubusercontent.com/leonkalema/QuickTARA/main/office-deploy.ps1 | iex
-```
-
-The script body is wrapped in a `main` function with a single trailing call,
-so a partially-downloaded script cannot execute partially.
-
 > **Windows prerequisites:** [Python 3](https://www.python.org/downloads/) (check *Add Python to PATH*), [Node.js LTS](https://nodejs.org/), [Git for Windows](https://git-scm.com/download/win).
 
 ### What the installer does
 
-Clones the repo, builds the SvelteKit frontend, starts the FastAPI backend,
-runs database migrations, creates an initial System Administrator with a
-randomly generated 144-bit password, and writes the credentials to
-`quicktara-initial-credentials.txt` (mode `0600`).
+1. Clones the repo, installs Python/Node dependencies
+2. Builds the SvelteKit frontend into static files
+3. Starts a single FastAPI server on **http://localhost:8080** (API + frontend on the same port)
+4. Creates a SQLite database and initial admin account with a randomly generated password
+5. Writes credentials to `quicktara-initial-credentials.txt` (mode `0600`)
 
-**HTTPS is on by default.** The installer generates a self-signed TLS
-certificate (valid 2 years) using `openssl` and serves both the frontend
-and backend over HTTPS. Browsers will show a one-time warning for the
-self-signed cert; accept it, or import `./certs/quicktara.crt` into your
-OS trust store, or supply your own cert via `QUICKTARA_SSL_CERTFILE` /
-`QUICKTARA_SSL_KEYFILE` before running.
+**First login:** open the credentials file, sign in, change your password
+under *Settings → My Account*, then delete the file.
 
-**Default URLs (HTTPS):**
+### Default URL
 
-- Frontend: `https://localhost:4173`
-- Backend: `https://localhost:8080`
-- LAN access: `https://<your-ip>:4173` and `https://<your-ip>:8080`
+Everything runs at **http://localhost:8080** (or `http://YOUR-IP:8080` on the LAN). One port, one URL — no cert warnings, no cross-origin issues.
 
-### Opting out of TLS (NOT recommended)
+### Securing your deployment
 
-Only safe behind a reverse proxy that terminates TLS for you, or on a
-fully trusted local development machine. **Never use this on a LAN or any
-network where credentials could be observed in transit.**
-
-```bash
-# macOS/Linux
-QUICKTARA_DISABLE_TLS=1 bash office-deploy.sh
-
-# Windows PowerShell
-$env:QUICKTARA_DISABLE_TLS = "1"; .\office-deploy.ps1
-```
-
-**First login:** open `quicktara-initial-credentials.txt`, sign in, change
-the password immediately under *Settings → My Account*, then delete the
-file. The bootstrap account exists only to let you create your own admin —
-it is never reused or regenerated.
+HTTP is fine for localhost and trusted office networks. For production or
+internet-facing deployments, see the
+[Deployment Guide](README-DEPLOYMENT.md#scenario-3-production--intranet-server)
+for TLS options (reverse proxy, own certificate, or self-signed for testing).
 
 ## Production configuration
 
@@ -149,13 +113,12 @@ it is never reused or regenerated.
 |---|---|
 | `QUICKTARA_SSL_CERTFILE` | Path to TLS certificate (PEM). Enables HTTPS when paired with key. |
 | `QUICKTARA_SSL_KEYFILE` | Path to TLS private key (PEM). |
-| `QUICKTARA_JWT_SECRET` | JWT signing secret. Auto-generated to `.quicktara_jwt_secret` (mode `0600`) if unset. |
-| `QUICKTARA_CORS_ORIGINS` | Comma-separated allow-list of additional frontend origins. |
-| `QUICKTARA_DB_*` | Override the default SQLite database to use MySQL or PostgreSQL. |
+| `QUICKTARA_ENABLE_TLS` | Set to `1` to generate a self-signed cert (testing only). |
+| `QUICKTARA_JWT_SECRET` | JWT signing secret. Auto-generated if unset. |
+| `QUICKTARA_DB_*` | Override default SQLite with MySQL or PostgreSQL. |
 
-Security defaults: CORS is locked to known origins, security headers are
-set, the login endpoint is rate-limited to 10/min per IP, and sessions use
-JWT with refresh tokens and bcrypt password hashing.
+Security defaults: security headers are set, login is rate-limited to
+10/min per IP, sessions use JWT with refresh tokens and bcrypt password hashing.
 
 ## Requirements
 

@@ -8,8 +8,22 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 import logging
 from pathlib import Path
+
+
+class SPAStaticFiles(StaticFiles):
+    """StaticFiles subclass that falls back to index.html for SPA routing."""
+
+    async def get_response(self, path: str, scope):
+        from starlette.exceptions import HTTPException as StarletteHTTPException
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code == 404:
+                return await super().get_response("index.html", scope)
+            raise
 
 
 def _local_lan_ips() -> list[str]:
@@ -209,15 +223,15 @@ def create_app(settings=None):
     app.include_router(organizations.router, tags=["organizations"])
     app.include_router(organization_members.router, tags=["organization-members"])
     
-    # Serve static files (for production when frontend is built)
-    frontend_dir = Path(__file__).parent.parent / "frontend" / "dist"
-    if frontend_dir.exists():
-        app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
-    
     @app.get("/api/health")
     async def health_check():
         """Simple health check endpoint"""
         return {"status": "ok"}
+    
+    # Serve built SvelteKit frontend as static files (must be last — catch-all)
+    frontend_dir = Path(__file__).parent.parent / "tara-web" / "build"
+    if frontend_dir.exists():
+        app.mount("/", SPAStaticFiles(directory=str(frontend_dir), html=True), name="frontend")
     
     @app.on_event("startup")
     async def seed_threat_catalog_on_startup():

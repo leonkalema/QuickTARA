@@ -48,6 +48,7 @@
 	},
 	"dependencies": {
 		"@lucide/svelte": "^0.542.0",
+		"@sveltejs/adapter-static": "^3.0.10",
 		"puppeteer": "^24.19.0"
 	}
 }
