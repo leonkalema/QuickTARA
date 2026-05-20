@@ -27,6 +27,7 @@ depends_on = None
 
 
 ADMIN_EMAIL = os.environ.get('QUICKTARA_ADMIN_EMAIL', 'admin@quicktara.local')
+ORG_NAME = os.environ.get('QUICKTARA_ORG_NAME', 'Default Organization')
 CREDENTIALS_FILENAME = 'quicktara-initial-credentials.txt'
 
 
@@ -158,9 +159,12 @@ def upgrade():
     hashed_password = _hash_password(password)
     now = datetime.utcnow()
 
+    admin_id = str(uuid.uuid4())
+    org_id = str(uuid.uuid4())
+
     op.bulk_insert(users_table, [
         {
-            'user_id': str(uuid.uuid4()),
+            'user_id': admin_id,
             'email': ADMIN_EMAIL,
             'username': 'admin',
             'first_name': 'System',
@@ -176,6 +180,34 @@ def upgrade():
         }
     ])
 
+    # Create default organization and assign admin to it
+    orgs_table = table('organizations',
+        column('organization_id', String),
+        column('name', String),
+        column('is_active', Boolean),
+        column('created_at', DateTime),
+        column('updated_at', DateTime),
+    )
+    user_orgs_table = table('user_organizations',
+        column('user_id', String),
+        column('organization_id', String),
+        column('role', String),
+        column('created_at', DateTime),
+    )
+    op.bulk_insert(orgs_table, [{
+        'organization_id': org_id,
+        'name': ORG_NAME,
+        'is_active': True,
+        'created_at': now,
+        'updated_at': now,
+    }])
+    op.bulk_insert(user_orgs_table, [{
+        'user_id': admin_id,
+        'organization_id': org_id,
+        'role': 'tool_admin',
+        'created_at': now,
+    }])
+
     creds_path = _write_credentials_file(ADMIN_EMAIL, password)
 
     banner = "=" * 60
@@ -183,6 +215,8 @@ def upgrade():
     print("INITIAL ADMIN USER CREATED")
     print(banner)
     print(f"Email:        {ADMIN_EMAIL}")
+    print(f"Organization: {ORG_NAME}")
+    print(f"Role:         tool_admin")
     print(f"Credentials:  {creds_path}")
     print("Permissions:  0600 (owner read/write only)")
     print("")
@@ -192,4 +226,6 @@ def upgrade():
 
 
 def downgrade():
+    op.execute(sa.text("DELETE FROM user_organizations WHERE user_id IN (SELECT user_id FROM users WHERE email = :email)").bindparams(email=ADMIN_EMAIL))
     op.execute(sa.text("DELETE FROM users WHERE email = :email").bindparams(email=ADMIN_EMAIL))
+    op.execute(sa.text("DELETE FROM organizations WHERE name = :name AND organization_id NOT IN (SELECT DISTINCT organization_id FROM user_organizations)").bindparams(name=ORG_NAME))

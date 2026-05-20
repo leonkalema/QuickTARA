@@ -73,6 +73,14 @@ case "$QUICKTARA_ADMIN_EMAIL" in
 esac
 export QUICKTARA_ADMIN_EMAIL
 echo "✅ Admin email: $QUICKTARA_ADMIN_EMAIL"
+
+if [ -z "${QUICKTARA_ORG_NAME:-}" ]; then
+  printf "🏢 Enter organization name [Default Organization]: "
+  read -r QUICKTARA_ORG_NAME </dev/tty
+  QUICKTARA_ORG_NAME="${QUICKTARA_ORG_NAME:-Default Organization}"
+fi
+export QUICKTARA_ORG_NAME
+echo "✅ Organization: $QUICKTARA_ORG_NAME"
 echo ""
 
 # ------------------------------------------------------------------

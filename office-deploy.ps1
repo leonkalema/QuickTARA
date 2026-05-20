@@ -120,6 +120,13 @@ if ($env:QUICKTARA_ADMIN_EMAIL -notmatch "^[^@]+@[^@]+\.[^@]+$") {
     exit 1
 }
 Write-Host "Admin email: $($env:QUICKTARA_ADMIN_EMAIL)" -ForegroundColor Green
+
+if (-not $env:QUICKTARA_ORG_NAME) {
+    $orgInput = Read-Host "Enter organization name [Default Organization]"
+    if ([string]::IsNullOrWhiteSpace($orgInput)) { $orgInput = "Default Organization" }
+    $env:QUICKTARA_ORG_NAME = $orgInput
+}
+Write-Host "Organization: $($env:QUICKTARA_ORG_NAME)" -ForegroundColor Green
 Write-Host ""
 
 # ---------------------------------------------------------------------------
