@@ -192,6 +192,22 @@ def get_asset_damage_links(scope_id: str, db: Session) -> List[Dict[str, Any]]:
     return links
 
 
+def has_cra_assessment(scope_id: str, db: Session) -> bool:
+    """Whether a CRA assessment exists for this product/scope.
+
+    CRA "in scope" is represented in the DB by the existence of a CraAssessment
+    row keyed on the product id (== scope id).
+    """
+    from db.cra_models import CraAssessment
+
+    return (
+        db.query(CraAssessment)
+        .filter(CraAssessment.product_id == scope_id)
+        .first()
+        is not None
+    )
+
+
 def get_threat_damage_links(scope_id: str, db: Session) -> List[Dict[str, Any]]:
     """Get links between threats and damage scenarios within the scope."""
     result = db.execute(text(

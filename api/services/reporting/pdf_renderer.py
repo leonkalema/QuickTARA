@@ -3,13 +3,34 @@ Clean PDF renderer for TARA reports.
 """
 from datetime import datetime
 from io import BytesIO
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 import os
+
+from api.models.report_config import ReportConfig
+
+
+def build_document_control_lines(config: Optional[ReportConfig]) -> List[str]:
+    """Build the document-control label lines from a report config.
+
+    Pure (no reportlab) so it is straightforward to unit test. Only includes
+    metadata fields that are present, but always includes the classification.
+    """
+    if config is None:
+        return []
+    lines: List[str] = [f"Classification: {config.classification.value.title()}"]
+    meta = config.metadata
+    if meta.author:
+        lines.append(f"Author: {meta.author}")
+    if meta.approver:
+        lines.append(f"Approver: {meta.approver}")
+    if meta.reference:
+        lines.append(f"Reference: {meta.reference}")
+    return lines
 
 
 def create_styles():
@@ -45,7 +66,11 @@ def create_styles():
     return styles
 
 
-def build_document_header(scope_info: Dict[str, Any], styles) -> List:
+def build_document_header(
+    scope_info: Dict[str, Any],
+    styles,
+    config: Optional[ReportConfig] = None,
+) -> List:
     """Build the document header with product information."""
     story = []
     
@@ -69,7 +94,12 @@ def build_document_header(scope_info: Dict[str, Any], styles) -> List:
     
     if scope_info.get('description'):
         story.append(Paragraph(f"<b>Description:</b> {scope_info['description']}", styles['ProductInfo']))
-    
+
+    # Document-control block (classification, author, approver, reference)
+    for line in build_document_control_lines(config):
+        label, _, value = line.partition(": ")
+        story.append(Paragraph(f"<b>{label}:</b> {value}", styles['ProductInfo']))
+
     story.append(Spacer(1, 20))
     
     # Compliance statement
@@ -84,7 +114,8 @@ def build_document_header(scope_info: Dict[str, Any], styles) -> List:
 
 def render_pdf(
     scope_info: Dict[str, Any],
-    sections: List[List]  # List of section story elements
+    sections: List[List],  # List of section story elements
+    config: Optional[ReportConfig] = None,
 ) -> bytes:
     """Render the complete PDF report."""
     
@@ -102,7 +133,7 @@ def render_pdf(
     story = []
     
     # Document header
-    story.extend(build_document_header(scope_info, styles))
+    story.extend(build_document_header(scope_info, styles, config))
     
     # Add all sections
     for section in sections:

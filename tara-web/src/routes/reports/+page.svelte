@@ -8,6 +8,16 @@
   import type { ThreatScenario } from '$lib/types/threatScenario';
   import type { AttackPath } from '$lib/types/attackPath';
   import type { RiskTreatmentData } from '$lib/api/riskTreatmentApi';
+  import ReportConfigPanel from '../../features/reports/components/ReportConfigPanel.svelte';
+  import {
+    createTemplate,
+    defaultConfigForAudience,
+    deleteTemplate,
+    generatePdf,
+    listTemplates,
+    type ReportConfig,
+    type TemplateSummary
+  } from '$lib/api/reportConfig';
 
   let loading = false;
   let generating = false;
@@ -74,6 +84,69 @@
     { value: 'text',  label: 'Plain text',        mime: 'text/plain',             ext: 'txt'  },
   ];
 
+  // Report configuration + templates
+  let reportConfig: ReportConfig = defaultConfigForAudience('internal');
+  let templates: TemplateSummary[] = [];
+  let selectedTemplateId = '';
+  let savingTemplate = false;
+  let newTemplateName = '';
+
+  async function loadTemplates(): Promise<void> {
+    try {
+      templates = await listTemplates();
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    }
+  }
+
+  loadTemplates();
+
+  function applyTemplate(): void {
+    const tpl = templates.find(t => t.template_id === selectedTemplateId);
+    if (!tpl) return;
+    // Built-in presets map to an audience; org templates resolve server-side
+    // at generation, but for the panel we seed from the audience default.
+    if (tpl.is_builtin) {
+      const audience = tpl.name.startsWith('External')
+        ? 'external'
+        : tpl.name.startsWith('Auditor')
+          ? 'auditor'
+          : 'internal';
+      reportConfig = defaultConfigForAudience(audience);
+    }
+  }
+
+  async function saveTemplate(): Promise<void> {
+    if (!newTemplateName.trim()) {
+      notifications.show('Enter a template name', 'error');
+      return;
+    }
+    savingTemplate = true;
+    try {
+      await createTemplate(newTemplateName.trim(), reportConfig);
+      newTemplateName = '';
+      await loadTemplates();
+      notifications.show('Template saved', 'success');
+    } catch (error: any) {
+      notifications.show(error.message ?? 'Failed to save template', 'error');
+    } finally {
+      savingTemplate = false;
+    }
+  }
+
+  async function removeTemplate(): Promise<void> {
+    const tpl = templates.find(t => t.template_id === selectedTemplateId);
+    if (!tpl || tpl.is_builtin) return;
+    try {
+      await deleteTemplate(tpl.template_id);
+      selectedTemplateId = '';
+      await loadTemplates();
+      notifications.show('Template deleted', 'success');
+    } catch (error: any) {
+      notifications.show(error.message ?? 'Failed to delete template', 'error');
+    }
+  }
+
   async function generateTARAReport(): Promise<void> {
     if (!$selectedProduct) {
       notifications.show('Please select a product first', 'error');
@@ -86,20 +159,21 @@
       const dateStr = new Date().toISOString().split('T')[0];
       const fmt = FORMAT_OPTIONS.find(f => f.value === selectedFormat)!;
 
-      const url = selectedFormat === 'pdf'
-        ? `${API_BASE_URL}/reports/${scopeId}/pdf`
-        : `${API_BASE_URL}/reports/${scopeId}/export/${selectedFormat}`;
-
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token') ?? ''}` }
-      });
-
-      if (!response.ok) {
-        const detail = await response.text().catch(() => response.statusText);
-        throw new Error(detail);
+      let blob: Blob;
+      if (selectedFormat === 'pdf') {
+        blob = await generatePdf(scopeId, reportConfig);
+      } else {
+        const response = await fetch(
+          `${API_BASE_URL}/reports/${scopeId}/export/${selectedFormat}`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` } }
+        );
+        if (!response.ok) {
+          const detail = await response.text().catch(() => response.statusText);
+          throw new Error(detail);
+        }
+        blob = await response.blob();
       }
 
-      const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = objectUrl;
@@ -217,6 +291,45 @@
               {/each}
             </select>
           </div>
+
+          {#if selectedFormat === 'pdf'}
+            <!-- Template selector -->
+            <div class="flex items-center gap-2 mb-3">
+              <label for="template" class="text-xs font-medium whitespace-nowrap" style="color: var(--color-text-secondary);">Template</label>
+              <select id="template" bind:value={selectedTemplateId} on:change={applyTemplate}
+                class="flex-1 px-2 py-1.5 text-xs rounded-lg"
+                style="background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border-default);">
+                <option value="">Custom (configure below)</option>
+                {#each templates as tpl}
+                  <option value={tpl.template_id}>{tpl.name}{tpl.is_builtin ? ' (built-in)' : ''}</option>
+                {/each}
+              </select>
+            </div>
+
+            <!-- Configuration panel -->
+            <div class="rounded-lg p-3 mb-3" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
+              <ReportConfigPanel bind:config={reportConfig} />
+            </div>
+
+            <!-- Save as template -->
+            <div class="flex items-center gap-2 mb-3">
+              <input type="text" bind:value={newTemplateName} placeholder="Save current config as template…"
+                class="flex-1 px-2 py-1.5 text-xs rounded-lg"
+                style="background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" />
+              <button type="button" on:click={saveTemplate} disabled={savingTemplate}
+                class="px-3 py-1.5 text-xs rounded-lg font-medium disabled:opacity-40"
+                style="background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border-default);">
+                Save
+              </button>
+              {#if selectedTemplateId && !templates.find(t => t.template_id === selectedTemplateId)?.is_builtin}
+                <button type="button" on:click={removeTemplate}
+                  class="px-3 py-1.5 text-xs rounded-lg font-medium"
+                  style="background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);">
+                  Delete
+                </button>
+              {/if}
+            </div>
+          {/if}
 
           <button
             on:click={generateTARAReport}
