@@ -65,7 +65,8 @@ class TestBuildSectionDispatch(unittest.TestCase):
     def test_document_control_is_not_a_body_section(self):
         # DOCUMENT_CONTROL renders in the header, so the body builder returns [].
         result = report_builder._build_section(
-            SectionKey.DOCUMENT_CONTROL, "scope-1", db=None, styles={}
+            SectionKey.DOCUMENT_CONTROL, "scope-1", db=None, styles={},
+            config=default_config_for_audience(ReportAudience.INTERNAL),
         )
         self.assertEqual(result, [])
 
@@ -74,7 +75,8 @@ class TestBuildSectionDispatch(unittest.TestCase):
             report_builder, "build_compliance_section", return_value=["iso"]
         ) as mocked:
             result = report_builder._build_section(
-                SectionKey.ISO_COMPLIANCE, "scope-1", db=None, styles={}
+                SectionKey.ISO_COMPLIANCE, "scope-1", db=None, styles={},
+                config=default_config_for_audience(ReportAudience.INTERNAL),
             )
         mocked.assert_called_once()
         self.assertEqual(result, ["iso"])
@@ -102,11 +104,11 @@ class TestBuildCompleteReportWiring(unittest.TestCase):
             out = report_builder.build_complete_report("scope-1", db=None)
 
         self.assertEqual(out, b"%PDF-FAKE")
-        # Internal profile enables all 9 sections, minus CRA (no assessment).
+        # Internal profile enables all 11 sections, minus CRA (no assessment).
         # _build_section is called once per resolved section (mocked to return
         # ["x"]), so count == resolved sections.
-        self.assertEqual(build_sec.call_count, 8)  # 9 - CRA
-        self.assertEqual(captured["section_count"], 8)
+        self.assertEqual(build_sec.call_count, 10)  # 11 - CRA
+        self.assertEqual(captured["section_count"], 10)
 
     def test_empty_sections_are_skipped(self):
         config = ReportConfig(sections={
@@ -114,7 +116,7 @@ class TestBuildCompleteReportWiring(unittest.TestCase):
             SectionKey.DOCUMENT_CONTROL: True,
         })
 
-        def fake_build(key, scope_id, db, styles):
+        def fake_build(key, scope_id, db, styles, config):
             return [] if key == SectionKey.DOCUMENT_CONTROL else ["body"]
 
         captured = {}

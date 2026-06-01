@@ -4,7 +4,12 @@ Main report builder that orchestrates all sections.
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List, Optional
 
-from api.models.report_config import ReportAudience, ReportConfig, SectionKey
+from api.models.report_config import (
+    ReportAudience,
+    ReportConfig,
+    ReportDetailLevel,
+    SectionKey,
+)
 from .presets import default_config_for_audience
 from .data_access import (
     get_scope_info, 
@@ -14,6 +19,7 @@ from .data_access import (
     get_assets,
     get_asset_damage_links,
     get_threat_damage_links,
+    get_attack_paths,
     has_cra_assessment,
 )
 from .sections.damage_section import build_damage_scenarios_section
@@ -24,6 +30,8 @@ from .sections.cra_compliance_section import build_cra_compliance_section
 from .sections.risk_summary_section import build_risk_summary_section
 from .sections.traceability_section import build_traceability_section
 from .sections.executive_summary_section import build_executive_summary_section
+from .sections.threat_scenarios_section import build_threat_scenarios_section
+from .sections.attack_paths_section import build_attack_paths_section
 from .pdf_renderer import render_pdf, create_styles
 
 
@@ -48,6 +56,7 @@ def _build_section(
     scope_id: str,
     db: Session,
     styles,
+    config: ReportConfig,
 ) -> List:
     """Build a single body section's story for the given key."""
     if key == SectionKey.EXECUTIVE_SUMMARY:
@@ -72,6 +81,20 @@ def _build_section(
         return build_assets_section(get_assets(scope_id, db), styles)
     if key == SectionKey.DAMAGE_SCENARIOS:
         return build_damage_scenarios_section(get_damage_scenarios(scope_id, db), styles)
+    if key == SectionKey.THREAT_SCENARIOS:
+        return build_threat_scenarios_section(
+            get_threat_scenarios(scope_id, db),
+            get_damage_scenarios(scope_id, db),
+            get_threat_damage_links(scope_id, db),
+            styles,
+        )
+    if key == SectionKey.ATTACK_PATHS:
+        include_steps = config.detail_level == ReportDetailLevel.FULL
+        return build_attack_paths_section(
+            get_attack_paths(scope_id, db),
+            styles,
+            include_steps=include_steps,
+        )
     if key == SectionKey.CYBERSECURITY_GOALS:
         approved_goals = select_approved_goals(
             get_damage_scenarios(scope_id, db),
@@ -113,7 +136,7 @@ def build_complete_report(
 
     sections: List[List] = []
     for key in resolve_sections(config, scope_id, db):
-        story = _build_section(key, scope_id, db, styles)
+        story = _build_section(key, scope_id, db, styles, config)
         if story:
             sections.append(story)
 

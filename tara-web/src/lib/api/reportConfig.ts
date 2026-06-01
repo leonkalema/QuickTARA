@@ -12,6 +12,8 @@ export type SectionKey =
 	| 'risk_summary'
 	| 'asset_inventory'
 	| 'damage_scenarios'
+	| 'threat_scenarios'
+	| 'attack_paths'
 	| 'cybersecurity_goals'
 	| 'traceability';
 
@@ -47,6 +49,8 @@ const SECTION_KEYS: SectionKey[] = [
 	'risk_summary',
 	'asset_inventory',
 	'damage_scenarios',
+	'threat_scenarios',
+	'attack_paths',
 	'cybersecurity_goals',
 	'traceability'
 ];

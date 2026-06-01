@@ -46,6 +46,8 @@ class SectionKey(str, Enum):
     RISK_SUMMARY = "risk_summary"
     ASSET_INVENTORY = "asset_inventory"
     DAMAGE_SCENARIOS = "damage_scenarios"
+    THREAT_SCENARIOS = "threat_scenarios"
+    ATTACK_PATHS = "attack_paths"
     CYBERSECURITY_GOALS = "cybersecurity_goals"
     TRACEABILITY = "traceability"
 
@@ -61,6 +63,8 @@ SECTION_ORDER: List[SectionKey] = [
     SectionKey.RISK_SUMMARY,
     SectionKey.ASSET_INVENTORY,
     SectionKey.DAMAGE_SCENARIOS,
+    SectionKey.THREAT_SCENARIOS,
+    SectionKey.ATTACK_PATHS,
     SectionKey.CYBERSECURITY_GOALS,
     SectionKey.TRACEABILITY,
 ]

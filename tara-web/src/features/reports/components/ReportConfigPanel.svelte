@@ -26,6 +26,8 @@
     { key: 'risk_summary', label: 'Risk Register', wp: 'WP-08 risk determination' },
     { key: 'asset_inventory', label: 'Asset Inventory', wp: 'WP-04 item definition' },
     { key: 'damage_scenarios', label: 'Damage Scenarios', wp: 'WP-04 damage scenarios' },
+    { key: 'threat_scenarios', label: 'Threat Scenarios', wp: 'WP-05 §15.4' },
+    { key: 'attack_paths', label: 'Attack Paths', wp: 'WP-06/07 §15.5–15.6' },
     { key: 'cybersecurity_goals', label: 'Cybersecurity Goals', wp: 'WP-15 goals / claims' },
     { key: 'traceability', label: 'Traceability Matrix', wp: 'Asset → Goal trace' }
   ];

@@ -227,3 +227,35 @@ def get_threat_damage_links(scope_id: str, db: Session) -> List[Dict[str, Any]]:
             "scenario_id": m.get("scenario_id"),
         })
     return links
+
+
+def get_attack_paths(scope_id: str, db: Session) -> List[Dict[str, Any]]:
+    """Get attack paths for the scope, joined via their threat scenario."""
+    result = db.execute(text(
+        """
+        SELECT
+            ap.attack_path_id,
+            ap.threat_scenario_id,
+            ap.name,
+            ap.description,
+            ap.attack_steps,
+            ap.overall_rating
+        FROM attack_paths ap
+        JOIN threat_scenarios ts ON ts.threat_scenario_id = ap.threat_scenario_id
+        WHERE ts.scope_id = :scope_id
+        ORDER BY ap.name
+        """
+    ), {"scope_id": scope_id})
+
+    paths = []
+    for row in result.fetchall():
+        m = row._mapping
+        paths.append({
+            "attack_path_id": m.get("attack_path_id"),
+            "threat_scenario_id": m.get("threat_scenario_id"),
+            "name": m.get("name"),
+            "description": m.get("description"),
+            "attack_steps": m.get("attack_steps"),
+            "overall_rating": m.get("overall_rating"),
+        })
+    return paths
