@@ -190,12 +190,13 @@ def test_full_head_to_base_to_head_round_trip(ephemeral_db: Path) -> None:
 
     command.upgrade(cfg, "head")
 
-    # Downgrade one step (j0k1l2m3n4o5 → i9j0k1l2m3n4): drops cra_conformity_checklists only
+    # Downgrade one step (k1l2m3n4o5p6 → j0k1l2m3n4o5): drops report_templates only
     command.downgrade(cfg, "-1")
     engine = create_engine(f"sqlite:///{ephemeral_db}")
     tables_mid = set(inspect(engine).get_table_names())
-    assert "cra_conformity_checklists" not in tables_mid  # downgraded away
-    assert "product_scopes" in tables_mid                 # still present (i9j0k1l2m3n4 keeps it)
+    assert "report_templates" not in tables_mid           # downgraded away
+    assert "cra_conformity_checklists" in tables_mid       # still present (j0k1l2m3n4o5 keeps it)
+    assert "product_scopes" in tables_mid                 # still present
     assert "analyses" in tables_mid                       # still present
 
     command.upgrade(cfg, "head")
@@ -214,6 +215,7 @@ def test_full_head_to_base_to_head_round_trip(ephemeral_db: Path) -> None:
         "risk_treatments",
         "threat_scenarios",
         "cra_conformity_checklists",
+        "report_templates",
     }
     missing = required - tables_final
     assert not missing, f"Tables missing after round-trip: {missing}"
