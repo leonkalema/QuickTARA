@@ -102,12 +102,11 @@ class TestBuildCompleteReportWiring(unittest.TestCase):
             out = report_builder.build_complete_report("scope-1", db=None)
 
         self.assertEqual(out, b"%PDF-FAKE")
-        # Internal profile enables all 8 sections, minus CRA (no assessment),
-        # minus DOCUMENT_CONTROL which yields an empty body story.
-        # _build_section is called once per resolved section; DOCUMENT_CONTROL
-        # returns ["x"] here too (mocked), so count == resolved sections.
-        self.assertEqual(build_sec.call_count, 7)  # 8 - CRA
-        self.assertEqual(captured["section_count"], 7)
+        # Internal profile enables all 9 sections, minus CRA (no assessment).
+        # _build_section is called once per resolved section (mocked to return
+        # ["x"]), so count == resolved sections.
+        self.assertEqual(build_sec.call_count, 8)  # 9 - CRA
+        self.assertEqual(captured["section_count"], 8)
 
     def test_empty_sections_are_skipped(self):
         config = ReportConfig(sections={

@@ -6,6 +6,7 @@ export type ReportClassification = 'public' | 'internal' | 'confidential';
 
 export type SectionKey =
 	| 'document_control'
+	| 'executive_summary'
 	| 'iso_compliance'
 	| 'cra_compliance'
 	| 'risk_summary'
@@ -40,6 +41,7 @@ interface TemplateListResponse {
 
 const SECTION_KEYS: SectionKey[] = [
 	'document_control',
+	'executive_summary',
 	'iso_compliance',
 	'cra_compliance',
 	'risk_summary',

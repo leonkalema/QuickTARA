@@ -40,6 +40,7 @@ class SectionKey(str, Enum):
     """Toggleable report sections. Each key maps to one section builder."""
 
     DOCUMENT_CONTROL = "document_control"
+    EXECUTIVE_SUMMARY = "executive_summary"
     ISO_COMPLIANCE = "iso_compliance"
     CRA_COMPLIANCE = "cra_compliance"
     RISK_SUMMARY = "risk_summary"
@@ -54,6 +55,7 @@ class SectionKey(str, Enum):
 # regardless of how the ``sections`` dict was constructed.
 SECTION_ORDER: List[SectionKey] = [
     SectionKey.DOCUMENT_CONTROL,
+    SectionKey.EXECUTIVE_SUMMARY,
     SectionKey.ISO_COMPLIANCE,
     SectionKey.CRA_COMPLIANCE,
     SectionKey.RISK_SUMMARY,

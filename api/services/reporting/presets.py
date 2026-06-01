@@ -21,6 +21,7 @@ from api.models.report_config import (
 _AUDIENCE_SECTIONS: Dict[ReportAudience, Dict[SectionKey, bool]] = {
     ReportAudience.INTERNAL: {
         SectionKey.DOCUMENT_CONTROL: True,
+        SectionKey.EXECUTIVE_SUMMARY: True,
         SectionKey.ISO_COMPLIANCE: True,
         SectionKey.CRA_COMPLIANCE: True,
         SectionKey.RISK_SUMMARY: True,
@@ -31,6 +32,7 @@ _AUDIENCE_SECTIONS: Dict[ReportAudience, Dict[SectionKey, bool]] = {
     },
     ReportAudience.EXTERNAL: {
         SectionKey.DOCUMENT_CONTROL: True,
+        SectionKey.EXECUTIVE_SUMMARY: True,
         SectionKey.ISO_COMPLIANCE: True,
         SectionKey.CRA_COMPLIANCE: True,
         SectionKey.RISK_SUMMARY: True,
@@ -41,6 +43,7 @@ _AUDIENCE_SECTIONS: Dict[ReportAudience, Dict[SectionKey, bool]] = {
     },
     ReportAudience.AUDITOR: {
         SectionKey.DOCUMENT_CONTROL: True,
+        SectionKey.EXECUTIVE_SUMMARY: True,
         SectionKey.ISO_COMPLIANCE: True,
         SectionKey.CRA_COMPLIANCE: True,
         SectionKey.RISK_SUMMARY: True,

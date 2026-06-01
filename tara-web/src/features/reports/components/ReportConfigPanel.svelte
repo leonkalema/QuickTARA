@@ -20,6 +20,7 @@
 
   const SECTIONS: { key: SectionKey; label: string; wp: string }[] = [
     { key: 'document_control', label: 'Document Control', wp: 'Clause 6 — management' },
+    { key: 'executive_summary', label: 'Executive Summary', wp: 'Scope & risk overview' },
     { key: 'iso_compliance', label: 'ISO 21434 Compliance Matrix', wp: 'Work products overview' },
     { key: 'cra_compliance', label: 'CRA Compliance', wp: 'Only if CRA assessment exists' },
     { key: 'risk_summary', label: 'Risk Register', wp: 'WP-08 risk determination' },

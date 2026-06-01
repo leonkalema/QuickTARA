@@ -23,6 +23,7 @@ from .sections.compliance_section import build_compliance_section
 from .sections.cra_compliance_section import build_cra_compliance_section
 from .sections.risk_summary_section import build_risk_summary_section
 from .sections.traceability_section import build_traceability_section
+from .sections.executive_summary_section import build_executive_summary_section
 from .pdf_renderer import render_pdf, create_styles
 
 
@@ -49,6 +50,14 @@ def _build_section(
     styles,
 ) -> List:
     """Build a single body section's story for the given key."""
+    if key == SectionKey.EXECUTIVE_SUMMARY:
+        return build_executive_summary_section(
+            get_assets(scope_id, db),
+            get_damage_scenarios(scope_id, db),
+            get_threat_scenarios(scope_id, db),
+            get_risk_treatments(scope_id, db),
+            styles,
+        )
     if key == SectionKey.ISO_COMPLIANCE:
         return build_compliance_section(styles)
     if key == SectionKey.CRA_COMPLIANCE:
