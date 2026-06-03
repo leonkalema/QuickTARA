@@ -59,6 +59,26 @@ def preview_damage_generation(
     }
 
 
+def has_auto_damage_drafts(db: Session, scope_id: str) -> bool:
+    """Return True if auto-generated damage drafts already exist for this product."""
+    return _count_auto_damage_drafts(db, scope_id) > 0
+
+
+def has_auto_threat_drafts(db: Session, scope_id: str) -> bool:
+    """Return True if auto-generated threat drafts already exist for this product."""
+    from db.threat_scenario import ThreatScenario as DBThreatScenario
+    count = (
+        db.query(DBThreatScenario)
+        .filter(
+            DBThreatScenario.scope_id == scope_id,
+            DBThreatScenario.threat_scenario_id.like(f"{AUTO_PREFIX_THREAT}%"),
+            DBThreatScenario.status == "draft",
+        )
+        .count()
+    )
+    return count > 0
+
+
 def generate_damage_scenarios_for_product(
     db: Session,
     scope_id: str,
@@ -67,6 +87,9 @@ def generate_damage_scenarios_for_product(
     Step 1: Generate damage scenarios from assets based on CIA properties.
     Deletes previous auto-generated drafts first to avoid duplicates.
     All-or-nothing: rolls back on any failure.
+
+    Skips any template output that would duplicate an existing manually-created
+    scenario (same asset + same damage_category + same CIA dimension).
     """
     product = _get_product(db, scope_id)
     if not product:
@@ -74,12 +97,38 @@ def generate_damage_scenarios_for_product(
     assets = _get_assets(db, scope_id)
     if not assets:
         return {"error": "No assets found for this product", "scope_id": scope_id}
+
+    # Deduplicate assets by asset_id (guards against versioning producing duplicate rows)
+    seen_ids: set = set()
+    unique_assets = []
+    for a in assets:
+        if a.asset_id not in seen_ids:
+            seen_ids.add(a.asset_id)
+            unique_assets.append(a)
+    assets = unique_assets
+
+    # Build a set of (asset_id, damage_category, cia_dimension) already covered
+    # by manually-created (non-AUTO) scenarios so we don't duplicate them.
+    existing_manual_keys = _get_manual_scenario_keys(db, scope_id)
+
     templates = load_templates()
     all_damage: List[Dict[str, Any]] = []
+    skipped = 0
     for asset in assets:
         asset_dict = _asset_to_dict(asset)
-        damage_scenarios = generate_for_asset(asset_dict, product.name, templates)
-        all_damage.extend(damage_scenarios)
+        candidates = generate_for_asset(asset_dict, product.name, templates)
+        for scenario in candidates:
+            key = (
+                scenario.get("primary_component_id", ""),
+                scenario.get("damage_category", ""),
+                scenario.get("cia_dimension", ""),
+            )
+            if key in existing_manual_keys:
+                skipped += 1
+                logger.debug("Skipping duplicate of manual scenario: %s", key)
+                continue
+            all_damage.append(scenario)
+
     try:
         drafts_removed = _remove_auto_damage_drafts(db, scope_id)
         damage_saved = _save_damage_scenarios(db, all_damage, scope_id)
@@ -88,8 +137,8 @@ def generate_damage_scenarios_for_product(
         db.rollback()
         raise
     logger.info(
-        "Auto-generated %d damage scenarios for product '%s' (removed %d old drafts)",
-        damage_saved, scope_id, drafts_removed,
+        "Auto-generated %d damage scenarios for product '%s' (removed %d old drafts, skipped %d duplicates)",
+        damage_saved, scope_id, drafts_removed, skipped,
     )
     return {
         "scope_id": scope_id,
@@ -97,6 +146,7 @@ def generate_damage_scenarios_for_product(
         "assets_processed": len(assets),
         "damage_scenarios_created": damage_saved,
         "drafts_replaced": drafts_removed,
+        "duplicates_skipped": skipped,
     }
 
 
@@ -388,6 +438,32 @@ def _save_threat_scenarios(
             )
         saved += 1
     return saved
+
+
+def _get_manual_scenario_keys(db: Session, scope_id: str) -> set:
+    """
+    Return a set of (asset_id, damage_category, cia_dimension) tuples for all
+    manually-created (non-AUTO) scenarios in this product. Used to skip
+    auto-generate templates that would duplicate existing expert work.
+    """
+    rows = (
+        db.query(DBDamageScenario)
+        .filter(
+            DBDamageScenario.scope_id == scope_id,
+            ~DBDamageScenario.scenario_id.like(f"{AUTO_PREFIX_DAMAGE}%"),
+        )
+        .all()
+    )
+    keys = set()
+    for ds in rows:
+        cia_dim = "integrity"
+        if ds.confidentiality_impact:
+            cia_dim = "confidentiality"
+        elif ds.availability_impact:
+            cia_dim = "availability"
+        if ds.primary_component_id and ds.damage_category:
+            keys.add((ds.primary_component_id, ds.damage_category, cia_dim))
+    return keys
 
 
 def _build_violated_properties(scenario: Dict[str, Any]) -> List[str]:

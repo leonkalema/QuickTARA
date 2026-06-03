@@ -47,6 +47,30 @@ class ScenarioGeneratorApiError extends Error {
 
 export const scenarioGeneratorApi = {
   /**
+   * Check if auto-generated damage drafts already exist for this product.
+   */
+  async hasAutoDamageDrafts(scopeId: string): Promise<boolean> {
+    const response = await fetch(
+      `${API_BASE_URL}/analysis/has-auto-damage-drafts/${scopeId}`,
+    );
+    if (!response.ok) return false;
+    const data = await response.json();
+    return data.has_drafts === true;
+  },
+
+  /**
+   * Check if auto-generated threat drafts already exist for this product.
+   */
+  async hasAutoThreatDrafts(scopeId: string): Promise<boolean> {
+    const response = await fetch(
+      `${API_BASE_URL}/analysis/has-auto-threat-drafts/${scopeId}`,
+    );
+    if (!response.ok) return false;
+    const data = await response.json();
+    return data.has_drafts === true;
+  },
+
+  /**
    * Preview how many scenarios would be generated (no DB writes).
    */
   async previewDamageGeneration(scopeId: string): Promise<GenerationPreview> {

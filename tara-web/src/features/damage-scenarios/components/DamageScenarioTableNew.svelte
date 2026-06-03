@@ -194,6 +194,53 @@
     }
   }
 
+  // SFOP inline editing state
+  let editingSfopId: string | null = null;
+  let sfopDraft = { safety: '', financial: '', operational: '', privacy: '' };
+
+  function startSfopEdit(scenario: DamageScenario) {
+    editingSfopId = scenario.scenario_id;
+    sfopDraft = {
+      safety: scenario.impact_rating?.safety || '',
+      financial: scenario.impact_rating?.financial || '',
+      operational: scenario.impact_rating?.operational || '',
+      privacy: scenario.impact_rating?.privacy || '',
+    };
+  }
+
+  function cancelSfopEdit() {
+    editingSfopId = null;
+  }
+
+  async function saveSfopEdit(scenario: DamageScenario) {
+    if (!sfopDraft.safety || !sfopDraft.financial || !sfopDraft.operational || !sfopDraft.privacy) {
+      notifications.show('All four SFOP ratings are required', 'error');
+      return;
+    }
+    isSaving = true;
+    try {
+      const updated = await damageScenarioApi.updateImpactRatings(scenario.scenario_id, {
+        safety_impact: sfopDraft.safety,
+        financial_impact: sfopDraft.financial,
+        operational_impact: sfopDraft.operational,
+        privacy_impact: sfopDraft.privacy,
+      });
+      const index = damageScenarios.findIndex(s => s.scenario_id === scenario.scenario_id);
+      if (index !== -1) {
+        damageScenarios[index] = updated;
+        damageScenarios = [...damageScenarios];
+      }
+      dispatch('scenarioUpdated', updated);
+      notifications.show('SFOP ratings updated', 'success');
+      editingSfopId = null;
+    } catch (error: any) {
+      console.error('Error updating SFOP ratings:', error);
+      notifications.show(error?.message || 'Failed to update SFOP ratings', 'error');
+    } finally {
+      isSaving = false;
+    }
+  }
+
   // Inline editing functions
   function startEdit(scenario: DamageScenario, field: string) {
     editingCell = { scenarioId: scenario.scenario_id, field };
@@ -375,14 +422,63 @@
                 </div>
               </td>
               <td class="px-4 py-3">
-                <div class="space-y-1">
-                  {#each Object.entries(getSfopImpacts(scenario)) as [key, value]}
+                {#if editingSfopId === scenario.scenario_id}
+                  <div class="space-y-1">
                     <div class="flex items-center space-x-1">
-                      <span class="text-[10px] w-5" style="color: var(--color-text-tertiary);">{key.charAt(0).toUpperCase()}</span>
-                      <span class="px-1 py-0.5 text-[10px] rounded" style="{getSfopBadgeStyle(value)}">{value}</span>
+                      <span class="text-[10px] w-5" style="color: var(--color-text-tertiary);">S</span>
+                      <select bind:value={sfopDraft.safety} class="px-1 py-0.5 rounded text-[10px]" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);" disabled={isSaving}>
+                        <option value="">—</option>
+                        <option value="negligible">Negligible</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="major">Major</option>
+                        <option value="severe">Severe</option>
+                      </select>
                     </div>
-                  {/each}
-                </div>
+                    <div class="flex items-center space-x-1">
+                      <span class="text-[10px] w-5" style="color: var(--color-text-tertiary);">F</span>
+                      <select bind:value={sfopDraft.financial} class="px-1 py-0.5 rounded text-[10px]" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);" disabled={isSaving}>
+                        <option value="">—</option>
+                        <option value="negligible">Negligible</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="major">Major</option>
+                        <option value="severe">Severe</option>
+                      </select>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                      <span class="text-[10px] w-5" style="color: var(--color-text-tertiary);">O</span>
+                      <select bind:value={sfopDraft.operational} class="px-1 py-0.5 rounded text-[10px]" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);" disabled={isSaving}>
+                        <option value="">—</option>
+                        <option value="negligible">Negligible</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="major">Major</option>
+                        <option value="severe">Severe</option>
+                      </select>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                      <span class="text-[10px] w-5" style="color: var(--color-text-tertiary);">P</span>
+                      <select bind:value={sfopDraft.privacy} class="px-1 py-0.5 rounded text-[10px]" style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-accent-primary);" disabled={isSaving}>
+                        <option value="">—</option>
+                        <option value="negligible">Negligible</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="major">Major</option>
+                        <option value="severe">Severe</option>
+                      </select>
+                    </div>
+                    <div class="flex space-x-1 pt-1">
+                      <button on:click={() => saveSfopEdit(scenario)} disabled={isSaving} class="px-2 py-0.5 text-[10px] rounded" style="background: var(--color-accent-primary); color: var(--color-text-inverse);">Save</button>
+                      <button on:click={cancelSfopEdit} disabled={isSaving} class="px-2 py-0.5 text-[10px] rounded" style="border: 1px solid var(--color-border-default); color: var(--color-text-secondary);">Cancel</button>
+                    </div>
+                  </div>
+                {:else}
+                  <button on:click={() => startSfopEdit(scenario)} class="space-y-1 text-left w-full" title="Click to edit SFOP ratings">
+                    {#each Object.entries(getSfopImpacts(scenario)) as [key, value]}
+                      <div class="flex items-center space-x-1">
+                        <span class="text-[10px] w-5" style="color: var(--color-text-tertiary);">{key.charAt(0).toUpperCase()}</span>
+                        <span class="px-1 py-0.5 text-[10px] rounded" style="{getSfopBadgeStyle(value)}">{value}</span>
+                      </div>
+                    {/each}
+                  </button>
+                {/if}
               </td>
               <td class="px-4 py-3">
                 <span class="px-2 py-1 text-[10px] font-medium rounded" style="{getSfopBadgeStyle(getOverallSfopRating(scenario))}">{getOverallSfopRating(scenario)}</span>

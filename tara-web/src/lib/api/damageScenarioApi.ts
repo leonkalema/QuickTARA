@@ -38,4 +38,22 @@ export const damageScenarioApi = {
 
   deleteDamageScenario: (id: string): Promise<void> =>
     apiFetch<void>(`${BASE}/${id}`, { method: 'DELETE' }),
+
+  updateImpactRatings: (
+    id: string,
+    ratings: {
+      safety_impact?: string;
+      financial_impact?: string;
+      operational_impact?: string;
+      privacy_impact?: string;
+      sfop_rating_override_reason?: string;
+    }
+  ): Promise<DamageScenario> =>
+    apiFetch<DamageScenario>(`/impact-ratings/scenarios/${id}/impact-ratings`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        ...ratings,
+        sfop_rating_override_reason: ratings.sfop_rating_override_reason ?? 'Manually updated by user',
+      }),
+    }),
 };

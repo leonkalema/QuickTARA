@@ -19,6 +19,7 @@
   let showAddForm = false;
   let canManageScenarios = false;
   let isGenerating = false;
+  let hasExistingAutoDrafts = false;
   let showConfirmGenerate = false;
   let statusFilter: 'all' | 'draft' | 'accepted' = 'all';
   
@@ -77,6 +78,7 @@
       
       // Load threat scenarios
       await loadThreatScenarios();
+      hasExistingAutoDrafts = await scenarioGeneratorApi.hasAutoThreatDrafts($selectedProduct.scope_id);
     } catch (error) {
       console.error('Error loading data:', error);
       notifications.show('Failed to load threat scenarios', 'error');
@@ -141,6 +143,7 @@
         : `Generated ${result.threat_scenarios_created} threat scenarios from ${result.damage_scenarios_used} damage scenarios`;
       notifications.show(msg, 'success');
       await loadData();
+      hasExistingAutoDrafts = true;
     } catch (error: any) {
       notifications.show(error.message || 'Auto-generation failed. Do you have damage scenarios?', 'error');
     } finally {
@@ -197,19 +200,27 @@
     </div>
     {#if canManageScenarios}
       <div class="flex gap-2 self-start">
-        <button
-          on:click={handleAutoGenerateClick}
-          disabled={isGenerating}
-          class="px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-          style="background: var(--color-accent-secondary); color: var(--color-text-inverse);"
-        >
-          {#if isGenerating}
-            <svg class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-            Generating...
-          {:else}
-            Auto-Generate
+        <div class="flex flex-col items-end gap-0.5">
+          <button
+            on:click={handleAutoGenerateClick}
+            disabled={isGenerating || hasExistingAutoDrafts}
+            title={hasExistingAutoDrafts ? 'Auto-generated drafts already exist. Review and accept them, or delete them to run again.' : 'Generate threat scenarios from your damage scenarios'}
+            class="px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            style="background: var(--color-accent-secondary); color: var(--color-text-inverse);"
+          >
+            {#if isGenerating}
+              <svg class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+              Generating...
+            {:else if hasExistingAutoDrafts}
+              ✓ Generated
+            {:else}
+              Auto-Generate
+            {/if}
+          </button>
+          {#if hasExistingAutoDrafts}
+            <span class="text-[10px]" style="color: var(--color-text-tertiary);">Review drafts, then delete to re-run</span>
           {/if}
-        </button>
+        </div>
         <button
           on:click={() => showAddForm = !showAddForm}
           class="px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2"

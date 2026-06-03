@@ -134,6 +134,26 @@ async def run_background_analysis(
     return {"status": "Analysis started in background", "analysis_id": analysis_id}
 
 
+@router.get("/has-auto-damage-drafts/{scope_id}")
+async def has_auto_damage_drafts(
+    scope_id: str,
+    db: Session = Depends(get_db),
+):
+    """Return whether auto-generated damage drafts already exist for this product."""
+    from core.generators.scenario_orchestrator import has_auto_damage_drafts as _check
+    return {"has_drafts": _check(db, scope_id)}
+
+
+@router.get("/has-auto-threat-drafts/{scope_id}")
+async def has_auto_threat_drafts(
+    scope_id: str,
+    db: Session = Depends(get_db),
+):
+    """Return whether auto-generated threat drafts already exist for this product."""
+    from core.generators.scenario_orchestrator import has_auto_threat_drafts as _check
+    return {"has_drafts": _check(db, scope_id)}
+
+
 @router.get("/preview-damage-generation/{scope_id}")
 async def preview_damage_generation(
     scope_id: str,
