@@ -8,7 +8,7 @@ from datetime import datetime
 from ..deps.db import get_db
 from ..auth.dependencies import get_current_user, get_current_active_user, require_tool_admin
 from ..auth.security import security_manager
-from ..models.user import User, UserRole, UserStatus
+from ..models.user import User, UserRole, UserStatus, user_organizations
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -33,6 +33,10 @@ class UserUpdate(BaseModel):
     status: Optional[UserStatus] = None
     password: Optional[str] = None
 
+class UserOrgInfo(BaseModel):
+    organization_id: str
+    role: str
+
 class UserResponse(UserBase):
     user_id: str
     is_verified: bool
@@ -40,9 +44,49 @@ class UserResponse(UserBase):
     created_at: datetime
     updated_at: datetime
     last_login: Optional[datetime]
+    organizations: List[UserOrgInfo] = []
 
     class Config:
         from_attributes = True
+
+
+def _get_user_org_memberships(db: Session, user_id: str) -> List[UserOrgInfo]:
+    """Fetch all org memberships (with roles) for a user."""
+    rows = db.execute(
+        user_organizations.select().where(user_organizations.c.user_id == user_id)
+    ).fetchall()
+    return [UserOrgInfo(organization_id=r.organization_id, role=(r.role or "").lower()) for r in rows]
+
+
+def _build_user_response(db: Session, user: User) -> UserResponse:
+    """Build a UserResponse, populating the organizations field from user_organizations."""
+    orgs = _get_user_org_memberships(db, user.user_id)
+    # Derive the top-level role field: tool_admin for superusers, else first org role or default
+    if user.is_superuser:
+        top_role = UserRole.TOOL_ADMIN
+    elif orgs:
+        try:
+            top_role = UserRole(orgs[0].role)
+        except ValueError:
+            top_role = UserRole.ANALYST
+    else:
+        top_role = UserRole.ANALYST
+
+    return UserResponse(
+        user_id=user.user_id,
+        email=user.email,
+        username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        role=top_role,
+        status=user.status,
+        is_verified=user.is_verified,
+        is_superuser=user.is_superuser,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+        last_login=user.last_login,
+        organizations=orgs,
+    )
 
 @router.get("", response_model=List[UserResponse])
 async def get_users(
@@ -59,7 +103,7 @@ async def get_users(
     # Tool Admin sees all users
     if current_user.is_superuser:
         users = db.query(User).offset(skip).limit(limit).all()
-        return users
+        return [_build_user_response(db, u) for u in users]
     
     # Get current user's organizations where they have management roles
     user_org_memberships = db.execute(
@@ -77,7 +121,7 @@ async def get_users(
         users = db.query(User).filter(
             User.is_superuser == False
         ).offset(skip).limit(limit).all()
-        return users
+        return [_build_user_response(db, u) for u in users]
 
     admin_org_ids = [m.organization_id for m in user_org_memberships if (m.role or '').lower() in management_roles]
     
@@ -105,7 +149,7 @@ async def get_users(
         User.user_id.in_(user_ids),
         User.is_superuser == False  # Exclude Tool Admins
     ).offset(skip).limit(limit).all()
-    return users
+    return [_build_user_response(db, u) for u in users]
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
@@ -120,7 +164,7 @@ async def get_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    return user
+    return _build_user_response(db, user)
 
 @router.post("", response_model=UserResponse)
 async def create_user(
@@ -157,8 +201,8 @@ async def create_user(
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
-    return db_user
+
+    return _build_user_response(db, db_user)
 
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
@@ -191,8 +235,8 @@ async def update_user(
     user.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(user)
-    
-    return user
+
+    return _build_user_response(db, user)
 
 @router.delete("/{user_id}")
 async def delete_user(

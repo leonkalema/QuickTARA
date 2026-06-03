@@ -5,7 +5,7 @@
   import { authStore } from '$lib/stores/auth';
   import { get } from 'svelte/store';
   import { API_BASE_URL } from '$lib/config';
-  import { UserRole, OrgRole, getAllOrgRoles, getOrgRoleLabel } from '$lib/types/roles';
+  import { UserRole, OrgRole, getAllOrgRoles, getOrgRoleLabel, getUserRoleLabel } from '$lib/types/roles';
   import { canCreateUsers, canEditUsers, canDeleteUsers } from '$lib/utils/permissions';
   import { Users, Plus, Search, Edit, Trash2, Key, X, Shield, UserCheck, UserX } from '@lucide/svelte';
 
@@ -445,10 +445,14 @@
                   {#if user.is_superuser}
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium" style="background: color-mix(in srgb, var(--color-accent-primary) 15%, transparent); color: var(--color-accent-primary);">
                       <Shield class="w-3 h-3 mr-1" />
-                      Admin
+                      Tool Admin
+                    </span>
+                  {:else if user.organizations && user.organizations.length > 0}
+                    <span class="text-xs font-medium" style="color: var(--color-text-secondary);">
+                      {getUserRoleLabel(user.organizations[0].role as UserRole)}
                     </span>
                   {:else}
-                    <span class="text-xs" style="color: var(--color-text-tertiary);">User</span>
+                    <span class="text-xs" style="color: var(--color-text-tertiary);">No Role</span>
                   {/if}
                 </td>
                 <td class="px-4 py-3">

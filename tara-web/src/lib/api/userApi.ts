@@ -2,18 +2,25 @@ import { authStore } from '$lib/stores/auth';
 import { get } from 'svelte/store';
 import { API_BASE_URL } from '$lib/config';
 
+export interface UserOrgInfo {
+  organization_id: string;
+  role: string;
+}
+
 export interface User {
   user_id: string;
   email: string;
   username: string;
   first_name: string;
   last_name: string;
+  role: string;
   status: string;
   is_verified: boolean;
   is_superuser: boolean;
   created_at: string;
   updated_at: string;
   last_login?: string;
+  organizations: UserOrgInfo[];
 }
 
 export interface CreateUserRequest {
