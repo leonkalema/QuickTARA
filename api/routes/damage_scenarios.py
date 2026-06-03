@@ -7,6 +7,8 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from api.deps.db import get_db
+from api.auth.dependencies import get_current_active_user, require_analyst_role, require_risk_manager
+from api.models.user import User
 from core.audit_helpers import get_user_from_request, audit_create, audit_update, audit_delete, audit_status_change
 from ..models.damage_scenario import (
     DamageScenario, 
@@ -31,13 +33,14 @@ logger = logging.getLogger(__name__)
 
 @router.get("", response_model=DamageScenarioList)
 async def list_damage_scenarios(
-    skip: int = 0, 
+    skip: int = 0,
     limit: int = 100,
     scope_id: Optional[str] = None,
     component_id: Optional[str] = None,
     damage_category: Optional[str] = None,
     severity: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all damage scenarios with pagination and filtering
@@ -74,7 +77,8 @@ def generate_damage_scenario_id(db: Session, scope_id: str) -> str:
 async def create_damage_scenario(
     request: Request,
     damage_scenario: DamageScenarioCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Create a new damage scenario with auto-generated ID
@@ -99,8 +103,9 @@ async def create_damage_scenario(
 
 @router.get("/{scenario_id}", response_model=DamageScenario)
 async def get_damage_scenario(
-    scenario_id: str, 
-    db: Session = Depends(get_db)
+    scenario_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a damage scenario by ID
@@ -116,10 +121,11 @@ async def get_damage_scenario(
 
 @router.put("/{scenario_id}", response_model=DamageScenario)
 async def update_damage_scenario(
-    scenario_id: str, 
+    scenario_id: str,
     scenario: DamageScenarioUpdate,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Update a damage scenario
@@ -144,9 +150,10 @@ async def update_damage_scenario(
 
 @router.delete("/{scenario_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_damage_scenario(
-    scenario_id: str, 
+    scenario_id: str,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Delete a damage scenario
@@ -166,6 +173,7 @@ async def delete_damage_scenario(
 async def accept_damage_scenario(
     scenario_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_risk_manager),
 ):
     """Accept a draft damage scenario (move from draft → accepted)."""
     from db.product_asset_models import DamageScenario as DBDamageScenario
@@ -189,7 +197,8 @@ async def get_propagation_suggestions(
     confidentiality_impact: bool = Query(False, description="Whether confidentiality is impacted"),
     integrity_impact: bool = Query(False, description="Whether integrity is impacted"),
     availability_impact: bool = Query(False, description="Whether availability is impacted"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get impact propagation suggestions for a component

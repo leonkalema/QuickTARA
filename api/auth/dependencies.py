@@ -173,11 +173,29 @@ async def require_tool_admin(current_user: User = Depends(get_current_active_use
         )
     return current_user
 
+async def require_analyst_role(current_user: User = Depends(get_current_active_user)):
+    """Require Analyst role or higher (Analyst, Risk Manager, Org Admin, Tool Admin).
+
+    Used to gate all write operations on TARA resources (assets, damage/threat
+    scenarios, attack paths, threat catalog items).  Viewers and unauthenticated
+    callers are rejected with 403.
+    """
+    user_roles = get_user_roles(current_user)
+    allowed_roles = [UserRole.TOOL_ADMIN, UserRole.ORG_ADMIN, UserRole.RISK_MANAGER, UserRole.ANALYST]
+
+    if not any(role in allowed_roles for role in user_roles):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Analyst access required to perform this action"
+        )
+    return current_user
+
+
 async def require_risk_manager(current_user: User = Depends(get_current_active_user)):
     """Require Risk Manager role or higher"""
     user_roles = get_user_roles(current_user)
     allowed_roles = [UserRole.TOOL_ADMIN, UserRole.ORG_ADMIN, UserRole.RISK_MANAGER]
-    
+
     if not any(role in allowed_roles for role in user_roles):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

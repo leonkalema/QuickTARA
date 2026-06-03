@@ -5,6 +5,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from sqlalchemy.orm import Session
 from api.deps.db import get_db
+from api.auth.dependencies import get_current_active_user, require_analyst_role, require_risk_manager
+from api.models.user import User
 from core.audit_helpers import get_user_from_request, audit_create, audit_update, audit_delete, audit_status_change
 from api.models.threat_scenario import ThreatScenario, ThreatScenarioCreate, ThreatScenarioUpdate, ThreatScenarioList
 from db.threat_scenario import ThreatScenario as DBThreatScenario
@@ -51,7 +53,8 @@ async def list_threat_scenarios(
     damage_scenario_id: Optional[str] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """List threat scenarios with optional filtering"""
     if damage_scenario_id:
@@ -91,7 +94,8 @@ async def list_threat_scenarios(
 async def create_threat_scenario(
     request: Request,
     threat_scenario: ThreatScenarioCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """Create a new threat scenario"""
     try:
@@ -157,7 +161,8 @@ async def create_threat_scenario(
 @router.get("/{threat_scenario_id}", response_model=ThreatScenario)
 async def get_threat_scenario(
     threat_scenario_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get a specific threat scenario by ID"""
     threat_scenario = db.query(DBThreatScenario).filter(
@@ -177,7 +182,8 @@ async def get_threat_scenario(
 @router.get("/{threat_scenario_id}/damage-scenarios")
 async def get_threat_scenario_damage_scenarios(
     threat_scenario_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get all damage scenarios linked to a specific threat scenario"""
     # Check if threat scenario exists
@@ -209,7 +215,8 @@ async def update_threat_scenario(
     threat_scenario_id: str,
     threat_scenario_update: ThreatScenarioUpdate,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """Update a threat scenario"""
     # Get existing threat scenario
@@ -247,6 +254,7 @@ async def update_threat_scenario(
 async def accept_threat_scenario(
     threat_scenario_id: str,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_risk_manager),
 ):
     """Accept a draft threat scenario (move from draft → accepted)."""
     scenario = db.query(DBThreatScenario).filter(
@@ -267,7 +275,8 @@ async def accept_threat_scenario(
 async def delete_threat_scenario(
     threat_scenario_id: str,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """Delete a threat scenario (soft delete)"""
     from sqlalchemy import and_

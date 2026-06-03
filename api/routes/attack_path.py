@@ -7,12 +7,14 @@ from sqlalchemy.orm import Session
 import logging
 
 from api.models.attack_path import (
-    AttackPathRequest, AttackPathAnalysisResult, AttackPathList, 
+    AttackPathRequest, AttackPathAnalysisResult, AttackPathList,
     AttackChainList, Path, Chain, AttackPathAssumption, AttackPathConstraint,
     ThreatScenario
 )
 from api.services.attack_path_service import AttackPathService
 from api.deps.db import get_db
+from api.auth.dependencies import get_current_active_user, require_analyst_role
+from api.models.user import User
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -21,7 +23,8 @@ logger = logging.getLogger(__name__)
 @router.post("", response_model=AttackPathAnalysisResult)
 async def generate_attack_paths(
     request: AttackPathRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Generate attack paths for the given components with enhanced contextual analysis.
@@ -73,7 +76,8 @@ async def get_attack_paths(
     skip: int = 0,
     limit: int = 100,
     analysis_id: Optional[str] = Query(None, description="Filter by analysis ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Retrieve attack paths, optionally filtered by analysis ID.
@@ -137,7 +141,8 @@ async def get_attack_chains(
     skip: int = 0,
     limit: int = 100,
     analysis_id: Optional[str] = Query(None, description="Filter by analysis ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Retrieve attack chains, optionally filtered by analysis ID.
@@ -219,7 +224,8 @@ async def get_attack_chains(
 @router.get("/chains/{chain_id}")
 async def get_attack_chain(
     chain_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Retrieve a specific attack chain by ID.
@@ -293,7 +299,8 @@ async def get_attack_chain(
 @router.get("/{path_id}", response_model=Path)
 async def get_attack_path(
     path_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Retrieve a specific attack path by ID.

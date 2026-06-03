@@ -9,6 +9,9 @@ import logging
 from datetime import datetime
 
 from api.deps.db import get_db
+from api.auth.dependencies import get_current_active_user, require_analyst_role
+from api.auth.product_rbac import can_manage_assets, can_view_product
+from api.models.user import User
 from core.audit_helpers import get_user_from_request, audit_create, audit_update, audit_delete
 from api.models.asset import Asset, AssetCreate, AssetUpdate, AssetList, AssetHistory
 from api.utils.error_handlers import handle_database_error, create_success_response, NotFoundAPIError
@@ -21,11 +24,12 @@ logger = logging.getLogger(__name__)
 
 @router.get("", response_model=AssetList)
 async def list_assets(
-    skip: int = 0, 
+    skip: int = 0,
     limit: int = 100,
     scope_id: Optional[str] = None,
     asset_type: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List all assets with pagination and optional filtering
@@ -100,7 +104,7 @@ async def create_asset(
     asset: AssetCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: str = None
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Create a new asset
@@ -142,7 +146,15 @@ async def create_asset(
                     "field_errors": {"scope_id": "Selected product does not exist"}
                 }
             )
-        
+
+        # Enforce product-scope RBAC: user must be analyst+ in the product's org
+        product_org_id = getattr(product, 'organization_id', None)
+        if not can_manage_assets(db, current_user, product_org_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to create assets in this product's department"
+            )
+
         # Generate asset_id if not provided
         if not asset.asset_id:
             import uuid
@@ -161,6 +173,7 @@ async def create_asset(
             )
         
         # Create new asset
+        performer = get_user_from_request(request) or current_user.email
         new_asset = DBAsset(
             asset_id=asset.asset_id,
             name=asset.name,
@@ -179,11 +192,11 @@ async def create_asset(
             is_current=True,
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            created_by=user,
-            updated_by=user
+            created_by=performer,
+            updated_by=performer,
         )
         db.add(new_asset)
-        
+
         # Create initial history record
         asset_history = DBAssetHistory(
             asset_id=asset.asset_id,
@@ -204,12 +217,11 @@ async def create_asset(
             revision_notes="Initial creation",
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            created_by=user,
-            updated_by=user
+            created_by=performer,
+            updated_by=performer,
         )
         db.add(asset_history)
         
-        performer = get_user_from_request(request)
         audit_create(db, "asset", asset.asset_id, performer, scope_id=asset.scope_id)
         db.commit()
         db.refresh(new_asset)
@@ -235,8 +247,9 @@ async def create_asset(
 
 @router.get("/{asset_id}", response_model=Asset)
 async def get_asset(
-    asset_id: str, 
-    db: Session = Depends(get_db)
+    asset_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get an asset by ID
@@ -256,11 +269,11 @@ async def get_asset(
 
 @router.put("/{asset_id}", response_model=Asset)
 async def update_asset(
-    asset_id: str, 
+    asset_id: str,
     asset: AssetUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    user: str = None
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Update an asset
@@ -277,7 +290,18 @@ async def update_asset(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Asset with ID {asset_id} not found"
             )
-        
+
+        # Enforce product-scope RBAC
+        product_for_rbac = db.query(DBProductScope).filter(
+            DBProductScope.scope_id == existing.scope_id
+        ).first()
+        product_org_id = getattr(product_for_rbac, 'organization_id', None)
+        if not can_manage_assets(db, current_user, product_org_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to edit assets in this product's department"
+            )
+
         # Check if product exists if changing product
         if asset.scope_id and asset.scope_id != existing.scope_id:
             product = db.query(DBProductScope).filter(
@@ -354,7 +378,7 @@ async def update_asset(
         original_asset.authenticity_required = asset.authenticity_required if asset.authenticity_required is not None else existing.authenticity_required
         original_asset.authorization_required = asset.authorization_required if asset.authorization_required is not None else existing.authorization_required
         original_asset.updated_at = datetime.now()
-        original_asset.updated_by = user
+        original_asset.updated_by = get_user_from_request(request) or current_user.email
         original_asset.revision_notes = "Updated asset"
         
         # No need to db.add as the object is already attached to the session
@@ -379,9 +403,10 @@ async def update_asset(
 
 @router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_asset(
-    asset_id: str, 
+    asset_id: str,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Delete an asset (logical delete via is_current flag)
@@ -398,7 +423,18 @@ async def delete_asset(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Asset with ID {asset_id} not found"
             )
-        
+
+        # Enforce product-scope RBAC
+        product_for_rbac = db.query(DBProductScope).filter(
+            DBProductScope.scope_id == asset.scope_id
+        ).first()
+        product_org_id = getattr(product_for_rbac, 'organization_id', None)
+        if not can_manage_assets(db, current_user, product_org_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete assets in this product's department"
+            )
+
         # Mark as deleted (set is_current to False)
         asset.is_current = False
         asset.revision_notes = "Deleted asset"
@@ -423,8 +459,9 @@ async def delete_asset(
 
 @router.get("/{asset_id}/history", response_model=List[AssetHistory])
 async def get_asset_history(
-    asset_id: str, 
-    db: Session = Depends(get_db)
+    asset_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get the version history of an asset
@@ -447,7 +484,8 @@ async def get_assets_by_product(
     scope_id: str,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get all assets for a specific product

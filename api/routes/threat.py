@@ -24,7 +24,7 @@ from api.services.threat_service import (
     perform_threat_analysis
 )
 from core.threat_catalog.catalog_seeder import seed_from_stix, get_catalog_stats
-from api.auth.dependencies import get_current_active_user
+from api.auth.dependencies import get_current_active_user, require_analyst_role
 from api.models.user import User
 
 router = APIRouter(
@@ -36,8 +36,9 @@ router = APIRouter(
 
 @router.post("/catalog", response_model=ThreatCatalogItem, status_code=status.HTTP_201_CREATED)
 async def create_new_catalog_item(
-    threat: ThreatCatalogCreate, 
-    db: Session = Depends(get_db)
+    threat: ThreatCatalogCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Create a new threat catalog item
@@ -47,12 +48,13 @@ async def create_new_catalog_item(
 
 @router.get("/catalog", response_model=ThreatCatalogList)
 async def list_catalog_items(
-    skip: int = 0, 
+    skip: int = 0,
     limit: int = 100,
     stride_category: Optional[StrideCategory] = None,
     component_type: Optional[str] = None,
     trust_zone: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     List threat catalog items with optional filtering
@@ -71,7 +73,8 @@ async def list_catalog_items(
 @router.post("/catalog/bulk", status_code=status.HTTP_201_CREATED)
 async def bulk_create_catalog_items(
     threats: List[ThreatCatalogCreate],
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """Bulk create threat catalog items"""
     created_items = [create_threat_catalog_item(db, t) for t in threats]
@@ -96,13 +99,20 @@ async def seed_mitre_catalog(
 
 
 @router.get("/catalog/stats")
-async def catalog_statistics(db: Session = Depends(get_db)):
+async def catalog_statistics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """Return summary statistics about the threat catalog."""
     return get_catalog_stats(db)
 
 
 @router.get("/catalog/{threat_id}", response_model=ThreatCatalogItem)
-async def get_catalog_item(threat_id: str, db: Session = Depends(get_db)):
+async def get_catalog_item(
+    threat_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
     """
     Get a specific threat catalog item by ID
     """
@@ -117,9 +127,10 @@ async def get_catalog_item(threat_id: str, db: Session = Depends(get_db)):
 
 @router.put("/catalog/{threat_id}", response_model=ThreatCatalogItem)
 async def update_catalog_item(
-    threat_id: str, 
-    threat_update: ThreatCatalogUpdate, 
-    db: Session = Depends(get_db)
+    threat_id: str,
+    threat_update: ThreatCatalogUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Update an existing threat catalog item
@@ -134,7 +145,11 @@ async def update_catalog_item(
 
 
 @router.delete("/catalog/{threat_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_catalog_item(threat_id: str, db: Session = Depends(get_db)):
+async def delete_catalog_item(
+    threat_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
+):
     """
     Delete a threat catalog item
     """
@@ -149,8 +164,9 @@ async def delete_catalog_item(threat_id: str, db: Session = Depends(get_db)):
 
 @router.post("/analyze", response_model=ThreatAnalysisResponse)
 async def analyze_threats(
-    analysis_request: ThreatAnalysisRequest, 
-    db: Session = Depends(get_db)
+    analysis_request: ThreatAnalysisRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_analyst_role),
 ):
     """
     Perform STRIDE threat analysis for the specified components
