@@ -401,8 +401,9 @@ def update_damage_scenario(
                 scenario.severity is not None]):
             
             # Get current violated properties
-            violated_props = _parse_json_field(db_scenario.violated_properties) or {}
-            
+            _vp_raw = _parse_json_field(db_scenario.violated_properties)
+            violated_props = _vp_raw if isinstance(_vp_raw, dict) else {}
+
             # Update fields if provided
             if scenario.confidentiality_impact is not None:
                 violated_props['confidentiality'] = scenario.confidentiality_impact
@@ -744,7 +745,8 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
 
     if is_product_scenario:
         # Handle ProductDamageScenario
-        violated_props = _parse_json_field(db_scenario.violated_properties) or {}
+        _vp_raw = _parse_json_field(db_scenario.violated_properties)
+        violated_props = _vp_raw if isinstance(_vp_raw, dict) else {}
         
         # Extract CIA impacts and severity from violated_properties
         # Use database fields as fallback if violated_properties doesn't have CIA data
