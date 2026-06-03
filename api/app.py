@@ -21,7 +21,10 @@ class SPAStaticFiles(StaticFiles):
         try:
             return await super().get_response(path, scope)
         except StarletteHTTPException as exc:
-            if exc.status_code == 404:
+            # Never mask unmatched API routes with the SPA shell: returning
+            # index.html (HTTP 200) for an /api/* call makes the browser parse
+            # HTML as JSON. Let these surface as a real 404 instead.
+            if exc.status_code == 404 and path != "api" and not path.startswith("api/"):
                 return await super().get_response("index.html", scope)
             raise
 

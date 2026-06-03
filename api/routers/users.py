@@ -44,7 +44,7 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
-@router.get("/", response_model=List[UserResponse])
+@router.get("", response_model=List[UserResponse])
 async def get_users(
     skip: int = 0,
     limit: int = 100,
@@ -122,7 +122,7 @@ async def get_user(
         )
     return user
 
-@router.post("/", response_model=UserResponse)
+@router.post("", response_model=UserResponse)
 async def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
