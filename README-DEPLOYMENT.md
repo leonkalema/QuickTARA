@@ -2,6 +2,84 @@
 
 This guide covers three deployment scenarios. Pick the one that matches your situation.
 
+**Already deployed and just want the latest version?** Jump to
+**[Upgrading an Existing Deployment](#upgrading-an-existing-deployment)**.
+
+---
+
+## Upgrading an Existing Deployment
+
+Already running QuickTARA (on your laptop, office LAN, or intranet) and want
+to pull in the latest fixes? You do **not** reinstall or lose any data.
+
+### The one command
+
+Open a terminal, go into your existing QuickTARA folder, and run:
+
+**macOS / Linux:**
+```bash
+bash upgrade.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\upgrade.ps1
+```
+
+That's it. The script pulls the latest code, updates dependencies, rebuilds
+the frontend, applies database migrations, and then tells you how to restart.
+
+### What the upgrade does (and why)
+
+| Step | What happens | Why it matters |
+|------|--------------|----------------|
+| `git pull` | Downloads the latest code | Gets the new features and bug fixes |
+| `pip install -r requirements.txt` | Updates Python packages | New code may need new/updated libraries |
+| **Rebuild the frontend** (`npm run build`) | Recompiles the web UI into static files | **This is the step people miss.** The UI is *compiled*, so fixes to the interface (like the login URL fix) only take effect after a rebuild |
+| `alembic upgrade head` | Applies database migrations | Adds new tables/columns without touching your existing data |
+
+Your database (`quicktara.db`, or your MySQL/PostgreSQL data) is **always
+preserved** — the upgrade only changes code, never your TARA data.
+
+### Restart the server (required)
+
+Code changes only take effect after a restart. Pick the line that matches how
+you run QuickTARA:
+
+- **Started manually in a terminal** — press `Ctrl+C` in that terminal, then:
+  ```bash
+  python quicktara_web.py --host 0.0.0.0 --port 8080
+  ```
+- **Running as a systemd service (Linux):**
+  ```bash
+  sudo systemctl restart quicktara
+  ```
+- **Running in Docker:**
+  ```bash
+  docker-compose up -d --build
+  ```
+
+Finally, **hard-refresh your browser** (`Cmd/Ctrl + Shift + R`) so it drops the
+old cached UI and loads the new one.
+
+### Prefer to do it by hand?
+
+The script just runs these steps for you — you can run them manually instead:
+
+```bash
+cd /path/to/QuickTARA          # your existing folder
+git pull                       # 1. latest code
+source .venv/bin/activate      # use your virtual env
+pip install -r requirements.txt        # 2. python deps
+cd tara-web && npm install && npm run build && cd ..   # 3. REBUILD the UI
+python -m alembic upgrade head         # 4. migrations (data preserved)
+# 5. restart the server (see options above)
+```
+
+> **Most common upgrade mistake:** pulling the code but forgetting to run
+> `npm run build`. The backend updates, but the browser keeps serving the old
+> compiled UI — so frontend fixes appear to "not work". Always rebuild.
+
 ---
 
 ## Scenario 1: Just Me, On My Laptop
@@ -93,15 +171,13 @@ To restore, stop the server, replace `quicktara.db` with your backup, and restar
 
 ### Updating to a new version
 
+One command, from inside your QuickTARA folder:
+
 ```bash
-cd QuickTARA
-git pull
-pip install -r requirements.txt
-cd tara-web && npm install && npm run build && cd ..
-python quicktara_web.py --host 0.0.0.0 --port 8080
+bash upgrade.sh
 ```
 
-Your database is preserved — only code is updated.
+See **[Upgrading an Existing Deployment](#upgrading-an-existing-deployment)** below for the full explanation and the Windows/Docker equivalents. Your database is always preserved — only code is updated.
 
 ---
 

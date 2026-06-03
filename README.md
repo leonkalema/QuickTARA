@@ -100,6 +100,17 @@ under *Settings → My Account*, then delete the file.
 
 Everything runs at **http://localhost:8080** (or `http://YOUR-IP:8080` on the LAN). One port, one URL — no cert warnings, no cross-origin issues.
 
+### Upgrading an existing install
+
+Already deployed and want the latest version? From inside your QuickTARA folder:
+
+```bash
+bash upgrade.sh          # macOS / Linux
+.\upgrade.ps1            # Windows (PowerShell)
+```
+
+It pulls the latest code, updates dependencies, **rebuilds the frontend**, runs database migrations (your data is preserved), and tells you how to restart. Full details and the manual steps are in the [Deployment Guide](README-DEPLOYMENT.md#upgrading-an-existing-deployment).
+
 ### Securing your deployment
 
 HTTP is fine for localhost and trusted office networks. For production or
