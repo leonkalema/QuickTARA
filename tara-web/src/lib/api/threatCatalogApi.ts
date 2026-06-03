@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '$lib/config';
+import { apiFetch } from './apiClient';
 
 export interface ThreatCatalogItem {
 	id: string;
@@ -36,12 +36,6 @@ export interface ThreatCatalogListResponse {
 	total: number;
 }
 
-class ThreatCatalogApiError extends Error {
-	constructor(message: string, public status?: number) {
-		super(message);
-		this.name = 'ThreatCatalogApiError';
-	}
-}
 
 export const threatCatalogApi = {
 	async getItems(params?: {
@@ -59,15 +53,11 @@ export const threatCatalogApi = {
 		if (params?.trust_zone) searchParams.set('trust_zone', params.trust_zone);
 
 		const query = searchParams.toString();
-		const url = `${API_BASE_URL}/threat/catalog${query ? `?${query}` : ''}`;
-		const resp = await fetch(url);
-		if (!resp.ok) throw new ThreatCatalogApiError(`HTTP ${resp.status}`, resp.status);
-		return resp.json();
+		const path = `/threat/catalog${query ? `?${query}` : ''}`;
+		return apiFetch<ThreatCatalogListResponse>(path);
 	},
 
 	async getItem(id: string): Promise<ThreatCatalogItem> {
-		const resp = await fetch(`${API_BASE_URL}/threat/catalog/${id}`);
-		if (!resp.ok) throw new ThreatCatalogApiError(`HTTP ${resp.status}`, resp.status);
-		return resp.json();
+		return apiFetch<ThreatCatalogItem>(`/threat/catalog/${id}`);
 	}
 };
