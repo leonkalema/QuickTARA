@@ -102,12 +102,17 @@ def alembic_db_url(tmp_path: Path) -> str:
 @pytest.fixture
 def alembic_client(alembic_db_url: str) -> Generator[TestClient, None, None]:
     """TestClient backed by a fully migrated ephemeral DB — use for TARA flow tests."""
+    import api.deps.db as _db_module
     from api.app import app
     from api.auth.dependencies import get_current_active_user, get_current_user
     from api.deps.db import get_db
 
     engine = create_engine(alembic_db_url, connect_args={"check_same_thread": False})
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+    # Patch the module-level SessionLocal so get_user_roles() (which imports it
+    # inside its function body) queries the test DB instead of the real one.
+    _db_module.SessionLocal = SessionLocal  # type: ignore[attr-defined]
 
     def _override_db() -> Generator[Session, None, None]:
         session = SessionLocal()
@@ -122,7 +127,9 @@ def alembic_client(alembic_db_url: str) -> Generator[TestClient, None, None]:
         email = "test@example.com"
         status = "active"
         organization_id = None
-        is_superuser = False
+        # is_superuser=True → get_user_roles() returns TOOL_ADMIN immediately,
+        # satisfying require_analyst_role and all other role guards in the routes.
+        is_superuser = True
 
     async def _override_user() -> _StubUser:
         return _StubUser()
