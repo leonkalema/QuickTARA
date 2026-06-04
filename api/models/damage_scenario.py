@@ -141,12 +141,12 @@ class DamageScenarioUpdate(BaseModel):
     revision_notes: Optional[str] = None
     
     # SFOP impact ratings
-    safety_impact: Optional[SeverityLevel] = None
-    financial_impact: Optional[SeverityLevel] = None
-    operational_impact: Optional[SeverityLevel] = None
-    privacy_impact: Optional[SeverityLevel] = None
+    safety_impact: Optional[ImpactRatingLevel] = None
+    financial_impact: Optional[ImpactRatingLevel] = None
+    operational_impact: Optional[ImpactRatingLevel] = None
+    privacy_impact: Optional[ImpactRatingLevel] = None
     impact_rating_notes: Optional[str] = None
-    
+
     # Audit fields for regulatory compliance
     sfop_rating_auto_generated: Optional[bool] = None
     sfop_rating_last_edited_by: Optional[str] = None

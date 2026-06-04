@@ -57,13 +57,14 @@
 
 	async function aggregateTotals(): Promise<void> {
 		totalAssets = 0; totalDamageScenarios = 0; totalThreatScenarios = 0; totalTreatments = 0;
+		const headers = getAuthHeaders();
 		for (const scope of productScopes) {
 			try {
 				const [aRes, dRes, tRes, rRes] = await Promise.all([
-					fetch(`${API_BASE_URL}/assets?scope_id=${scope.scope_id}`),
-					fetch(`${API_BASE_URL}/damage-scenarios?scope_id=${scope.scope_id}`),
-					fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${scope.scope_id}`),
-					fetch(`${API_BASE_URL}/risk-treatment?scope_id=${scope.scope_id}`)
+					fetch(`${API_BASE_URL}/assets?scope_id=${scope.scope_id}`, { headers }),
+					fetch(`${API_BASE_URL}/damage-scenarios?scope_id=${scope.scope_id}`, { headers }),
+					fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${scope.scope_id}`, { headers }),
+					fetch(`${API_BASE_URL}/risk-treatment?scope_id=${scope.scope_id}`, { headers })
 				]);
 				const [a, d, t, r] = await Promise.all([
 					aRes.ok ? aRes.json() : { assets: [] },
