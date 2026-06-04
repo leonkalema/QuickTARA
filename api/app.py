@@ -238,17 +238,15 @@ def create_app(settings=None):
     
     @app.on_event("startup")
     async def seed_threat_catalog_on_startup():
-        """Auto-seed threat catalog from bundled data if empty. No internet needed."""
+        """
+        Auto-seed threat catalog from MITRE ATT&CK ICS on first startup.
+        Downloads the STIX bundle if not cached locally; runs in a background
+        thread so the app is immediately available while seeding happens.
+        """
         try:
-            from core.threat_catalog.startup_seed import auto_seed_catalog
+            from core.threat_catalog.startup_seed import schedule_background_seed
             from api.deps.db import SessionLocal
-            db = SessionLocal()
-            try:
-                result = auto_seed_catalog(db)
-                if result.get("created", 0) > 0:
-                    logger.info("Auto-seeded %d threats into catalog", result["created"])
-            finally:
-                db.close()
+            schedule_background_seed(SessionLocal)
         except Exception as e:
             logger.warning("Threat catalog auto-seed skipped: %s", str(e))
     

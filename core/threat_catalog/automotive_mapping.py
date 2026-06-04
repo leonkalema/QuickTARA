@@ -93,27 +93,73 @@ def enrich_technique(
 def enrich_all_techniques(
     techniques: List[Dict[str, Any]],
     mapping_config: Optional[Dict[str, Any]] = None,
+    include_unmapped: bool = True,
 ) -> List[Dict[str, Any]]:
     """
-    Enrich a list of parsed STIX techniques, keeping only those
-    with an automotive mapping entry.
+    Enrich a list of parsed STIX techniques.
+
+    When include_unmapped=True (default), techniques without an entry in
+    automotive_mappings.json are still included with reasonable defaults
+    so the catalog is populated even without a custom mapping file.
+    Unmapped techniques get automotive_relevance=2 (the generator minimum)
+    and empty component_types/trust_zones (matches any asset type).
     """
     if mapping_config is None:
         mapping_config = load_mapping_config()
 
     enriched: List[Dict[str, Any]] = []
+    mapped = 0
+    defaulted = 0
+
     for tech in techniques:
         result = enrich_technique(tech, mapping_config)
         if result is not None:
             enriched.append(result)
+            mapped += 1
+        elif include_unmapped:
+            enriched.append(_default_enrichment(tech, mapping_config))
+            defaulted += 1
 
-    skipped = len(techniques) - len(enriched)
     logger.info(
-        "Enriched %d automotive-relevant techniques (skipped %d)",
-        len(enriched),
-        skipped,
+        "Enriched %d techniques (%d mapped, %d with defaults)",
+        len(enriched), mapped, defaulted,
     )
     return enriched
+
+
+def _default_enrichment(
+    technique: Dict[str, Any],
+    mapping_config: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Produce a minimal automotive enrichment for an unmapped ICS technique.
+    Uses tactic→STRIDE mapping and sets empty component/zone lists so it
+    matches all asset types in the generator.
+    """
+    tactic_names = technique.get("tactic_names", [])
+    primary_tactic = tactic_names[0] if tactic_names else ""
+    stride_category = get_stride_for_tactic(primary_tactic)
+
+    return {
+        "mitre_technique_id": technique.get("mitre_technique_id", ""),
+        "title": technique.get("name", ""),
+        "description": technique.get("description", ""),
+        "stride_category": stride_category,
+        "mitre_tactic": primary_tactic,
+        "source": "mitre_attack_ics",
+        "source_version": mapping_config.get("attack_version", ""),
+        "automotive_relevance": 2,          # minimum to pass generator filter
+        "automotive_context": "",
+        "applicable_component_types": [],   # empty = matches all asset types
+        "applicable_trust_zones": [],       # empty = matches all trust zones
+        "attack_vectors": [],
+        "typical_likelihood": 3,
+        "typical_severity": 3,
+        "mitigation_strategies": _build_mitigation_list(technique.get("mitigations", [])),
+        "cwe_ids": [],
+        "capec_ids": [],
+        "examples": [],
+    }
 
 
 def _build_mitigation_list(

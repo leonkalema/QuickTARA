@@ -1,102 +1,165 @@
 """
 Startup auto-seeder for the threat catalog.
-Seeds from automotive_mappings.json directly — no STIX bundle required.
-This runs on app startup if the catalog is empty.
 
-Purpose: Ensure prod deployments ship with a pre-populated threat catalog
-Depends on: core/threat_catalog/catalog_seeder.py, data/threat_catalogs/automotive_mappings.json
+On startup, if the catalog is empty:
+  1. Try to load a cached STIX bundle from disk.
+  2. If not cached, download it from MITRE GitHub (with timeout + retry).
+  3. Parse the STIX bundle and enrich with automotive context.
+  4. Upsert into the threat_catalog table.
+
+Runs in a background thread so it never blocks app startup.
+Falls back gracefully if the network is unavailable.
+
+Purpose: Ship a pre-populated threat catalog out of the box — no manual steps
+Depends on: core/threat_catalog/catalog_seeder.py, core/threat_catalog/stix_parser.py
 Used by: api/app.py (startup event)
 """
+import json
 import logging
+import threading
+import urllib.request
+import urllib.error
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any
+
 from sqlalchemy.orm import Session
 
 from db.threat_catalog import ThreatCatalog
-from core.threat_catalog.automotive_mapping import load_mapping_config, get_stride_for_tactic
-from core.threat_catalog.catalog_seeder import seed_from_enriched
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "threat_catalogs"
-DEFAULT_MAPPING_FILE = DATA_DIR / "automotive_mappings.json"
+# ── Constants ────────────────────────────────────────────────────────────────
 
+STIX_URL = (
+    "https://raw.githubusercontent.com/mitre-attack/attack-stix-data"
+    "/master/ics-attack/ics-attack.json"
+)
+FALLBACK_STIX_URL = (
+    "https://raw.githubusercontent.com/mitre/cti"
+    "/master/ics-attack/ics-attack.json"
+)
+
+DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "threat_catalogs"
+STIX_CACHE_PATH = DATA_DIR / "ics-attack.json"
+
+DOWNLOAD_TIMEOUT_SECONDS = 30
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
 
 def should_auto_seed(db: Session) -> bool:
-    """Check if the catalog needs seeding (empty or no MITRE entries)."""
-    mitre_count = db.query(ThreatCatalog).filter(
+    """Return True if the catalog has no MITRE ICS entries."""
+    return db.query(ThreatCatalog).filter(
         ThreatCatalog.source == "mitre_attack_ics"
-    ).count()
-    return mitre_count == 0
+    ).count() == 0
 
 
-def auto_seed_catalog(db: Session) -> Dict[str, int]:
+def auto_seed_catalog(db: Session) -> Dict[str, Any]:
     """
-    Auto-seed the threat catalog from automotive_mappings.json on startup.
-    Only runs if no MITRE entries exist. No internet access needed.
+    Seed the threat catalog if empty. Blocks the caller — wrap in a thread
+    for non-blocking use (see schedule_background_seed).
     """
     if not should_auto_seed(db):
-        logger.info("Threat catalog already seeded, skipping auto-seed")
+        logger.info("Threat catalog already seeded — skipping")
         return {"created": 0, "updated": 0, "skipped": 0}
 
-    config = load_mapping_config(DEFAULT_MAPPING_FILE)
-    if not config.get("mappings"):
-        logger.warning("No automotive mappings found at %s", DEFAULT_MAPPING_FILE)
-        return {"created": 0, "updated": 0, "skipped": 0}
+    stix_path = _ensure_stix_bundle()
+    if stix_path is None:
+        logger.error(
+            "Could not obtain STIX bundle (no cache, download failed). "
+            "Threat catalog will be empty until network is available."
+        )
+        return {"created": 0, "updated": 0, "skipped": 0, "error": "stix_unavailable"}
 
-    enriched = _build_threats_from_mappings(config)
-    result = seed_from_enriched(db, enriched)
-    logger.info(
-        "Auto-seed complete: %d threats created, %d updated",
-        result["created"],
-        result["updated"],
-    )
-    return result
-
-
-def _build_threats_from_mappings(config: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Build enriched threat dicts directly from automotive_mappings.json."""
-    attack_version = config.get("attack_version", "")
-    threats: List[Dict[str, Any]] = []
-
-    for technique_id, mapping in config.get("mappings", {}).items():
-        primary_vector = mapping.get("attack_vectors", [""])[0] if mapping.get("attack_vectors") else ""
-        stride_category = _infer_stride_from_mapping(mapping, primary_vector)
-
-        threats.append({
-            "mitre_technique_id": technique_id,
-            "title": f"ATT&CK ICS {technique_id}",
-            "description": mapping.get("automotive_context", ""),
-            "stride_category": stride_category,
-            "mitre_tactic": "",
-            "source": "mitre_attack_ics",
-            "source_version": attack_version,
-            "automotive_relevance": mapping.get("automotive_relevance", 3),
-            "automotive_context": mapping.get("automotive_context", ""),
-            "applicable_component_types": mapping.get("component_types", []),
-            "applicable_trust_zones": mapping.get("trust_zones", []),
-            "attack_vectors": mapping.get("attack_vectors", []),
-            "typical_likelihood": mapping.get("typical_likelihood", 3),
-            "typical_severity": mapping.get("typical_severity", 3),
-            "mitigation_strategies": [],
-            "cwe_ids": mapping.get("cwe_ids", []),
-            "capec_ids": mapping.get("capec_ids", []),
-            "examples": mapping.get("examples", []),
-        })
-
-    return threats
+    try:
+        from core.threat_catalog.catalog_seeder import seed_from_stix
+        result = seed_from_stix(db, stix_path=stix_path)
+        logger.info(
+            "Threat catalog seeded from MITRE ATT&CK ICS: "
+            "created=%d updated=%d skipped=%d",
+            result.get("created", 0),
+            result.get("updated", 0),
+            result.get("skipped", 0),
+        )
+        return result
+    except Exception as exc:
+        logger.error("Catalog seed failed: %s", exc, exc_info=True)
+        return {"created": 0, "updated": 0, "skipped": 0, "error": str(exc)}
 
 
-def _infer_stride_from_mapping(mapping: Dict[str, Any], primary_vector: str) -> str:
-    """Infer STRIDE category from the mapping's severity/vector context."""
-    severity = mapping.get("typical_severity", 3)
-    vectors = mapping.get("attack_vectors", [])
-    trust_zones = mapping.get("trust_zones", [])
+def schedule_background_seed(db_factory) -> None:
+    """
+    Run auto_seed_catalog in a daemon thread so app startup is not blocked.
+    db_factory must be a zero-argument callable that returns a DB session.
+    """
+    def _run():
+        db = db_factory()
+        try:
+            auto_seed_catalog(db)
+        finally:
+            db.close()
 
-    if severity >= 5 and "can_bus" in vectors:
-        return "tampering"
-    if "external" in trust_zones or "network" in vectors:
-        return "spoofing"
-    if severity <= 3 and any(v in vectors for v in ["wifi", "bluetooth"]):
-        return "info_disclosure"
-    return "tampering"
+    thread = threading.Thread(target=_run, daemon=True, name="catalog-seed")
+    thread.start()
+    logger.info("Catalog seeder started in background thread")
+
+
+# ── Internal helpers ──────────────────────────────────────────────────────────
+
+def _ensure_stix_bundle() -> Path | None:
+    """
+    Return path to the STIX bundle, downloading it if not already cached.
+    Returns None if unavailable.
+    """
+    if STIX_CACHE_PATH.exists():
+        logger.info("Using cached STIX bundle at %s", STIX_CACHE_PATH)
+        return STIX_CACHE_PATH
+
+    logger.info("STIX bundle not cached — downloading from MITRE GitHub…")
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    for url in (STIX_URL, FALLBACK_STIX_URL):
+        path = _download_stix(url, STIX_CACHE_PATH)
+        if path is not None:
+            return path
+
+    return None
+
+
+def _download_stix(url: str, dest: Path) -> Path | None:
+    """
+    Download the STIX bundle from url → dest.
+    Returns dest on success, None on failure.
+    """
+    try:
+        logger.info("Downloading STIX bundle from %s", url)
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "QuickTARA/1.0 (threat-catalog-seeder)"},
+        )
+        with urllib.request.urlopen(req, timeout=DOWNLOAD_TIMEOUT_SECONDS) as resp:
+            raw = resp.read()
+
+        # Validate it looks like a STIX bundle before caching
+        parsed = json.loads(raw)
+        if parsed.get("type") != "bundle" or "objects" not in parsed:
+            logger.error("Downloaded file from %s is not a valid STIX bundle", url)
+            return None
+
+        dest.write_bytes(raw)
+        size_kb = len(raw) // 1024
+        logger.info(
+            "STIX bundle downloaded and cached at %s (%d KB, %d objects)",
+            dest, size_kb, len(parsed["objects"]),
+        )
+        return dest
+
+    except urllib.error.URLError as exc:
+        logger.warning("Download failed from %s: %s", url, exc)
+        return None
+    except (json.JSONDecodeError, KeyError) as exc:
+        logger.warning("Invalid STIX data from %s: %s", url, exc)
+        return None
+    except Exception as exc:
+        logger.warning("Unexpected error downloading from %s: %s", url, exc)
+        return None

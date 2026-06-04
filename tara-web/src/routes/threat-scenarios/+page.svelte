@@ -21,6 +21,7 @@
   let isGenerating = false;
   let hasExistingAutoDrafts = false;
   let showConfirmGenerate = false;
+  let catalogCount = 0;
   let statusFilter: 'all' | 'draft' | 'accepted' = 'all';
   
   // Pagination
@@ -79,6 +80,12 @@
       // Load threat scenarios
       await loadThreatScenarios();
       hasExistingAutoDrafts = await scenarioGeneratorApi.hasAutoThreatDrafts($selectedProduct.scope_id);
+
+      // Check if threat catalog is seeded
+      try {
+        const stats = await scenarioGeneratorApi.getCatalogStats();
+        catalogCount = stats.total ?? 0;
+      } catch { catalogCount = 0; }
     } catch (error) {
       console.error('Error loading data:', error);
       notifications.show('Failed to load threat scenarios', 'error');
@@ -138,12 +145,26 @@
     isGenerating = true;
     try {
       const result = await scenarioGeneratorApi.generateThreatScenarios($selectedProduct.scope_id);
-      const msg = result.drafts_replaced > 0
-        ? `Generated ${result.threat_scenarios_created} scenarios (replaced ${result.drafts_replaced} old drafts)`
-        : `Generated ${result.threat_scenarios_created} threat scenarios from ${result.damage_scenarios_used} damage scenarios`;
-      notifications.show(msg, 'success');
+      if (result.threat_scenarios_created === 0) {
+        if (catalogCount === 0) {
+          notifications.show(
+            'No threat scenarios generated — your threat catalog is empty. Go to Settings → Threat Catalog and seed it with MITRE ATT&CK ICS data first.',
+            'warning'
+          );
+        } else {
+          notifications.show(
+            'No threat scenarios generated. Check that your damage scenarios cover at least one CIA dimension and that catalog entries match your asset types.',
+            'warning'
+          );
+        }
+      } else {
+        const msg = result.drafts_replaced > 0
+          ? `Generated ${result.threat_scenarios_created} threat scenarios (replaced ${result.drafts_replaced} old drafts)`
+          : `Generated ${result.threat_scenarios_created} threat scenarios from ${result.damage_scenarios_used} damage scenarios`;
+        notifications.show(msg, 'success');
+        hasExistingAutoDrafts = true;
+      }
       await loadData();
-      hasExistingAutoDrafts = true;
     } catch (error: any) {
       notifications.show(error.message || 'Auto-generation failed. Do you have damage scenarios?', 'error');
     } finally {
@@ -203,8 +224,14 @@
         <div class="flex flex-col items-end gap-0.5">
           <button
             on:click={handleAutoGenerateClick}
-            disabled={isGenerating || hasExistingAutoDrafts}
-            title={hasExistingAutoDrafts ? 'Auto-generated drafts already exist. Review and accept them, or delete them to run again.' : 'Generate threat scenarios from your damage scenarios'}
+            disabled={isGenerating || hasExistingAutoDrafts || catalogCount === 0}
+            title={
+              catalogCount === 0
+                ? 'Threat catalog is empty — seed it in Settings → Threat Catalog first'
+                : hasExistingAutoDrafts
+                  ? 'Auto-generated drafts already exist. Review and accept them, or delete them to re-run.'
+                  : 'Generate threat scenarios from your damage scenarios using the MITRE ATT&CK ICS catalog'
+            }
             class="px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             style="background: var(--color-accent-secondary); color: var(--color-text-inverse);"
           >
@@ -217,7 +244,9 @@
               Auto-Generate
             {/if}
           </button>
-          {#if hasExistingAutoDrafts}
+          {#if catalogCount === 0}
+            <span class="text-[10px]" style="color: var(--color-error, #ef4444);">Catalog empty — seed in Settings first</span>
+          {:else if hasExistingAutoDrafts}
             <span class="text-[10px]" style="color: var(--color-text-tertiary);">Review drafts, then delete to re-run</span>
           {/if}
         </div>

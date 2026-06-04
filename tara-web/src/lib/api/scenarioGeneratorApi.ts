@@ -1,11 +1,11 @@
 /**
  * API client for auto-generating damage + threat scenarios from assets.
  *
- * Purpose: Frontend client for POST /api/analysis/generate-scenarios/{scope_id}
- * Depends on: $lib/config
- * Used by: threat-scenarios page, assets page (generate button)
+ * Purpose: Frontend client for scenario generation endpoints
+ * Depends on: $lib/api/apiClient
+ * Used by: threat-scenarios page, damage-scenarios page
  */
-import { API_BASE_URL } from '$lib/config';
+import { apiFetch } from './apiClient';
 
 /** Preview before generating (no DB writes) */
 export interface GenerationPreview {
@@ -35,90 +35,57 @@ export interface ThreatGenerationResult {
   readonly drafts_replaced: number;
 }
 
-class ScenarioGeneratorApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status?: number,
-  ) {
-    super(message);
-    this.name = 'ScenarioGeneratorApiError';
-  }
+/** Threat catalog statistics */
+export interface CatalogStats {
+  readonly total: number;
+  readonly mitre_attack_ics: number;
+  readonly custom: number;
 }
 
 export const scenarioGeneratorApi = {
-  /**
-   * Check if auto-generated damage drafts already exist for this product.
-   */
+  /** Check if auto-generated damage drafts already exist for this product. */
   async hasAutoDamageDrafts(scopeId: string): Promise<boolean> {
-    const response = await fetch(
-      `${API_BASE_URL}/analysis/has-auto-damage-drafts/${scopeId}`,
-    );
-    if (!response.ok) return false;
-    const data = await response.json();
-    return data.has_drafts === true;
+    try {
+      const data = await apiFetch<{ has_drafts: boolean }>(
+        `/analysis/has-auto-damage-drafts/${scopeId}`,
+      );
+      return data.has_drafts === true;
+    } catch { return false; }
   },
 
-  /**
-   * Check if auto-generated threat drafts already exist for this product.
-   */
+  /** Check if auto-generated threat drafts already exist for this product. */
   async hasAutoThreatDrafts(scopeId: string): Promise<boolean> {
-    const response = await fetch(
-      `${API_BASE_URL}/analysis/has-auto-threat-drafts/${scopeId}`,
-    );
-    if (!response.ok) return false;
-    const data = await response.json();
-    return data.has_drafts === true;
+    try {
+      const data = await apiFetch<{ has_drafts: boolean }>(
+        `/analysis/has-auto-threat-drafts/${scopeId}`,
+      );
+      return data.has_drafts === true;
+    } catch { return false; }
   },
 
-  /**
-   * Preview how many scenarios would be generated (no DB writes).
-   */
+  /** Get threat catalog statistics (total count etc.). */
+  async getCatalogStats(): Promise<CatalogStats> {
+    return apiFetch<CatalogStats>('/threat/catalog/stats');
+  },
+
+  /** Preview how many damage scenarios would be generated (no DB writes). */
   async previewDamageGeneration(scopeId: string): Promise<GenerationPreview> {
-    const response = await fetch(
-      `${API_BASE_URL}/analysis/preview-damage-generation/${scopeId}`,
-    );
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new ScenarioGeneratorApiError(`Preview failed: ${errorText}`, response.status);
-    }
-    return response.json();
+    return apiFetch<GenerationPreview>(`/analysis/preview-damage-generation/${scopeId}`);
   },
 
-  /**
-   * Step 1: Auto-generate damage scenarios from assets (CIA-based).
-   * Called from the Damage Scenarios page.
-   */
+  /** Step 1: Auto-generate damage scenarios from assets (CIA-based). */
   async generateDamageScenarios(scopeId: string): Promise<DamageGenerationResult> {
-    const response = await fetch(
-      `${API_BASE_URL}/analysis/generate-damage-scenarios/${scopeId}`,
+    return apiFetch<DamageGenerationResult>(
+      `/analysis/generate-damage-scenarios/${scopeId}`,
       { method: 'POST' },
     );
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new ScenarioGeneratorApiError(
-        `Damage scenario generation failed: ${errorText}`,
-        response.status,
-      );
-    }
-    return response.json();
   },
 
-  /**
-   * Step 2: Auto-generate threat scenarios from existing damage scenarios.
-   * Called from the Threat Scenarios page. Requires damage scenarios to exist.
-   */
+  /** Step 2: Auto-generate threat scenarios from existing damage scenarios. */
   async generateThreatScenarios(scopeId: string): Promise<ThreatGenerationResult> {
-    const response = await fetch(
-      `${API_BASE_URL}/analysis/generate-threat-scenarios/${scopeId}`,
+    return apiFetch<ThreatGenerationResult>(
+      `/analysis/generate-threat-scenarios/${scopeId}`,
       { method: 'POST' },
     );
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new ScenarioGeneratorApiError(
-        `Threat scenario generation failed: ${errorText}`,
-        response.status,
-      );
-    }
-    return response.json();
   },
 };
