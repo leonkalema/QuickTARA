@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field
 
-from api.models.damage_scenario import SeverityLevel
+from api.models.damage_scenario import SeverityLevel, ImpactRatingLevel
 
 
 class ImpactRatingExplanation(BaseModel):
@@ -18,18 +18,18 @@ class ImpactRatingExplanation(BaseModel):
 
 class ImpactRatingUpdate(BaseModel):
     """Model for updating impact ratings"""
-    safety_impact: Optional[SeverityLevel] = None
-    financial_impact: Optional[SeverityLevel] = None
-    operational_impact: Optional[SeverityLevel] = None
-    privacy_impact: Optional[SeverityLevel] = None
+    safety_impact: Optional[ImpactRatingLevel] = None
+    financial_impact: Optional[ImpactRatingLevel] = None
+    operational_impact: Optional[ImpactRatingLevel] = None
+    privacy_impact: Optional[ImpactRatingLevel] = None
     impact_rating_notes: Optional[str] = None
     sfop_rating_override_reason: Optional[str] = None  # Required when manually overriding auto-ratings
 
 
 class ImpactRatingSuggestion(BaseModel):
     """Suggested impact ratings based on component and damage properties"""
-    safety_impact: SeverityLevel
-    financial_impact: SeverityLevel
-    operational_impact: SeverityLevel
-    privacy_impact: SeverityLevel
+    safety_impact: ImpactRatingLevel
+    financial_impact: ImpactRatingLevel
+    operational_impact: ImpactRatingLevel
+    privacy_impact: ImpactRatingLevel
     explanations: ImpactRatingExplanation

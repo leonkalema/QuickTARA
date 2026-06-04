@@ -96,18 +96,19 @@ async def suggest_sfop_ratings(
     # 3. System context and dependencies
     
     # Placeholder logic - would be replaced with actual algorithm
-    safety_impact = SeverityLevel.HIGH if damage_category == DamageCategory.SAFETY else SeverityLevel.LOW
-    financial_impact = SeverityLevel.HIGH if damage_category == DamageCategory.FINANCIAL else SeverityLevel.MEDIUM
-    operational_impact = SeverityLevel.HIGH if damage_category == DamageCategory.OPERATIONAL else SeverityLevel.MEDIUM
-    privacy_impact = SeverityLevel.HIGH if damage_category == DamageCategory.PRIVACY else SeverityLevel.LOW
-    
-    # If availability is impacted, operational impact is at least MEDIUM
-    if availability_impact and operational_impact == SeverityLevel.LOW:
-        operational_impact = SeverityLevel.MEDIUM
-        
-    # If confidentiality is impacted, privacy impact is at least MEDIUM
-    if confidentiality_impact and privacy_impact == SeverityLevel.LOW:
-        privacy_impact = SeverityLevel.MEDIUM
+    from api.models.damage_scenario import ImpactRatingLevel
+    safety_impact = ImpactRatingLevel.SEVERE if damage_category == DamageCategory.SAFETY else ImpactRatingLevel.NEGLIGIBLE
+    financial_impact = ImpactRatingLevel.MAJOR if damage_category == DamageCategory.FINANCIAL else ImpactRatingLevel.MODERATE
+    operational_impact = ImpactRatingLevel.MAJOR if damage_category == DamageCategory.OPERATIONAL else ImpactRatingLevel.MODERATE
+    privacy_impact = ImpactRatingLevel.SEVERE if damage_category == DamageCategory.PRIVACY else ImpactRatingLevel.NEGLIGIBLE
+
+    # If availability is impacted, operational impact is at least MODERATE
+    if availability_impact and operational_impact == ImpactRatingLevel.NEGLIGIBLE:
+        operational_impact = ImpactRatingLevel.MODERATE
+
+    # If confidentiality is impacted, privacy impact is at least MODERATE
+    if confidentiality_impact and privacy_impact == ImpactRatingLevel.NEGLIGIBLE:
+        privacy_impact = ImpactRatingLevel.MODERATE
     
     explanations = ImpactRatingExplanation(
         safety_impact=f"Based on component type and {damage_category.value} damage category",
