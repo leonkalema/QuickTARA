@@ -239,7 +239,7 @@ class TestEnrichAllTechniques:
         result = enrich_all_techniques(techniques, mapping_config={"mappings": {}}, include_unmapped=True)
         assert len(result) == 1
         assert result[0]["mitre_technique_id"] == "T9991"
-        assert result[0]["automotive_relevance"] == 2
+        assert result[0]["automotive_relevance"] == 1  # below generator threshold — catalogued but not auto-generated
 
     def test_excludes_unmapped_when_flag_false(self) -> None:
         from core.threat_catalog.automotive_mapping import enrich_all_techniques

@@ -49,9 +49,13 @@ DOWNLOAD_TIMEOUT_SECONDS = 30
 
 def should_auto_seed(db: Session) -> bool:
     """Return True if the catalog has no MITRE ICS entries."""
-    return db.query(ThreatCatalog).filter(
-        ThreatCatalog.source == "mitre_attack_ics"
-    ).count() == 0
+    try:
+        return db.query(ThreatCatalog).filter(
+            ThreatCatalog.source == "mitre_attack_ics"
+        ).count() == 0
+    except Exception:
+        # Table may not exist yet (e.g. during tests or before migrations run)
+        return False
 
 
 def auto_seed_catalog(db: Session) -> Dict[str, Any]:
