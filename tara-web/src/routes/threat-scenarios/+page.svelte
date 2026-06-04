@@ -153,7 +153,7 @@
           );
         } else {
           notifications.show(
-            'No threat scenarios generated. Check that your damage scenarios cover at least one CIA dimension and that catalog entries match your asset types.',
+            'No threat scenarios generated. Your catalog may have outdated relevance scores — go to Settings → Threat Catalog → "Force Update" to refresh it, then try again.',
             'warning'
           );
         }
