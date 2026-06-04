@@ -20,7 +20,7 @@ from core.generators.asset_type_mapper import (
 
 logger = logging.getLogger(__name__)
 
-MIN_RELEVANCE_SCORE = 2  # minimum automotive_relevance to include
+MIN_RELEVANCE_SCORE = 3  # minimum automotive_relevance to include (1-2 = catalogued only, not auto-generated)
 
 
 def find_matching_catalog_threats(
@@ -65,14 +65,21 @@ def generate_threat_scenarios(
     Links each threat to the most relevant damage scenario(s) based on STRIDE↔CIA mapping.
     """
     threat_scenarios: List[Dict[str, Any]] = []
+    seen_technique_ids: set = set()  # deduplicate same technique per asset
 
     for catalog_threat in matched_threats:
+        technique_id = catalog_threat.mitre_technique_id or catalog_threat.id
+        if technique_id in seen_technique_ids:
+            logger.debug("Skipping duplicate technique %s for asset '%s'", technique_id, asset.get("name"))
+            continue
+
         linked_damage_ids = _find_linked_damage_scenarios(
             catalog_threat, damage_scenarios,
         )
         if not linked_damage_ids:
             continue
 
+        seen_technique_ids.add(technique_id)
         scenario = _build_threat_scenario(
             catalog_threat, linked_damage_ids, asset, scope_id,
         )

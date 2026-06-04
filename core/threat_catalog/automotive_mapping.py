@@ -148,7 +148,7 @@ def _default_enrichment(
         "mitre_tactic": primary_tactic,
         "source": "mitre_attack_ics",
         "source_version": mapping_config.get("attack_version", ""),
-        "automotive_relevance": 2,          # minimum to pass generator filter
+        "automotive_relevance": 1,          # below generator threshold — cataloged but not auto-generated
         "automotive_context": "",
         "applicable_component_types": [],   # empty = matches all asset types
         "applicable_trust_zones": [],       # empty = matches all trust zones

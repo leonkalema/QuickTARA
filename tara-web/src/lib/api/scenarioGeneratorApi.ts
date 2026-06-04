@@ -88,4 +88,20 @@ export const scenarioGeneratorApi = {
       { method: 'POST' },
     );
   },
+
+  /** Delete ALL auto-generated threat scenarios (any status) for a product. */
+  async deleteAutoThreatScenarios(scopeId: string): Promise<{ deleted: number }> {
+    return apiFetch<{ deleted: number }>(
+      `/analysis/delete-auto-threat-scenarios/${scopeId}`,
+      { method: 'DELETE' },
+    );
+  },
+
+  /** Delete ALL auto-generated damage scenarios (any status) for a product. */
+  async deleteAutoDamageScenarios(scopeId: string): Promise<{ deleted: number }> {
+    return apiFetch<{ deleted: number }>(
+      `/analysis/delete-auto-damage-scenarios/${scopeId}`,
+      { method: 'DELETE' },
+    );
+  },
 };

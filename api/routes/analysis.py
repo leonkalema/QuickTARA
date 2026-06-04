@@ -242,6 +242,63 @@ async def generate_threat_scenarios(
         )
 
 
+@router.delete("/delete-auto-threat-scenarios/{scope_id}")
+async def delete_auto_threat_scenarios(
+    scope_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Delete ALL auto-generated threat scenarios (TS-AUTO-*) for a product,
+    regardless of status (draft or accepted). Used to reset before re-running
+    auto-generation with updated catalog/mappings.
+    """
+    from sqlalchemy import text
+    params = {"sid": scope_id, "prefix": "TS-AUTO-%"}
+    count = db.execute(
+        text("SELECT COUNT(*) FROM threat_scenarios WHERE scope_id = :sid AND threat_scenario_id LIKE :prefix"),
+        params,
+    ).scalar() or 0
+    db.execute(
+        text("DELETE FROM threat_damage_links WHERE threat_scenario_id IN "
+             "(SELECT threat_scenario_id FROM threat_scenarios WHERE scope_id = :sid AND threat_scenario_id LIKE :prefix)"),
+        params,
+    )
+    db.execute(
+        text("DELETE FROM threat_scenarios WHERE scope_id = :sid AND threat_scenario_id LIKE :prefix"),
+        params,
+    )
+    db.commit()
+    return {"deleted": int(count), "scope_id": scope_id}
+
+
+@router.delete("/delete-auto-damage-scenarios/{scope_id}")
+async def delete_auto_damage_scenarios(
+    scope_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Delete ALL auto-generated damage scenarios (DS-AUTO-*) for a product,
+    regardless of status. Used to reset before re-running auto-generation.
+    """
+    from sqlalchemy import text
+    params = {"sid": scope_id, "prefix": "DS-AUTO-%"}
+    count = db.execute(
+        text("SELECT COUNT(*) FROM damage_scenarios WHERE scope_id = :sid AND scenario_id LIKE :prefix"),
+        params,
+    ).scalar() or 0
+    db.execute(
+        text("DELETE FROM asset_damage_scenario WHERE scenario_id IN "
+             "(SELECT scenario_id FROM damage_scenarios WHERE scope_id = :sid AND scenario_id LIKE :prefix)"),
+        params,
+    )
+    db.execute(
+        text("DELETE FROM damage_scenarios WHERE scope_id = :sid AND scenario_id LIKE :prefix"),
+        params,
+    )
+    db.commit()
+    return {"deleted": int(count), "scope_id": scope_id}
+
+
 # ── ISO/SAE 21434 Clause Mapping ─────────────────────────────────────────
 
 @router.get("/iso21434/mappings")
