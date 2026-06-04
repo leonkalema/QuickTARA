@@ -20,7 +20,7 @@ import threading
 import urllib.request
 import urllib.error
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -106,7 +106,7 @@ def schedule_background_seed(db_factory) -> None:
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-def _ensure_stix_bundle() -> Path | None:
+def _ensure_stix_bundle() -> Optional[Path]:
     """
     Return path to the STIX bundle, downloading it if not already cached.
     Returns None if unavailable.
@@ -126,7 +126,7 @@ def _ensure_stix_bundle() -> Path | None:
     return None
 
 
-def _download_stix(url: str, dest: Path) -> Path | None:
+def _download_stix(url: str, dest: Path) -> Optional[Path]:
     """
     Download the STIX bundle from url → dest.
     Returns dest on success, None on failure.

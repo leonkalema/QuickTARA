@@ -127,7 +127,8 @@ class TestEnrichAllTechniques:
             _sample_technique("T0800"),
             _sample_technique("T9999"),
         ]
-        result = enrich_all_techniques(techniques, config)
+        # include_unmapped=False preserves the original strict-filter behaviour
+        result = enrich_all_techniques(techniques, config, include_unmapped=False)
         assert len(result) == 1
         assert result[0]["mitre_technique_id"] == "T0800"
 
