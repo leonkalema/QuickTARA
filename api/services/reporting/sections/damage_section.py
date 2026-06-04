@@ -52,13 +52,16 @@ def build_damage_scenarios_section(damage_scenarios: List[Dict[str, Any]], style
         overall_sfop = calculate_overall_sfop(scenario)
         desc = scenario.get('description', '') or ''
         
-        # Use Paragraph for automatic wrapping (no truncation)
+        # Truncate long descriptions to prevent ReportLab table overflow
+        if len(desc) > 400:
+            desc = desc[:400].rstrip() + "…"
         name_para = Paragraph(str(name), styles['Normal'])
         desc_para = Paragraph(str(desc), styles['Normal'])
         table_data.append([str(scenario_id), name_para, desc_para, overall_sfop])
-    
-    # Create and style table
-    table = Table(table_data, colWidths=[1.2*inch, 2.2*inch, 2.6*inch, 1.0*inch])
+
+    # Create and style table — splitByRow + repeatRows prevent overflow with 200+ rows
+    table = Table(table_data, colWidths=[1.2*inch, 2.2*inch, 2.6*inch, 1.0*inch],
+                  repeatRows=1, splitByRow=True)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),

@@ -43,6 +43,15 @@ def map_threats_to_damages(
     return rows
 
 
+_MAX_DESC_CHARS = 400  # cap MITRE descriptions that can run to 10k+ chars
+
+
+def _truncate(text: str, limit: int = _MAX_DESC_CHARS) -> str:
+    if not text:
+        return ""
+    return text[:limit].rstrip() + "…" if len(text) > limit else text
+
+
 def _threats_table(rows: List[Dict[str, Any]], styles) -> Table:
     header = [
         Paragraph("<b>Threat</b>", styles["Normal"]),
@@ -54,10 +63,15 @@ def _threats_table(rows: List[Dict[str, Any]], styles) -> Table:
         damages = "<br/>".join(f"• {name}" for name in row["damage_names"]) or "—"
         table_rows.append([
             Paragraph(row["name"], styles["Normal"]),
-            Paragraph(row["description"] or "", styles["Normal"]),
+            Paragraph(_truncate(row["description"] or ""), styles["Normal"]),
             Paragraph(damages, styles["Normal"]),
         ])
-    table = Table(table_rows, colWidths=[1.8 * inch, 2.7 * inch, 2.0 * inch])
+    table = Table(
+        table_rows,
+        colWidths=[1.8 * inch, 2.7 * inch, 2.0 * inch],
+        repeatRows=1,       # repeat header on every page
+        splitByRow=True,    # allow rows to split across page breaks
+    )
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
