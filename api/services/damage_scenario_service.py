@@ -423,22 +423,21 @@ def update_damage_scenario(
             # Update violated_properties JSON
             db_scenario.violated_properties = json.dumps(violated_props)
         
-        # For product model, SFOP are boolean flags
         if scenario.damage_category is not None:
             db_scenario.category = scenario.damage_category
-            
+
+        # Store SFOP ratings as string values (negligible/moderate/major/severe)
         if scenario.safety_impact is not None:
-            # Convert SeverityLevel to boolean (any non-LOW value is True)
-            db_scenario.safety_impact = (scenario.safety_impact != SeverityLevel.LOW)
-        
+            db_scenario.safety_impact = scenario.safety_impact.value if hasattr(scenario.safety_impact, 'value') else scenario.safety_impact
+
         if scenario.financial_impact is not None:
-            db_scenario.financial_impact = (scenario.financial_impact != SeverityLevel.LOW)
-        
+            db_scenario.financial_impact = scenario.financial_impact.value if hasattr(scenario.financial_impact, 'value') else scenario.financial_impact
+
         if scenario.operational_impact is not None:
-            db_scenario.operational_impact = (scenario.operational_impact != SeverityLevel.LOW)
-        
+            db_scenario.operational_impact = scenario.operational_impact.value if hasattr(scenario.operational_impact, 'value') else scenario.operational_impact
+
         if scenario.privacy_impact is not None:
-            db_scenario.privacy_impact = (scenario.privacy_impact != SeverityLevel.LOW)
+            db_scenario.privacy_impact = scenario.privacy_impact.value if hasattr(scenario.privacy_impact, 'value') else scenario.privacy_impact
     else:
         # Legacy model - direct field updates
         if scenario.safety_impact is not None:
@@ -766,16 +765,30 @@ def _db_scenario_to_schema(db_scenario) -> DamageScenario:
         # Extract SFOP ratings from violated_properties if available
         sfop_ratings = violated_props.get('sfop_ratings', {})
         
-        # Create ImpactRating object from SFOP data
+        # Build ImpactRating: prefer direct columns, fall back to violated_properties sfop_ratings
         from api.models.damage_scenario import ImpactRating, ImpactRatingLevel
-        impact_rating = None
-        if sfop_ratings:
-            impact_rating = ImpactRating(
-                safety=ImpactRatingLevel(sfop_ratings.get('safety', 'negligible')),
-                financial=ImpactRatingLevel(sfop_ratings.get('financial', 'negligible')),
-                operational=ImpactRatingLevel(sfop_ratings.get('operational', 'negligible')),
-                privacy=ImpactRatingLevel(sfop_ratings.get('privacy', 'negligible'))
-            )
+
+        def _to_impact_level(val, fallback='negligible') -> ImpactRatingLevel:
+            try:
+                return ImpactRatingLevel(val) if val else ImpactRatingLevel(fallback)
+            except ValueError:
+                return ImpactRatingLevel(fallback)
+
+        direct_safety = getattr(db_scenario, 'safety_impact', None)
+        direct_financial = getattr(db_scenario, 'financial_impact', None)
+        direct_operational = getattr(db_scenario, 'operational_impact', None)
+        direct_privacy = getattr(db_scenario, 'privacy_impact', None)
+
+        # Use direct columns if they hold valid string values; otherwise fall back to sfop_ratings dict
+        has_direct = any(isinstance(v, str) and v in ('negligible', 'moderate', 'major', 'severe')
+                         for v in (direct_safety, direct_financial, direct_operational, direct_privacy))
+
+        impact_rating = ImpactRating(
+            safety=_to_impact_level(direct_safety if has_direct else sfop_ratings.get('safety')),
+            financial=_to_impact_level(direct_financial if has_direct else sfop_ratings.get('financial')),
+            operational=_to_impact_level(direct_operational if has_direct else sfop_ratings.get('operational')),
+            privacy=_to_impact_level(direct_privacy if has_direct else sfop_ratings.get('privacy')),
+        )
 
         return DamageScenario(
             scenario_id=db_scenario.scenario_id,
