@@ -229,7 +229,7 @@
               catalogCount === 0
                 ? 'Threat catalog is empty — seed it in Settings → Threat Catalog first'
                 : hasExistingAutoDrafts
-                  ? 'Auto-generated drafts already exist. Review and accept them, or delete them to re-run.'
+                  ? 'Auto-generated scenarios already exist. Delete all auto-generated scenarios to re-run.'
                   : 'Generate threat scenarios from your damage scenarios using the MITRE ATT&CK ICS catalog'
             }
             class="px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"

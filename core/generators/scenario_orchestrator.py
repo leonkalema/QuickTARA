@@ -65,14 +65,17 @@ def has_auto_damage_drafts(db: Session, scope_id: str) -> bool:
 
 
 def has_auto_threat_drafts(db: Session, scope_id: str) -> bool:
-    """Return True if auto-generated threat drafts already exist for this product."""
+    """
+    Return True if any auto-generated threat scenarios exist for this product
+    (draft OR accepted). Button stays disabled until the user explicitly deletes
+    them — prevents duplicate generation after accepting all drafts.
+    """
     from db.threat_scenario import ThreatScenario as DBThreatScenario
     count = (
         db.query(DBThreatScenario)
         .filter(
             DBThreatScenario.scope_id == scope_id,
             DBThreatScenario.threat_scenario_id.like(f"{AUTO_PREFIX_THREAT}%"),
-            DBThreatScenario.status == "draft",
         )
         .count()
     )
@@ -219,13 +222,16 @@ def generate_scenarios_for_product(
 
 
 def _count_auto_damage_drafts(db: Session, scope_id: str) -> int:
-    """Count existing auto-generated damage drafts for a product."""
+    """
+    Count auto-generated damage scenarios (draft OR accepted) for a product.
+    Used to keep the button disabled once generation has run, preventing
+    duplicates after the user accepts all drafts.
+    """
     return (
         db.query(DBDamageScenario)
         .filter(
             DBDamageScenario.scope_id == scope_id,
             DBDamageScenario.scenario_id.like(f"{AUTO_PREFIX_DAMAGE}%"),
-            DBDamageScenario.status == "draft",
         )
         .count()
     )

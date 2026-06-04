@@ -162,8 +162,8 @@ class TestHasAutoDamageDrafts:
         db.commit()
         assert has_auto_damage_drafts(db, "scope-test") is True
 
-    def test_returns_false_when_auto_draft_accepted(self, db: Session) -> None:
-        """Accepted auto scenarios don't count — only drafts."""
+    def test_returns_true_when_auto_draft_accepted(self, db: Session) -> None:
+        """Accepted auto scenarios still count — prevents duplicate generation after accept-all."""
         from core.generators.scenario_orchestrator import has_auto_damage_drafts
         _make_product(db)
         ds = DBDamageScenario(
@@ -181,7 +181,7 @@ class TestHasAutoDamageDrafts:
             operational_impact="negligible",
             privacy_impact="negligible",
             scope_id="scope-test",
-            status="accepted",   # accepted, not draft
+            status="accepted",   # accepted — still blocks re-generation
             version=1,
             is_current=True,
             created_at=datetime.now(),
@@ -189,7 +189,7 @@ class TestHasAutoDamageDrafts:
         )
         db.add(ds)
         db.commit()
-        assert has_auto_damage_drafts(db, "scope-test") is False
+        assert has_auto_damage_drafts(db, "scope-test") is True
 
     def test_scoped_to_product(self, db: Session) -> None:
         """Drafts from a different scope don't affect the query."""
@@ -455,7 +455,8 @@ class TestHasAutoThreatDrafts:
         db.commit()
         assert has_auto_threat_drafts(db, "scope-test") is False
 
-    def test_accepted_auto_threats_do_not_count(self, db: Session) -> None:
+    def test_accepted_auto_threats_do_count(self, db: Session) -> None:
+        """Accepted auto scenarios keep the button disabled — prevents duplicate generation."""
         from core.generators.scenario_orchestrator import has_auto_threat_drafts
         from db.threat_scenario import ThreatScenario as DBThreatScenario
         ts = DBThreatScenario(
@@ -469,4 +470,4 @@ class TestHasAutoThreatDrafts:
         )
         db.add(ts)
         db.commit()
-        assert has_auto_threat_drafts(db, "scope-test") is False
+        assert has_auto_threat_drafts(db, "scope-test") is True
