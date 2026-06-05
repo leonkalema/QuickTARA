@@ -107,8 +107,8 @@ class TestBuildCompleteReportWiring(unittest.TestCase):
         # Internal profile enables all 11 sections, minus CRA (no assessment).
         # _build_section is called once per resolved section (mocked to return
         # ["x"]), so count == resolved sections.
-        self.assertEqual(build_sec.call_count, 10)  # 11 - CRA
-        self.assertEqual(captured["section_count"], 10)
+        self.assertEqual(build_sec.call_count, 16)  # 17 sections - CRA (no assessment)
+        self.assertEqual(captured["section_count"], 16)
 
     def test_empty_sections_are_skipped(self):
         config = ReportConfig(sections={

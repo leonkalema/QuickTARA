@@ -28,10 +28,16 @@ from .sections.goals_section import select_approved_goals, build_goals_section
 from .sections.compliance_section import build_compliance_section
 from .sections.cra_compliance_section import build_cra_compliance_section
 from .sections.risk_summary_section import build_risk_summary_section
+from .sections.risk_register_section import build_risk_register_section
+from .sections.treatment_summary_section import build_treatment_summary_section
 from .sections.traceability_section import build_traceability_section
 from .sections.executive_summary_section import build_executive_summary_section
 from .sections.threat_scenarios_section import build_threat_scenarios_section
 from .sections.attack_paths_section import build_attack_paths_section
+from .sections.scope_section import build_scope_section
+from .sections.methodology_section import build_methodology_section
+from .sections.assessment_status_section import build_assessment_status_section
+from .sections.open_issues_section import build_open_issues_section
 from .pdf_renderer import render_pdf, create_styles
 
 
@@ -62,6 +68,40 @@ def _build_section(
     if key == SectionKey.EXECUTIVE_SUMMARY:
         return build_executive_summary_section(
             get_assets(scope_id, db),
+            get_damage_scenarios(scope_id, db),
+            get_threat_scenarios(scope_id, db),
+            get_risk_treatments(scope_id, db),
+            styles,
+        )
+    if key == SectionKey.SCOPE_AND_ASSUMPTIONS:
+        return build_scope_section(
+            get_scope_info(scope_id, db) or {},
+            get_assets(scope_id, db),
+            styles,
+        )
+    if key == SectionKey.METHODOLOGY:
+        return build_methodology_section(styles)
+    if key == SectionKey.ASSESSMENT_STATUS:
+        return build_assessment_status_section(
+            get_damage_scenarios(scope_id, db),
+            get_threat_scenarios(scope_id, db),
+            get_risk_treatments(scope_id, db),
+            styles,
+        )
+    if key == SectionKey.RISK_REGISTER:
+        return build_risk_register_section(
+            get_damage_scenarios(scope_id, db),
+            get_risk_treatments(scope_id, db),
+            styles,
+        )
+    if key == SectionKey.TREATMENT_SUMMARY:
+        return build_treatment_summary_section(
+            get_damage_scenarios(scope_id, db),
+            get_risk_treatments(scope_id, db),
+            styles,
+        )
+    if key == SectionKey.OPEN_ISSUES:
+        return build_open_issues_section(
             get_damage_scenarios(scope_id, db),
             get_threat_scenarios(scope_id, db),
             get_risk_treatments(scope_id, db),

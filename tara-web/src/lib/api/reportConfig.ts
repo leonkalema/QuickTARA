@@ -7,14 +7,20 @@ export type ReportClassification = 'public' | 'internal' | 'confidential';
 export type SectionKey =
 	| 'document_control'
 	| 'executive_summary'
+	| 'scope_and_assumptions'
+	| 'methodology'
+	| 'assessment_status'
 	| 'iso_compliance'
 	| 'cra_compliance'
-	| 'risk_summary'
 	| 'asset_inventory'
 	| 'damage_scenarios'
 	| 'threat_scenarios'
 	| 'attack_paths'
+	| 'risk_summary'
+	| 'risk_register'
+	| 'treatment_summary'
 	| 'cybersecurity_goals'
+	| 'open_issues'
 	| 'traceability';
 
 export interface ReportMetadata {
@@ -74,43 +80,61 @@ const SECTION_KEYS: SectionKey[] = [
  */
 const AUDIENCE_SECTIONS: Record<ReportAudience, Record<SectionKey, boolean>> = {
 	internal: {
-		document_control:   true,
-		executive_summary:  true,
-		iso_compliance:     true,
-		cra_compliance:     true,
-		risk_summary:       true,
-		asset_inventory:    true,
-		damage_scenarios:   true,
-		threat_scenarios:   true,
-		attack_paths:       true,
-		cybersecurity_goals: true,
-		traceability:       true,
+		document_control:      true,
+		executive_summary:     true,
+		scope_and_assumptions: true,
+		methodology:           true,
+		assessment_status:     true,
+		iso_compliance:        true,
+		cra_compliance:        true,
+		asset_inventory:       true,
+		damage_scenarios:      true,
+		threat_scenarios:      true,
+		attack_paths:          true,
+		risk_summary:          true,
+		risk_register:         true,
+		treatment_summary:     true,
+		cybersecurity_goals:   true,
+		open_issues:           true,
+		traceability:          true,
 	},
 	external: {
-		document_control:   true,
-		executive_summary:  true,
-		iso_compliance:     true,   // compliance statement only — no detail
-		cra_compliance:     false,  // internal regulatory gap list — never external
-		risk_summary:       true,   // high-level decisions only
-		asset_inventory:    true,   // asset types only, no internal detail
-		damage_scenarios:   false,  // sensitive — reveals what can go wrong in detail
-		threat_scenarios:   false,  // attack roadmap — never share externally
-		attack_paths:       false,  // attacker guide — never share externally
-		cybersecurity_goals: true,  // goals are safe to share
-		traceability:       false,  // exposes internal architecture decisions
+		document_control:      true,
+		executive_summary:     true,
+		scope_and_assumptions: true,
+		methodology:           true,
+		assessment_status:     true,
+		iso_compliance:        true,
+		cra_compliance:        false,  // internal regulatory gaps
+		asset_inventory:       true,
+		damage_scenarios:      false,  // sensitive IP
+		threat_scenarios:      false,  // attack roadmap
+		attack_paths:          false,  // attacker guide
+		risk_summary:          true,
+		risk_register:         true,
+		treatment_summary:     true,
+		cybersecurity_goals:   true,
+		open_issues:           true,
+		traceability:          false,  // internal architecture
 	},
 	auditor: {
-		document_control:   true,
-		executive_summary:  true,
-		iso_compliance:     true,
-		cra_compliance:     false,  // separate regulatory track, not ISO 21434
-		risk_summary:       true,
-		asset_inventory:    true,
-		damage_scenarios:   true,
-		threat_scenarios:   true,
-		attack_paths:       false,  // auditor needs process evidence, not attack detail
-		cybersecurity_goals: true,
-		traceability:       true,   // essential for clause-by-clause audit
+		document_control:      true,
+		executive_summary:     true,
+		scope_and_assumptions: true,
+		methodology:           true,
+		assessment_status:     true,
+		iso_compliance:        true,
+		cra_compliance:        false,  // separate regulatory track
+		asset_inventory:       true,
+		damage_scenarios:      true,
+		threat_scenarios:      true,
+		attack_paths:          false,  // not needed for process audit
+		risk_summary:          true,
+		risk_register:         true,
+		treatment_summary:     true,
+		cybersecurity_goals:   true,
+		open_issues:           true,
+		traceability:          true,
 	},
 };
 

@@ -41,31 +41,41 @@ class SectionKey(str, Enum):
 
     DOCUMENT_CONTROL = "document_control"
     EXECUTIVE_SUMMARY = "executive_summary"
+    SCOPE_AND_ASSUMPTIONS = "scope_and_assumptions"
+    METHODOLOGY = "methodology"
+    ASSESSMENT_STATUS = "assessment_status"
     ISO_COMPLIANCE = "iso_compliance"
     CRA_COMPLIANCE = "cra_compliance"
-    RISK_SUMMARY = "risk_summary"
     ASSET_INVENTORY = "asset_inventory"
     DAMAGE_SCENARIOS = "damage_scenarios"
     THREAT_SCENARIOS = "threat_scenarios"
     ATTACK_PATHS = "attack_paths"
+    RISK_SUMMARY = "risk_summary"
+    RISK_REGISTER = "risk_register"
+    TREATMENT_SUMMARY = "treatment_summary"
     CYBERSECURITY_GOALS = "cybersecurity_goals"
+    OPEN_ISSUES = "open_issues"
     TRACEABILITY = "traceability"
 
 
-# Canonical render order. The builder iterates this list and emits the
-# subset whose toggle is enabled, so report layout is deterministic
-# regardless of how the ``sections`` dict was constructed.
+# Canonical render order — matches the recommended OEM report structure.
 SECTION_ORDER: List[SectionKey] = [
     SectionKey.DOCUMENT_CONTROL,
     SectionKey.EXECUTIVE_SUMMARY,
+    SectionKey.SCOPE_AND_ASSUMPTIONS,
+    SectionKey.METHODOLOGY,
+    SectionKey.ASSESSMENT_STATUS,
     SectionKey.ISO_COMPLIANCE,
     SectionKey.CRA_COMPLIANCE,
-    SectionKey.RISK_SUMMARY,
     SectionKey.ASSET_INVENTORY,
     SectionKey.DAMAGE_SCENARIOS,
     SectionKey.THREAT_SCENARIOS,
     SectionKey.ATTACK_PATHS,
+    SectionKey.RISK_SUMMARY,
+    SectionKey.RISK_REGISTER,
+    SectionKey.TREATMENT_SUMMARY,
     SectionKey.CYBERSECURITY_GOALS,
+    SectionKey.OPEN_ISSUES,
     SectionKey.TRACEABILITY,
 ]
 

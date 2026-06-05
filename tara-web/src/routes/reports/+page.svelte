@@ -331,9 +331,16 @@
             </div>
           {/if}
 
+          {@const needsSignoff = (reportConfig.audience === 'external' || reportConfig.audience === 'auditor') &&
+            (!reportConfig.metadata.author || !reportConfig.metadata.approver)}
+          {#if needsSignoff}
+            <p class="text-xs text-center mb-2" style="color: var(--color-error);">
+              Author and Approver are required before generating an external or auditor report.
+            </p>
+          {/if}
           <button
             on:click={generateTARAReport}
-            disabled={generating || riskTreatmentData.length === 0}
+            disabled={generating || riskTreatmentData.length === 0 || needsSignoff}
             class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             style="background: var(--color-accent-primary); color: var(--color-text-inverse);"
           >

@@ -19,17 +19,23 @@
   ];
 
   const SECTIONS: { key: SectionKey; label: string; wp: string }[] = [
-    { key: 'document_control',    label: 'Document Control',         wp: 'Clause 6 — management' },
-    { key: 'executive_summary',   label: 'Executive Summary',        wp: 'Scope & risk overview' },
-    { key: 'iso_compliance',      label: 'ISO 21434 Compliance',     wp: 'Work products overview' },
-    { key: 'cra_compliance',      label: 'CRA Compliance',           wp: 'Only if CRA assessment exists' },
-    { key: 'risk_summary',        label: 'Risk Register',            wp: 'WP-08 risk determination' },
-    { key: 'asset_inventory',     label: 'Asset Inventory',          wp: 'WP-04 item definition' },
-    { key: 'damage_scenarios',    label: 'Damage Scenarios',         wp: 'WP-04 damage scenarios' },
-    { key: 'threat_scenarios',    label: 'Threat Scenarios',         wp: 'WP-05 §15.4' },
-    { key: 'attack_paths',        label: 'Attack Paths',             wp: 'WP-06/07 §15.5–15.6' },
-    { key: 'cybersecurity_goals', label: 'Cybersecurity Goals',      wp: 'WP-15 goals / claims' },
-    { key: 'traceability',        label: 'Traceability Matrix',      wp: 'Asset → Goal trace' }
+    { key: 'document_control',      label: 'Document Control',              wp: 'Cover, version history, classification' },
+    { key: 'executive_summary',     label: 'Executive Summary',             wp: 'Scope, counts, highest risk' },
+    { key: 'scope_and_assumptions', label: 'Scope & Assumptions',           wp: '§8.3 Item boundary and context' },
+    { key: 'methodology',           label: 'Methodology',                   wp: 'SFOP, STRIDE, feasibility method' },
+    { key: 'assessment_status',     label: 'Assessment Status',             wp: 'Draft vs reviewed vs approved counts' },
+    { key: 'iso_compliance',        label: 'ISO 21434 Compliance',          wp: 'Work products overview' },
+    { key: 'cra_compliance',        label: 'CRA Compliance',                wp: 'Only if CRA assessment exists' },
+    { key: 'asset_inventory',       label: 'Asset Inventory',               wp: 'WP-04 — assets and interfaces' },
+    { key: 'damage_scenarios',      label: 'Damage Scenarios',              wp: 'WP-04 — damage scenario detail' },
+    { key: 'threat_scenarios',      label: 'Threat Scenarios',              wp: 'WP-05 §15.4' },
+    { key: 'attack_paths',          label: 'Attack Paths',                  wp: 'WP-06/07 §15.5–15.6' },
+    { key: 'risk_summary',          label: 'Risk Summary',                  wp: 'High-level risk counts' },
+    { key: 'risk_register',         label: 'Risk Register',                 wp: '§15.7 — full risk table with decisions' },
+    { key: 'treatment_summary',     label: 'Treatment Summary',             wp: '§14 — treatment decisions per risk' },
+    { key: 'cybersecurity_goals',   label: 'Cybersecurity Goals',           wp: 'WP-15 goals / claims' },
+    { key: 'open_issues',           label: 'Open Issues & Customer Actions',wp: 'Draft items, customer confirmations' },
+    { key: 'traceability',          label: 'Traceability Matrix',           wp: 'Asset → Damage → Threat → Goal trace' },
   ];
 
   // Reason shown when a section is locked off for the current audience
@@ -40,6 +46,7 @@
     attack_paths:     { external: 'Attacker guide — never share externally', auditor: 'Not required for process audit' },
     traceability:     { external: 'Exposes internal architecture decisions' },
   };
+
 
   const CLASSIFICATIONS: ReportClassification[] = ['public', 'internal', 'confidential'];
 
@@ -150,16 +157,42 @@
         </select>
       </div>
       <div class="flex items-center gap-2">
-        <label for="author" class="text-xs w-24" style="color: var(--color-text-secondary);">Author</label>
-        <input id="author" type="text" bind:value={config.metadata.author} placeholder="Optional"
-          class="flex-1 px-2 py-1.5 text-xs rounded-lg"
-          style="background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" />
+        <label for="author" class="text-xs w-24 flex items-center gap-1" style="color: var(--color-text-secondary);">
+          Author
+          {#if config.audience === 'external' || config.audience === 'auditor'}
+            <span style="color: var(--color-error);">*</span>
+          {/if}
+        </label>
+        <div class="flex-1 flex flex-col gap-0.5">
+          <input id="author" type="text" bind:value={config.metadata.author}
+            placeholder={config.audience === 'external' || config.audience === 'auditor' ? 'Required for external / auditor reports' : 'Optional'}
+            required={config.audience === 'external' || config.audience === 'auditor'}
+            class="w-full px-2 py-1.5 text-xs rounded-lg"
+            style="background: var(--color-bg-elevated); color: var(--color-text-primary);
+                   border: 1px solid {(config.audience === 'external' || config.audience === 'auditor') && !config.metadata.author ? 'var(--color-error)' : 'var(--color-border-default)'};" />
+          {#if (config.audience === 'external' || config.audience === 'auditor') && !config.metadata.author}
+            <span class="text-[10px]" style="color: var(--color-error);">Required — unsigned external documents are not credible</span>
+          {/if}
+        </div>
       </div>
       <div class="flex items-center gap-2">
-        <label for="approver" class="text-xs w-24" style="color: var(--color-text-secondary);">Approver</label>
-        <input id="approver" type="text" bind:value={config.metadata.approver} placeholder="Optional"
-          class="flex-1 px-2 py-1.5 text-xs rounded-lg"
-          style="background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" />
+        <label for="approver" class="text-xs w-24 flex items-center gap-1" style="color: var(--color-text-secondary);">
+          Approver
+          {#if config.audience === 'external' || config.audience === 'auditor'}
+            <span style="color: var(--color-error);">*</span>
+          {/if}
+        </label>
+        <div class="flex-1 flex flex-col gap-0.5">
+          <input id="approver" type="text" bind:value={config.metadata.approver}
+            placeholder={config.audience === 'external' || config.audience === 'auditor' ? 'Required for external / auditor reports' : 'Optional'}
+            required={config.audience === 'external' || config.audience === 'auditor'}
+            class="w-full px-2 py-1.5 text-xs rounded-lg"
+            style="background: var(--color-bg-elevated); color: var(--color-text-primary);
+                   border: 1px solid {(config.audience === 'external' || config.audience === 'auditor') && !config.metadata.approver ? 'var(--color-error)' : 'var(--color-border-default)'};" />
+          {#if (config.audience === 'external' || config.audience === 'auditor') && !config.metadata.approver}
+            <span class="text-[10px]" style="color: var(--color-error);">Required — report needs an approver before external release</span>
+          {/if}
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <label for="reference" class="text-xs w-24" style="color: var(--color-text-secondary);">Reference</label>
