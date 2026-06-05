@@ -37,7 +37,8 @@ fi
 # 1. Pull latest code
 # ------------------------------------------------------------------
 echo "📥 Pulling latest code..."
-git pull
+git fetch origin
+git reset --hard origin/main
 echo ""
 
 # ------------------------------------------------------------------
