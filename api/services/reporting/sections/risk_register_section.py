@@ -68,14 +68,15 @@ def build_risk_register_section(
         treatment = (rt.get("selected_treatment") or rt.get("suggested_treatment") or "—").capitalize()
         status = (rt.get("treatment_status") or "Draft").capitalize()
 
+        P = lambda t: Paragraph(str(t), styles["Normal"])
         rows.append([
-            f"R-{i:03d}",
-            ds_name,
-            (rt.get("impact_level") or "—").capitalize(),
-            (rt.get("feasibility_level") or "—").capitalize(),
-            risk_level,
-            treatment,
-            status,
+            P(f"R-{i:03d}"),
+            P(ds_name),
+            P((rt.get("impact_level") or "—").capitalize()),
+            P((rt.get("feasibility_level") or "—").capitalize()),
+            P(risk_level),
+            P(treatment),
+            P(status),
         ])
 
         colour = _RISK_COLOURS.get(rl_lower)

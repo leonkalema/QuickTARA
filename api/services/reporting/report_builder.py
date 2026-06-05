@@ -38,6 +38,8 @@ from .sections.scope_section import build_scope_section
 from .sections.methodology_section import build_methodology_section
 from .sections.assessment_status_section import build_assessment_status_section
 from .sections.open_issues_section import build_open_issues_section
+from .sections.report_status_section import build_report_status_section
+from .sections.appendices_section import build_appendices_section
 from .pdf_renderer import render_pdf, create_styles
 
 
@@ -73,6 +75,14 @@ def _build_section(
             get_risk_treatments(scope_id, db),
             styles,
         )
+    if key == SectionKey.REPORT_STATUS:
+        return build_report_status_section(
+            get_scope_info(scope_id, db) or {},
+            config.audience.value if hasattr(config.audience, 'value') else str(config.audience),
+            styles,
+        )
+    if key == SectionKey.APPENDICES:
+        return build_appendices_section(styles)
     if key == SectionKey.SCOPE_AND_ASSUMPTIONS:
         return build_scope_section(
             get_scope_info(scope_id, db) or {},

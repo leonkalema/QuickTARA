@@ -51,7 +51,11 @@ def build_assessment_status_section(
               if (r.get("risk_level") or "").lower() == "low")
 
     def _row(label, value, note=""):
-        return [label, str(value), note]
+        return [
+            Paragraph(str(label), styles["Normal"]),
+            Paragraph(str(value), styles["Normal"]),
+            Paragraph(str(note), styles["Normal"]),
+        ]
 
     status_data = [
         [Paragraph("<b>Item</b>", styles["Normal"]),

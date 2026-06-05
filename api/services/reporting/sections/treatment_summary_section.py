@@ -51,12 +51,13 @@ def build_treatment_summary_section(
         status = (rt.get("treatment_status") or "Draft").capitalize()
         risk_level = (rt.get("risk_level") or "—").capitalize()
 
+        P = lambda t: Paragraph(str(t), styles["Normal"])
         rows.append([
-            f"R-{i:03d}",
-            risk_level,
-            treatment.capitalize(),
-            goal,
-            status,
+            P(f"R-{i:03d}"),
+            P(risk_level),
+            P(treatment.capitalize()),
+            P(goal),
+            P(status),
         ])
 
     col_widths = [0.65*inch, 0.85*inch, 1.2*inch, 3.0*inch, 0.8*inch]

@@ -41,10 +41,10 @@ class SectionKey(str, Enum):
 
     DOCUMENT_CONTROL = "document_control"
     EXECUTIVE_SUMMARY = "executive_summary"
+    REPORT_STATUS = "report_status"
     SCOPE_AND_ASSUMPTIONS = "scope_and_assumptions"
     METHODOLOGY = "methodology"
     ASSESSMENT_STATUS = "assessment_status"
-    ISO_COMPLIANCE = "iso_compliance"
     CRA_COMPLIANCE = "cra_compliance"
     ASSET_INVENTORY = "asset_inventory"
     DAMAGE_SCENARIOS = "damage_scenarios"
@@ -55,17 +55,19 @@ class SectionKey(str, Enum):
     TREATMENT_SUMMARY = "treatment_summary"
     CYBERSECURITY_GOALS = "cybersecurity_goals"
     OPEN_ISSUES = "open_issues"
+    ISO_COMPLIANCE = "iso_compliance"   # moved near end per OEM convention
     TRACEABILITY = "traceability"
+    APPENDICES = "appendices"
 
 
-# Canonical render order — matches the recommended OEM report structure.
+# Canonical render order — OEM deliverable convention.
 SECTION_ORDER: List[SectionKey] = [
     SectionKey.DOCUMENT_CONTROL,
     SectionKey.EXECUTIVE_SUMMARY,
+    SectionKey.REPORT_STATUS,
     SectionKey.SCOPE_AND_ASSUMPTIONS,
     SectionKey.METHODOLOGY,
     SectionKey.ASSESSMENT_STATUS,
-    SectionKey.ISO_COMPLIANCE,
     SectionKey.CRA_COMPLIANCE,
     SectionKey.ASSET_INVENTORY,
     SectionKey.DAMAGE_SCENARIOS,
@@ -76,7 +78,9 @@ SECTION_ORDER: List[SectionKey] = [
     SectionKey.TREATMENT_SUMMARY,
     SectionKey.CYBERSECURITY_GOALS,
     SectionKey.OPEN_ISSUES,
+    SectionKey.ISO_COMPLIANCE,
     SectionKey.TRACEABILITY,
+    SectionKey.APPENDICES,
 ]
 
 

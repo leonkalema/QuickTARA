@@ -23,10 +23,10 @@ _AUDIENCE_SECTIONS: Dict[ReportAudience, Dict[SectionKey, bool]] = {
     ReportAudience.INTERNAL: {
         SectionKey.DOCUMENT_CONTROL:      True,
         SectionKey.EXECUTIVE_SUMMARY:     True,
+        SectionKey.REPORT_STATUS:         True,
         SectionKey.SCOPE_AND_ASSUMPTIONS: True,
         SectionKey.METHODOLOGY:           True,
         SectionKey.ASSESSMENT_STATUS:     True,
-        SectionKey.ISO_COMPLIANCE:        True,
         SectionKey.CRA_COMPLIANCE:        True,
         SectionKey.ASSET_INVENTORY:       True,
         SectionKey.DAMAGE_SCENARIOS:      True,
@@ -37,47 +37,51 @@ _AUDIENCE_SECTIONS: Dict[ReportAudience, Dict[SectionKey, bool]] = {
         SectionKey.TREATMENT_SUMMARY:     True,
         SectionKey.CYBERSECURITY_GOALS:   True,
         SectionKey.OPEN_ISSUES:           True,
+        SectionKey.ISO_COMPLIANCE:        True,
         SectionKey.TRACEABILITY:          True,
+        SectionKey.APPENDICES:            False,  # no appendices needed for internal
     },
-    # External / OEM report — no sensitive technical detail
     ReportAudience.EXTERNAL: {
         SectionKey.DOCUMENT_CONTROL:      True,
         SectionKey.EXECUTIVE_SUMMARY:     True,
+        SectionKey.REPORT_STATUS:         True,
         SectionKey.SCOPE_AND_ASSUMPTIONS: True,
         SectionKey.METHODOLOGY:           True,
         SectionKey.ASSESSMENT_STATUS:     True,
-        SectionKey.ISO_COMPLIANCE:        True,
-        SectionKey.CRA_COMPLIANCE:        False,  # internal regulatory gaps
+        SectionKey.CRA_COMPLIANCE:        False,
         SectionKey.ASSET_INVENTORY:       True,
-        SectionKey.DAMAGE_SCENARIOS:      False,  # sensitive IP
-        SectionKey.THREAT_SCENARIOS:      False,  # attack roadmap
-        SectionKey.ATTACK_PATHS:          False,  # attacker guide
-        SectionKey.RISK_SUMMARY:          True,
-        SectionKey.RISK_REGISTER:         True,   # decisions only, no attack detail
-        SectionKey.TREATMENT_SUMMARY:     True,
-        SectionKey.CYBERSECURITY_GOALS:   True,
-        SectionKey.OPEN_ISSUES:           True,
-        SectionKey.TRACEABILITY:          False,  # internal architecture
-    },
-    # Auditor / ISO 21434 type-approval body
-    ReportAudience.AUDITOR: {
-        SectionKey.DOCUMENT_CONTROL:      True,
-        SectionKey.EXECUTIVE_SUMMARY:     True,
-        SectionKey.SCOPE_AND_ASSUMPTIONS: True,
-        SectionKey.METHODOLOGY:           True,
-        SectionKey.ASSESSMENT_STATUS:     True,
-        SectionKey.ISO_COMPLIANCE:        True,
-        SectionKey.CRA_COMPLIANCE:        False,  # separate regulatory track
-        SectionKey.ASSET_INVENTORY:       True,
-        SectionKey.DAMAGE_SCENARIOS:      True,
-        SectionKey.THREAT_SCENARIOS:      True,
-        SectionKey.ATTACK_PATHS:          False,  # not needed for process audit
+        SectionKey.DAMAGE_SCENARIOS:      False,
+        SectionKey.THREAT_SCENARIOS:      False,
+        SectionKey.ATTACK_PATHS:          False,
         SectionKey.RISK_SUMMARY:          True,
         SectionKey.RISK_REGISTER:         True,
         SectionKey.TREATMENT_SUMMARY:     True,
         SectionKey.CYBERSECURITY_GOALS:   True,
         SectionKey.OPEN_ISSUES:           True,
-        SectionKey.TRACEABILITY:          True,   # essential for clause audit
+        SectionKey.ISO_COMPLIANCE:        True,
+        SectionKey.TRACEABILITY:          False,
+        SectionKey.APPENDICES:            True,
+    },
+    ReportAudience.AUDITOR: {
+        SectionKey.DOCUMENT_CONTROL:      True,
+        SectionKey.EXECUTIVE_SUMMARY:     True,
+        SectionKey.REPORT_STATUS:         True,
+        SectionKey.SCOPE_AND_ASSUMPTIONS: True,
+        SectionKey.METHODOLOGY:           True,
+        SectionKey.ASSESSMENT_STATUS:     True,
+        SectionKey.CRA_COMPLIANCE:        False,
+        SectionKey.ASSET_INVENTORY:       True,
+        SectionKey.DAMAGE_SCENARIOS:      True,
+        SectionKey.THREAT_SCENARIOS:      True,
+        SectionKey.ATTACK_PATHS:          False,
+        SectionKey.RISK_SUMMARY:          True,
+        SectionKey.RISK_REGISTER:         True,
+        SectionKey.TREATMENT_SUMMARY:     True,
+        SectionKey.CYBERSECURITY_GOALS:   True,
+        SectionKey.OPEN_ISSUES:           True,
+        SectionKey.ISO_COMPLIANCE:        True,
+        SectionKey.TRACEABILITY:          True,
+        SectionKey.APPENDICES:            True,
     },
 }
 

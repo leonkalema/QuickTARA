@@ -27,9 +27,10 @@ class TestResolveSections(unittest.TestCase):
         })
         with mock.patch.object(report_builder, "has_cra_assessment", return_value=False):
             resolved = report_builder.resolve_sections(config, "scope-1", db=None)
+        # ISO_COMPLIANCE was moved after ASSET_INVENTORY in the canonical order
         self.assertEqual(resolved, [
-            SectionKey.ISO_COMPLIANCE,
             SectionKey.ASSET_INVENTORY,
+            SectionKey.ISO_COMPLIANCE,
             SectionKey.TRACEABILITY,
         ])
 
@@ -107,8 +108,8 @@ class TestBuildCompleteReportWiring(unittest.TestCase):
         # Internal profile enables all 11 sections, minus CRA (no assessment).
         # _build_section is called once per resolved section (mocked to return
         # ["x"]), so count == resolved sections.
-        self.assertEqual(build_sec.call_count, 16)  # 17 sections - CRA (no assessment)
-        self.assertEqual(captured["section_count"], 16)
+        self.assertEqual(build_sec.call_count, 17)  # 18 internal sections - CRA (no assessment)
+        self.assertEqual(captured["section_count"], 17)
 
     def test_empty_sections_are_skipped(self):
         config = ReportConfig(sections={

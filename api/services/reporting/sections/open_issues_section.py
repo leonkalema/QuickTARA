@@ -103,12 +103,13 @@ def build_open_issues_section(
         Paragraph("<b>Priority</b>", styles["Normal"]),
     ]
     rows = [header]
+    P = lambda t: Paragraph(str(t), styles["Normal"])
     for issue in issues:
         rows.append([
-            issue["category"],
-            Paragraph(issue["issue"], styles["Normal"]),
-            issue["action"],
-            issue["priority"],
+            P(issue["category"]),
+            P(issue["issue"]),
+            P(issue["action"]),
+            P(issue["priority"]),
         ])
 
     col_widths = [1.3*inch, 3.2*inch, 1.5*inch, 0.8*inch]

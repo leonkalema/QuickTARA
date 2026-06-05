@@ -7,10 +7,10 @@ export type ReportClassification = 'public' | 'internal' | 'confidential';
 export type SectionKey =
 	| 'document_control'
 	| 'executive_summary'
+	| 'report_status'
 	| 'scope_and_assumptions'
 	| 'methodology'
 	| 'assessment_status'
-	| 'iso_compliance'
 	| 'cra_compliance'
 	| 'asset_inventory'
 	| 'damage_scenarios'
@@ -21,7 +21,9 @@ export type SectionKey =
 	| 'treatment_summary'
 	| 'cybersecurity_goals'
 	| 'open_issues'
-	| 'traceability';
+	| 'iso_compliance'
+	| 'traceability'
+	| 'appendices';
 
 export interface ReportMetadata {
 	author: string | null;
@@ -48,17 +50,12 @@ interface TemplateListResponse {
 }
 
 const SECTION_KEYS: SectionKey[] = [
-	'document_control',
-	'executive_summary',
-	'iso_compliance',
-	'cra_compliance',
-	'risk_summary',
-	'asset_inventory',
-	'damage_scenarios',
-	'threat_scenarios',
-	'attack_paths',
-	'cybersecurity_goals',
-	'traceability'
+	'document_control', 'executive_summary', 'report_status',
+	'scope_and_assumptions', 'methodology', 'assessment_status',
+	'cra_compliance', 'asset_inventory', 'damage_scenarios',
+	'threat_scenarios', 'attack_paths', 'risk_summary', 'risk_register',
+	'treatment_summary', 'cybersecurity_goals', 'open_issues',
+	'iso_compliance', 'traceability', 'appendices',
 ];
 
 /**
@@ -80,61 +77,28 @@ const SECTION_KEYS: SectionKey[] = [
  */
 const AUDIENCE_SECTIONS: Record<ReportAudience, Record<SectionKey, boolean>> = {
 	internal: {
-		document_control:      true,
-		executive_summary:     true,
-		scope_and_assumptions: true,
-		methodology:           true,
-		assessment_status:     true,
-		iso_compliance:        true,
-		cra_compliance:        true,
-		asset_inventory:       true,
-		damage_scenarios:      true,
-		threat_scenarios:      true,
-		attack_paths:          true,
-		risk_summary:          true,
-		risk_register:         true,
-		treatment_summary:     true,
-		cybersecurity_goals:   true,
-		open_issues:           true,
-		traceability:          true,
+		document_control: true, executive_summary: true, report_status: true,
+		scope_and_assumptions: true, methodology: true, assessment_status: true,
+		cra_compliance: true, asset_inventory: true, damage_scenarios: true,
+		threat_scenarios: true, attack_paths: true, risk_summary: true,
+		risk_register: true, treatment_summary: true, cybersecurity_goals: true,
+		open_issues: true, iso_compliance: true, traceability: true, appendices: false,
 	},
 	external: {
-		document_control:      true,
-		executive_summary:     true,
-		scope_and_assumptions: true,
-		methodology:           true,
-		assessment_status:     true,
-		iso_compliance:        true,
-		cra_compliance:        false,  // internal regulatory gaps
-		asset_inventory:       true,
-		damage_scenarios:      false,  // sensitive IP
-		threat_scenarios:      false,  // attack roadmap
-		attack_paths:          false,  // attacker guide
-		risk_summary:          true,
-		risk_register:         true,
-		treatment_summary:     true,
-		cybersecurity_goals:   true,
-		open_issues:           true,
-		traceability:          false,  // internal architecture
+		document_control: true, executive_summary: true, report_status: true,
+		scope_and_assumptions: true, methodology: true, assessment_status: true,
+		cra_compliance: false, asset_inventory: true, damage_scenarios: false,
+		threat_scenarios: false, attack_paths: false, risk_summary: true,
+		risk_register: true, treatment_summary: true, cybersecurity_goals: true,
+		open_issues: true, iso_compliance: true, traceability: false, appendices: true,
 	},
 	auditor: {
-		document_control:      true,
-		executive_summary:     true,
-		scope_and_assumptions: true,
-		methodology:           true,
-		assessment_status:     true,
-		iso_compliance:        true,
-		cra_compliance:        false,  // separate regulatory track
-		asset_inventory:       true,
-		damage_scenarios:      true,
-		threat_scenarios:      true,
-		attack_paths:          false,  // not needed for process audit
-		risk_summary:          true,
-		risk_register:         true,
-		treatment_summary:     true,
-		cybersecurity_goals:   true,
-		open_issues:           true,
-		traceability:          true,
+		document_control: true, executive_summary: true, report_status: true,
+		scope_and_assumptions: true, methodology: true, assessment_status: true,
+		cra_compliance: false, asset_inventory: true, damage_scenarios: true,
+		threat_scenarios: true, attack_paths: false, risk_summary: true,
+		risk_register: true, treatment_summary: true, cybersecurity_goals: true,
+		open_issues: true, iso_compliance: true, traceability: true, appendices: true,
 	},
 };
 
