@@ -319,6 +319,12 @@
             Accepted ({acceptedCount})
           </button>
         </div>
+        {#if hasExistingAutoDrafts && draftCount > 0}
+          <div class="text-xs px-3 py-2 rounded-md" style="background: var(--color-warning-bg); color: var(--color-warning); max-width: 600px;">
+            <strong>Draft — Generated from MITRE ATT&CK ICS catalog.</strong>
+            Engineering review required before acceptance: verify the technique applies to this asset type, the damage linkage is semantically correct, and the attack path is feasible for this product.
+          </div>
+        {/if}
         {#if canManageScenarios}
           <div class="flex gap-2 flex-wrap">
             {#if draftCount > 0}
