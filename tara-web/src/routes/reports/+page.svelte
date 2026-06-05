@@ -86,6 +86,8 @@
 
   // Report configuration + templates
   let reportConfig: ReportConfig = defaultConfigForAudience('internal');
+  $: needsSignoff = (reportConfig.audience === 'external' || reportConfig.audience === 'auditor') &&
+    (!reportConfig.metadata.author || !reportConfig.metadata.approver);
   let templates: TemplateSummary[] = [];
   let selectedTemplateId = '';
   let savingTemplate = false;
@@ -331,8 +333,6 @@
             </div>
           {/if}
 
-          {@const needsSignoff = (reportConfig.audience === 'external' || reportConfig.audience === 'auditor') &&
-            (!reportConfig.metadata.author || !reportConfig.metadata.approver)}
           {#if needsSignoff}
             <p class="text-xs text-center mb-2" style="color: var(--color-error);">
               Author and Approver are required before generating an external or auditor report.
