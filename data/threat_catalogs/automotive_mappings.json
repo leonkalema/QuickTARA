@@ -7,14 +7,12 @@
       "automotive_relevance": 5,
       "automotive_context": "CAN bus messages can be replayed to repeat actuator commands (e.g. torque, braking) without driver input.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Controller"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical",
-        "Trusted"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -37,13 +35,12 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker modifies calibration or sensor data in ECU memory \u2014 e.g. altering torque limits or safety thresholds.",
       "component_types": [
-        "ECU",
-        "Controller",
-        "Sensor"
+        "controller",
+        "sensor"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "uds",
@@ -67,12 +64,10 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker activates automated routines (e.g. calibration, diagnostic modes) outside their intended context.",
       "component_types": [
-        "ECU",
-        "Controller"
+        "controller"
       ],
       "trust_zones": [
-        "Internal",
-        "Trusted"
+        "trusted"
       ],
       "attack_vectors": [
         "uds",
@@ -92,13 +87,13 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker blocks or corrupts diagnostic communication to prevent fault detection or OTA updates.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Telematics"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "External"
+        "external",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -122,12 +117,11 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker repeatedly sends I/O commands via CAN to force an actuator beyond its safety limits.",
       "component_types": [
-        "ECU",
-        "Controller"
+        "controller"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus"
@@ -148,14 +142,12 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker injects a malicious command message impersonating a trusted ECU on the CAN bus.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Controller"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical",
-        "Trusted"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -178,11 +170,10 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker tampers with data stored in non-volatile memory (EEPROM, Flash) of an ECU.",
       "component_types": [
-        "ECU",
-        "Controller"
+        "controller"
       ],
       "trust_zones": [
-        "Internal"
+        "trusted"
       ],
       "attack_vectors": [
         "jtag",
@@ -206,13 +197,12 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker reads diagnostic or sensor data from the ECU to map system behaviour before an attack.",
       "component_types": [
-        "ECU",
-        "Sensor",
-        "Controller"
+        "controller",
+        "sensor"
       ],
       "trust_zones": [
-        "Internal",
-        "External"
+        "external",
+        "trusted"
       ],
       "attack_vectors": [
         "obd",
@@ -236,13 +226,13 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker exploits ECU firmware vulnerability to bypass security checks or disable monitoring.",
       "component_types": [
-        "ECU",
-        "Telematics",
-        "Gateway"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "External"
+        "external",
+        "trusted"
       ],
       "attack_vectors": [
         "ota",
@@ -266,13 +256,13 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker abuses a trusted network path (e.g. OBD tester, telematics, V2X) to reach internal ECUs.",
       "component_types": [
-        "Gateway",
-        "Telematics",
-        "ECU"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External",
-        "Internal"
+        "trusted",
+        "external"
       ],
       "attack_vectors": [
         "obd",
@@ -297,13 +287,12 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker floods the CAN bus or automotive ethernet to prevent legitimate ECU messages from being processed, causing loss of control.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Controller"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -326,13 +315,12 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker interferes with sensor data (e.g. position sensor, temperature) causing the ECU to make incorrect control decisions.",
       "component_types": [
-        "Sensor",
-        "ECU",
-        "Controller"
+        "controller",
+        "sensor"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -355,13 +343,13 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker uses a connected device or legitimate service channel to target a deeper ECU via the network.",
       "component_types": [
-        "Gateway",
-        "ECU",
-        "Telematics"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External",
-        "Internal"
+        "trusted",
+        "external"
       ],
       "attack_vectors": [
         "network",
@@ -385,14 +373,12 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker impersonates a trusted node on the CAN bus or automotive ethernet to inject commands or drain data.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Controller"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical",
-        "Trusted"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -416,14 +402,13 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker manipulates the firmware update process (OTA or via UDS) to flash malicious code.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Telematics"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External",
-        "Internal",
-        "Trusted"
+        "trusted",
+        "external"
       ],
       "attack_vectors": [
         "ota",
@@ -448,13 +433,12 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker modifies actuator commands in transit on the CAN bus \u2014 e.g. changing torque or braking commands.",
       "component_types": [
-        "ECU",
-        "Controller",
-        "Gateway"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -477,12 +461,11 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker exploits weak or missing security seed/key exchange in UDS security access to unlock privileged services.",
       "component_types": [
-        "ECU",
-        "Controller"
+        "controller"
       ],
       "trust_zones": [
-        "Internal",
-        "External"
+        "external",
+        "trusted"
       ],
       "attack_vectors": [
         "uds",
@@ -506,12 +489,12 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker restores an ECU to a previous (potentially vulnerable) firmware version via downgrade attack.",
       "component_types": [
-        "ECU",
-        "Gateway"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "External"
+        "external",
+        "trusted"
       ],
       "attack_vectors": [
         "ota",
@@ -534,13 +517,12 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker targets supply chain components (libraries, tools, hardware) to embed malicious code before the ECU reaches the vehicle.",
       "component_types": [
-        "ECU",
-        "Controller",
-        "Gateway"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External",
-        "Internal"
+        "trusted",
+        "external"
       ],
       "attack_vectors": [
         "supply_chain"
@@ -563,12 +545,11 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker uses reverse engineering or network capture to extract proprietary calibration data or cryptographic keys from an ECU.",
       "component_types": [
-        "ECU",
-        "Controller",
-        "Sensor"
+        "controller",
+        "sensor"
       ],
       "trust_zones": [
-        "Internal"
+        "trusted"
       ],
       "attack_vectors": [
         "jtag",
@@ -593,11 +574,10 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker modifies the program logic of the ECU microcontroller (e.g. altering interrupt handlers or safety monitors).",
       "component_types": [
-        "ECU",
-        "Controller"
+        "controller"
       ],
       "trust_zones": [
-        "Internal"
+        "trusted"
       ],
       "attack_vectors": [
         "jtag",
@@ -622,12 +602,11 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker queries or injects messages on the remote I/O interface (e.g. LIN, K-Line) of a sub-system ECU.",
       "component_types": [
-        "ECU",
-        "Sensor",
-        "Controller"
+        "controller",
+        "sensor"
       ],
       "trust_zones": [
-        "Internal"
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -648,12 +627,12 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker exploits a rogue device connected to the OBD-II port or USB port to access vehicle networks.",
       "component_types": [
-        "Gateway",
-        "ECU",
-        "Telematics"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External"
+        "external"
       ],
       "attack_vectors": [
         "obd",
@@ -677,13 +656,13 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker manipulates real-time clock or network time signals to invalidate certificate validity or timing-sensitive safety functions.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Telematics"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "External"
+        "external",
+        "trusted"
       ],
       "attack_vectors": [
         "network",
@@ -706,13 +685,13 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker abuses legitimate remote access or diagnostics to send commands from outside the vehicle.",
       "component_types": [
-        "Telematics",
-        "Gateway",
-        "ECU"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External",
-        "Internal"
+        "trusted",
+        "external"
       ],
       "attack_vectors": [
         "network",
@@ -735,13 +714,12 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker spoofs or replays command messages to trigger unintended actuator behaviour (throttle, brakes, steering).",
       "component_types": [
-        "ECU",
-        "Controller",
-        "Gateway"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -766,13 +744,13 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker exploits default or stolen credentials to access diagnostic services or telematics backend.",
       "component_types": [
-        "ECU",
-        "Telematics",
-        "Gateway"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External",
-        "Internal"
+        "trusted",
+        "external"
       ],
       "attack_vectors": [
         "network",
@@ -796,13 +774,13 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker reads or eavesdrops on network traffic to extract sensitive data or learn message formats.",
       "component_types": [
-        "ECU",
-        "Gateway",
-        "Telematics"
+        "communication",
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "Internal",
-        "External"
+        "external",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -826,13 +804,12 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker modifies point values or sensor signals to cause an ECU to operate outside safe parameters.",
       "component_types": [
-        "Sensor",
-        "ECU",
-        "Controller"
+        "controller",
+        "sensor"
       ],
       "trust_zones": [
-        "Internal",
-        "Critical"
+        "secure",
+        "trusted"
       ],
       "attack_vectors": [
         "can_bus",
@@ -855,11 +832,11 @@
       "automotive_relevance": 2,
       "automotive_context": "Attacker targets automotive supply chain software or hardware components to introduce vulnerabilities before deployment.",
       "component_types": [
-        "ECU",
-        "Gateway"
+        "controller",
+        "gateway"
       ],
       "trust_zones": [
-        "External"
+        "external"
       ],
       "attack_vectors": [
         "supply_chain"
@@ -880,12 +857,12 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker uses hard-coded or default credentials in diagnostic tools or telematics to gain unauthorized access.",
       "component_types": [
-        "ECU",
-        "Telematics"
+        "communication",
+        "controller"
       ],
       "trust_zones": [
-        "External",
-        "Internal"
+        "trusted",
+        "external"
       ],
       "attack_vectors": [
         "network",

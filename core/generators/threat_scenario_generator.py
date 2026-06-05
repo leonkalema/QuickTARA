@@ -97,12 +97,15 @@ def _matches_asset(
     component_types: List[str],
     catalog_zones: List[str],
 ) -> bool:
-    """Check if a catalog threat matches the asset's component types or trust zones."""
-    threat_types = threat.applicable_component_types or []
-    threat_zones = threat.applicable_trust_zones or []
+    """Check if a catalog threat matches the asset's component types or trust zones.
+    Matching is case-insensitive to handle mixed-case catalog entries."""
+    threat_types = [t.lower() for t in (threat.applicable_component_types or [])]
+    threat_zones = [z.lower() for z in (threat.applicable_trust_zones or [])]
+    asset_types = [ct.lower() for ct in component_types]
+    asset_zones = [tz.lower() for tz in catalog_zones]
 
-    type_match = not threat_types or any(ct in threat_types for ct in component_types)
-    zone_match = not threat_zones or any(tz in threat_zones for tz in catalog_zones)
+    type_match = not threat_types or any(ct in threat_types for ct in asset_types)
+    zone_match = not threat_zones or any(tz in threat_zones for tz in asset_zones)
 
     return type_match and zone_match
 
