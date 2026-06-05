@@ -23,6 +23,7 @@
   import { get } from 'svelte/store';
   import ProductQuickActions from '../../../features/products/components/ProductQuickActions.svelte';
   import ProductDetailsGrid from '../../../features/products/components/ProductDetailsGrid.svelte';
+  import ProductSetupStatus from '../../../features/products/components/ProductSetupStatus.svelte';
   import { notifyProductsChanged } from '$lib/stores/productEvents';
 
   type OrganizationOption = {
@@ -37,6 +38,9 @@
   let editedProduct: Partial<CreateProductRequest> = {};
   let isSaving = false;
   let permissions: ProductPermissions | null = null;
+  let assetCount = 0;
+  let damageCount = 0;
+  let threatCount = 0;
 
   let organizations: OrganizationOption[] = [];
   let selectedOrganizationId = '';
@@ -94,11 +98,21 @@
     
     try {
       product = await productApi.getById(productId);
-      // Auto-select this product when viewing details
       selectedProduct.set(product);
-      // Fetch permissions for this product
       permissions = await productPermissions.fetchPermissions(productId);
       selectedOrganizationId = product.organization_id ?? '';
+      // Load counts for completeness indicator (best-effort)
+      try {
+        const headers = { 'Authorization': `Bearer ${localStorage.getItem('auth_token') ?? ''}` };
+        const [ar, dr, tr] = await Promise.all([
+          fetch(`${API_BASE_URL}/assets?scope_id=${productId}`, { headers }).then(r => r.ok ? r.json() : {assets: []}),
+          fetch(`${API_BASE_URL}/damage-scenarios?scope_id=${productId}&limit=1`, { headers }).then(r => r.ok ? r.json() : {total: 0}),
+          fetch(`${API_BASE_URL}/threat-scenarios?scope_id=${productId}&limit=1`, { headers }).then(r => r.ok ? r.json() : {total: 0}),
+        ]);
+        assetCount = ar.assets?.length ?? 0;
+        damageCount = typeof dr.total === 'number' ? dr.total : dr.scenarios?.length ?? 0;
+        threatCount = typeof tr.total === 'number' ? tr.total : tr.threat_scenarios?.length ?? 0;
+      } catch { /* non-critical */ }
     } catch (err) {
       error = 'Failed to load product details';
       console.error('Error loading product:', err);
@@ -360,9 +374,11 @@
       </div>
     </div>
 
-    <ProductDetailsGrid {product} />
+    <ProductSetupStatus {product} {assetCount} damageScenarioCount={damageCount} threatScenarioCount={threatCount} />
 
-    <ProductQuickActions />
+    <ProductDetailsGrid {product} {isEditing} bind:editedProduct canEdit={permissions?.can_edit ?? false} />
+
+    <ProductQuickActions {assetCount} damageCount={damageCount} threatCount={threatCount} />
   {:else}
     <div class="text-center py-12">
       <p class="text-xs" style="color: var(--color-text-tertiary);">Product not found</p>
