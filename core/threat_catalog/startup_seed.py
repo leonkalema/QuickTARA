@@ -14,6 +14,7 @@ Purpose: Ship a pre-populated threat catalog out of the box — no manual steps
 Depends on: core/threat_catalog/catalog_seeder.py, core/threat_catalog/stix_parser.py
 Used by: api/app.py (startup event)
 """
+import hashlib
 import json
 import logging
 import threading
@@ -41,6 +42,8 @@ FALLBACK_STIX_URL = (
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "threat_catalogs"
 STIX_CACHE_PATH = DATA_DIR / "ics-attack.json"
+MAPPINGS_PATH = DATA_DIR / "automotive_mappings.json"
+MAPPINGS_HASH_PATH = DATA_DIR / ".automotive_mappings_hash"
 
 DOWNLOAD_TIMEOUT_SECONDS = 30
 
@@ -54,17 +57,44 @@ def should_auto_seed(db: Session) -> bool:
             ThreatCatalog.source == "mitre_attack_ics"
         ).count() == 0
     except Exception:
-        # Table may not exist yet (e.g. during tests or before migrations run)
         return False
+
+
+def mappings_changed() -> bool:
+    """
+    Return True if automotive_mappings.json has changed since the last seed.
+    Compares SHA-256 of the file against the stored hash.
+    """
+    if not MAPPINGS_PATH.exists():
+        return False
+    current_hash = hashlib.sha256(MAPPINGS_PATH.read_bytes()).hexdigest()
+    if not MAPPINGS_HASH_PATH.exists():
+        return True  # no record of previous seed — treat as changed
+    return MAPPINGS_HASH_PATH.read_text().strip() != current_hash
+
+
+def _record_mappings_hash() -> None:
+    """Store the current automotive_mappings.json hash after a successful seed."""
+    if MAPPINGS_PATH.exists():
+        current_hash = hashlib.sha256(MAPPINGS_PATH.read_bytes()).hexdigest()
+        MAPPINGS_HASH_PATH.write_text(current_hash)
 
 
 def auto_seed_catalog(db: Session) -> Dict[str, Any]:
     """
-    Seed the threat catalog if empty. Blocks the caller — wrap in a thread
-    for non-blocking use (see schedule_background_seed).
+    Seed or refresh the threat catalog.
+
+    - First run (empty catalog): downloads STIX bundle and seeds all entries.
+    - Subsequent runs: if automotive_mappings.json has changed since the last
+      seed, runs a force-update so new relevance scores and component-type
+      filters take effect immediately — no manual Settings action required.
+    - If nothing changed: skips entirely.
     """
-    if not should_auto_seed(db):
-        logger.info("Threat catalog already seeded — skipping")
+    empty = should_auto_seed(db)
+    changed = mappings_changed()
+
+    if not empty and not changed:
+        logger.info("Threat catalog up to date — skipping seed")
         return {"created": 0, "updated": 0, "skipped": 0}
 
     stix_path = _ensure_stix_bundle()
@@ -75,12 +105,19 @@ def auto_seed_catalog(db: Session) -> Dict[str, Any]:
         )
         return {"created": 0, "updated": 0, "skipped": 0, "error": "stix_unavailable"}
 
+    # Force update when mappings changed so stale relevance scores and
+    # component-type filters are corrected without manual intervention.
+    force_update = changed and not empty
+
     try:
         from core.threat_catalog.catalog_seeder import seed_from_stix
-        result = seed_from_stix(db, stix_path=stix_path)
+        result = seed_from_stix(db, stix_path=stix_path, force_update=force_update)
+        _record_mappings_hash()
+        action = "force-updated" if force_update else "seeded"
         logger.info(
-            "Threat catalog seeded from MITRE ATT&CK ICS: "
+            "Threat catalog %s from MITRE ATT&CK ICS: "
             "created=%d updated=%d skipped=%d",
+            action,
             result.get("created", 0),
             result.get("updated", 0),
             result.get("skipped", 0),
