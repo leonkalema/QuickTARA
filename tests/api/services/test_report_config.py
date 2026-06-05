@@ -58,10 +58,11 @@ class TestReportConfigModel(unittest.TestCase):
             SectionKey.ISO_COMPLIANCE: True,
         })
         enabled = config.enabled_sections()
+        # ISO_COMPLIANCE is now near end (after OPEN_ISSUES) per OEM convention
         self.assertEqual(enabled, [
             SectionKey.DOCUMENT_CONTROL,
-            SectionKey.ISO_COMPLIANCE,
             SectionKey.CYBERSECURITY_GOALS,
+            SectionKey.ISO_COMPLIANCE,
         ])
 
     def test_is_enabled(self):
@@ -91,7 +92,10 @@ class TestAudiencePresets(unittest.TestCase):
         config = default_config_for_audience(ReportAudience.INTERNAL)
         self.assertEqual(config.detail_level, ReportDetailLevel.FULL)
         self.assertEqual(config.classification, ReportClassification.INTERNAL)
-        self.assertEqual(set(config.enabled_sections()), set(SECTION_ORDER))
+        # Internal enables all sections except APPENDICES (which is an
+        # external-package deliverable, not needed for internal working docs)
+        expected = set(SECTION_ORDER) - {SectionKey.APPENDICES}
+        self.assertEqual(set(config.enabled_sections()), expected)
 
     def test_external_hides_traceability_and_is_summary(self):
         config = default_config_for_audience(ReportAudience.EXTERNAL)
