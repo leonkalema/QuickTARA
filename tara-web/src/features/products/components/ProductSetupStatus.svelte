@@ -13,7 +13,7 @@
     hint: string;
   }
 
-  $: checks: CheckItem[] = [
+  $: checks = [
     { label: 'Product basics',       done: !!(product.name && product.safety_level && product.product_type), required: true,  hint: 'Name, safety level, product type' },
     { label: 'Description',          done: !!(product.description && product.description.length > 20),         required: false, hint: 'Enables auto-detect of interfaces' },
     { label: 'Interfaces',           done: !!(product.interfaces && product.interfaces.length > 0),            required: true,  hint: 'CAN-FD, UDS, OTA, etc.' },
