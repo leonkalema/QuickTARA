@@ -334,29 +334,6 @@
       ],
       "examples": []
     },
-    "T0806": {
-      "automotive_relevance": 3,
-      "automotive_context": "Attacker repeatedly sends extreme I/O commands (e.g. max torque, full PWM duty cycle) via CAN to drive actuators beyond their safety limits, attempting to induce hardware failure or unsafe operating conditions.",
-      "component_types": [
-        "controller"
-      ],
-      "trust_zones": [
-        "secure",
-        "trusted"
-      ],
-      "attack_vectors": [
-        "can_bus"
-      ],
-      "typical_likelihood": 3,
-      "typical_severity": 4,
-      "cwe_ids": [
-        "CWE-20"
-      ],
-      "capec_ids": [
-        "CAPEC-210"
-      ],
-      "examples": []
-    },
     "T0800": {
       "automotive_relevance": 4,
       "automotive_context": "Attacker triggers the ECU to enter its firmware programming/bootloader mode without authorization (e.g. via UDS DiagnosticSessionControl or a physical pin), enabling subsequent firmware replacement.",
