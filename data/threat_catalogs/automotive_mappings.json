@@ -7,8 +7,8 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker replays or spoofs CAN-FD frames (e.g. torque request, brake command) by impersonating a trusted ECU node ID. Requires bus access.",
       "component_types": [
-        "controller",
-        "gateway"
+        "communication",
+        "interface"
       ],
       "trust_zones": [
         "secure",
@@ -35,6 +35,7 @@
       "automotive_context": "Attacker floods the CAN bus or automotive Ethernet with high-rate frames, starving legitimate ECU messages and causing loss of control or safety-function timeout.",
       "component_types": [
         "controller",
+        "communication",
         "gateway"
       ],
       "trust_zones": [
@@ -59,7 +60,7 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker selectively blocks or corrupts specific CAN frames (e.g. safety-critical torque limit messages) to prevent legitimate commands from reaching the ECU.",
       "component_types": [
-        "controller",
+        "communication",
         "gateway"
       ],
       "trust_zones": [
@@ -84,7 +85,7 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker tampers with ECU calibration or configuration data (e.g. torque limits, current thresholds, thermal protection setpoints) via UDS WriteDataByIdentifier or RoutineControl.",
       "component_types": [
-        "controller"
+        "sensor"
       ],
       "trust_zones": [
         "secure",
@@ -108,8 +109,7 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker opens an unauthorized UDS programming session (bypassing SecurityAccess seed-key) and flashes modified or malicious firmware to the ECU via RequestDownload / TransferData.",
       "component_types": [
-        "controller",
-        "gateway"
+        "processing_unit"
       ],
       "trust_zones": [
         "secure",
@@ -136,8 +136,7 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker modifies or replaces individual firmware modules (e.g. MCAL drivers, AUTOSAR BSW, bootloader) without a valid signature, bypassing secure boot checks via a vulnerability or supply chain compromise.",
       "component_types": [
-        "controller",
-        "gateway"
+        "processing_unit"
       ],
       "trust_zones": [
         "secure",
@@ -163,7 +162,8 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker injects unauthorized control commands (e.g. manipulating torque setpoints, switching phase outputs) that override normal ECU operation and cause unintended actuator behaviour.",
       "component_types": [
-        "controller"
+        "communication",
+        "interface"
       ],
       "trust_zones": [
         "secure",
@@ -187,7 +187,7 @@
       "automotive_relevance": 5,
       "automotive_context": "Attacker injects false sensor values (e.g. rotor position, phase current, temperature) onto the CAN bus or internal interface, causing the ECU to make incorrect control decisions and potentially triggering unsafe states.",
       "component_types": [
-        "controller",
+        "communication",
         "sensor"
       ],
       "trust_zones": [
@@ -212,6 +212,7 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker disables or bypasses safety monitors, watchdog timers, or protection functions (e.g. overcurrent protection, thermal shutdown) in the ECU \u2014 leaving the system in an unprotected state.",
       "component_types": [
+        "processing_unit",
         "controller"
       ],
       "trust_zones": [
@@ -237,7 +238,7 @@
       "automotive_context": "Attacker positions between two ECUs on the automotive Ethernet (SOME/IP) or CAN-FD network, intercepting and potentially modifying messages in transit without either endpoint detecting the interception.",
       "component_types": [
         "gateway",
-        "controller"
+        "communication"
       ],
       "trust_zones": [
         "secure",
@@ -262,7 +263,7 @@
       "automotive_context": "Attacker transmits CAN frames using the arbitration ID of a trusted ECU (e.g. the VCU), impersonating its identity to inject commands that the target ECU accepts as legitimate.",
       "component_types": [
         "controller",
-        "gateway"
+        "communication"
       ],
       "trust_zones": [
         "secure",
@@ -285,8 +286,8 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker connects a rogue device to the OBD-II port or automotive network acting as an unauthorized diagnostic master, gaining access to programming sessions and internal ECU data.",
       "component_types": [
-        "gateway",
-        "controller"
+        "controller",
+        "sensor"
       ],
       "trust_zones": [
         "trusted",
@@ -338,8 +339,7 @@
       "automotive_relevance": 4,
       "automotive_context": "Attacker triggers the ECU to enter its firmware programming/bootloader mode without authorization (e.g. via UDS DiagnosticSessionControl or a physical pin), enabling subsequent firmware replacement.",
       "component_types": [
-        "controller",
-        "gateway"
+        "processing_unit"
       ],
       "trust_zones": [
         "secure",
@@ -364,12 +364,9 @@
       "automotive_relevance": 3,
       "automotive_context": "Attacker compromises software or hardware components in the supply chain (e.g. Tier-2 MCAL drivers, open-source AUTOSAR stack, silicon vendor SDK) before they reach the ECU, embedding malicious code that activates in the field.",
       "component_types": [
-        "controller",
-        "gateway"
+        "processing_unit"
       ],
-      "trust_zones": [
-        "external"
-      ],
+      "trust_zones": [],
       "attack_vectors": [
         "supply_chain"
       ],
