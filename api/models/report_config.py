@@ -90,6 +90,7 @@ class ReportMetadata(BaseModel):
     author: Optional[str] = Field(default=None, description="Document author name")
     approver: Optional[str] = Field(default=None, description="Approver name")
     reference: Optional[str] = Field(default=None, description="Document reference / ID")
+    tara_version: Optional[str] = Field(default=None, description="TARA document version (e.g. v1, v1.1). Overrides product scope version on cover page.")
 
 
 class ReportConfig(BaseModel):

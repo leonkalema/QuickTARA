@@ -75,7 +75,9 @@ def build_document_header(
     story = []
     
     current_date = datetime.now().strftime("%Y-%m-%d %H:%M")
-    version = f"v{scope_info.get('version', '1.0')}"
+    # Use analyst-specified TARA version if provided; fall back to scope version
+    tara_ver = (config.metadata.tara_version or "").strip() if config and config.metadata else ""
+    version = tara_ver if tara_ver else f"v{scope_info.get('version', '1')}"
     # Prefer org from DB via scope_info; fallback to env; else Unknown
     org_name = scope_info.get('organization_name') or os.environ.get("QUICKTARA_ORG_NAME", "Unknown Organization")
     tool_name = "QuickTARA"

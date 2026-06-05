@@ -197,6 +197,12 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
+        <label for="tara_version" class="text-xs w-24" style="color: var(--color-text-secondary);">TARA Version</label>
+        <input id="tara_version" type="text" bind:value={config.metadata.tara_version} placeholder="e.g. v1, v1.1 (overrides auto)"
+          class="flex-1 px-2 py-1.5 text-xs rounded-lg"
+          style="background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border-default);" />
+      </div>
+      <div class="flex items-center gap-2">
         <label for="reference" class="text-xs w-24" style="color: var(--color-text-secondary);">Reference</label>
         <input id="reference" type="text" bind:value={config.metadata.reference} placeholder="Optional document ID"
           class="flex-1 px-2 py-1.5 text-xs rounded-lg"

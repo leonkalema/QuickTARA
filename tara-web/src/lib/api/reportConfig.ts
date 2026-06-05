@@ -29,6 +29,7 @@ export interface ReportMetadata {
 	author: string | null;
 	approver: string | null;
 	reference: string | null;
+	tara_version: string | null;
 }
 
 export interface ReportConfig {
@@ -124,7 +125,7 @@ export function defaultConfigForAudience(audience: ReportAudience): ReportConfig
 		detail_level: meta.detail,
 		classification: meta.classification,
 		sections,
-		metadata: { author: null, approver: null, reference: null }
+		metadata: { author: null, approver: null, reference: null, tara_version: null }
 	};
 }
 
