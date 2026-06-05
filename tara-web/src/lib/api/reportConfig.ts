@@ -55,10 +55,63 @@ const SECTION_KEYS: SectionKey[] = [
 	'traceability'
 ];
 
-const AUDIENCE_SECTIONS: Record<ReportAudience, Partial<Record<SectionKey, boolean>>> = {
-	internal: { traceability: true },
-	external: { traceability: false },
-	auditor: { traceability: true }
+/**
+ * Per-audience section visibility.
+ *
+ * internal  — Full working document. All sections, full detail.
+ *
+ * external  — For customers, suppliers, or public disclosure.
+ *             NEVER include: attack paths (attacker roadmap), traceability
+ *             (exposes internal architecture decisions), CRA compliance gaps
+ *             (unresolved regulatory exposure), or damage/threat scenario
+ *             detail (sensitive IP). Include: executive summary, high-level
+ *             asset overview, ISO compliance statement, risk decisions only.
+ *
+ * auditor   — For ISO 21434 / type-approval assessors verifying process
+ *             compliance. Needs traceability and clause mapping to check
+ *             work products. Excludes attack paths (not needed for audit)
+ *             and CRA gaps (separate regulatory track).
+ */
+const AUDIENCE_SECTIONS: Record<ReportAudience, Record<SectionKey, boolean>> = {
+	internal: {
+		document_control:   true,
+		executive_summary:  true,
+		iso_compliance:     true,
+		cra_compliance:     true,
+		risk_summary:       true,
+		asset_inventory:    true,
+		damage_scenarios:   true,
+		threat_scenarios:   true,
+		attack_paths:       true,
+		cybersecurity_goals: true,
+		traceability:       true,
+	},
+	external: {
+		document_control:   true,
+		executive_summary:  true,
+		iso_compliance:     true,   // compliance statement only — no detail
+		cra_compliance:     false,  // internal regulatory gap list — never external
+		risk_summary:       true,   // high-level decisions only
+		asset_inventory:    true,   // asset types only, no internal detail
+		damage_scenarios:   false,  // sensitive — reveals what can go wrong in detail
+		threat_scenarios:   false,  // attack roadmap — never share externally
+		attack_paths:       false,  // attacker guide — never share externally
+		cybersecurity_goals: true,  // goals are safe to share
+		traceability:       false,  // exposes internal architecture decisions
+	},
+	auditor: {
+		document_control:   true,
+		executive_summary:  true,
+		iso_compliance:     true,
+		cra_compliance:     false,  // separate regulatory track, not ISO 21434
+		risk_summary:       true,
+		asset_inventory:    true,
+		damage_scenarios:   true,
+		threat_scenarios:   true,
+		attack_paths:       false,  // auditor needs process evidence, not attack detail
+		cybersecurity_goals: true,
+		traceability:       true,   // essential for clause-by-clause audit
+	},
 };
 
 const AUDIENCE_DEFAULTS: Record<ReportAudience, { detail: ReportDetailLevel; classification: ReportClassification }> = {
@@ -76,11 +129,7 @@ function authHeaders(): Record<string, string> {
 
 /** Build a default config for an audience, mirroring the backend presets. */
 export function defaultConfigForAudience(audience: ReportAudience): ReportConfig {
-	const overrides = AUDIENCE_SECTIONS[audience];
-	const sections = SECTION_KEYS.reduce((acc, key) => {
-		acc[key] = overrides[key] ?? true;
-		return acc;
-	}, {} as Record<SectionKey, boolean>);
+	const sections = { ...AUDIENCE_SECTIONS[audience] };
 	const meta = AUDIENCE_DEFAULTS[audience];
 	return {
 		audience,

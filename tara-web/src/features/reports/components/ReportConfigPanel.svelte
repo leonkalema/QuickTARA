@@ -13,36 +13,54 @@
   const dispatch = createEventDispatcher<{ change: ReportConfig }>();
 
   const AUDIENCES: { value: ReportAudience; label: string; hint: string }[] = [
-    { value: 'internal', label: 'Internal', hint: 'Full detail for the engineering team' },
+    { value: 'internal', label: 'Internal', hint: 'Full detail — engineering team' },
     { value: 'external', label: 'External', hint: 'Curated for customers / OEMs' },
-    { value: 'auditor', label: 'Auditor', hint: 'ISO 21434 / regulator submission' }
+    { value: 'auditor', label: 'Auditor', hint: 'ISO 21434 / type-approval body' }
   ];
 
   const SECTIONS: { key: SectionKey; label: string; wp: string }[] = [
-    { key: 'document_control', label: 'Document Control', wp: 'Clause 6 — management' },
-    { key: 'executive_summary', label: 'Executive Summary', wp: 'Scope & risk overview' },
-    { key: 'iso_compliance', label: 'ISO 21434 Compliance Matrix', wp: 'Work products overview' },
-    { key: 'cra_compliance', label: 'CRA Compliance', wp: 'Only if CRA assessment exists' },
-    { key: 'risk_summary', label: 'Risk Register', wp: 'WP-08 risk determination' },
-    { key: 'asset_inventory', label: 'Asset Inventory', wp: 'WP-04 item definition' },
-    { key: 'damage_scenarios', label: 'Damage Scenarios', wp: 'WP-04 damage scenarios' },
-    { key: 'threat_scenarios', label: 'Threat Scenarios', wp: 'WP-05 §15.4' },
-    { key: 'attack_paths', label: 'Attack Paths', wp: 'WP-06/07 §15.5–15.6' },
-    { key: 'cybersecurity_goals', label: 'Cybersecurity Goals', wp: 'WP-15 goals / claims' },
-    { key: 'traceability', label: 'Traceability Matrix', wp: 'Asset → Goal trace' }
+    { key: 'document_control',    label: 'Document Control',         wp: 'Clause 6 — management' },
+    { key: 'executive_summary',   label: 'Executive Summary',        wp: 'Scope & risk overview' },
+    { key: 'iso_compliance',      label: 'ISO 21434 Compliance',     wp: 'Work products overview' },
+    { key: 'cra_compliance',      label: 'CRA Compliance',           wp: 'Only if CRA assessment exists' },
+    { key: 'risk_summary',        label: 'Risk Register',            wp: 'WP-08 risk determination' },
+    { key: 'asset_inventory',     label: 'Asset Inventory',          wp: 'WP-04 item definition' },
+    { key: 'damage_scenarios',    label: 'Damage Scenarios',         wp: 'WP-04 damage scenarios' },
+    { key: 'threat_scenarios',    label: 'Threat Scenarios',         wp: 'WP-05 §15.4' },
+    { key: 'attack_paths',        label: 'Attack Paths',             wp: 'WP-06/07 §15.5–15.6' },
+    { key: 'cybersecurity_goals', label: 'Cybersecurity Goals',      wp: 'WP-15 goals / claims' },
+    { key: 'traceability',        label: 'Traceability Matrix',      wp: 'Asset → Goal trace' }
   ];
+
+  // Reason shown when a section is locked off for the current audience
+  const LOCKED_REASONS: Partial<Record<SectionKey, Partial<Record<ReportAudience, string>>>> = {
+    cra_compliance:   { external: 'Exposes unresolved regulatory gaps', auditor: 'Separate regulatory track' },
+    damage_scenarios: { external: 'Sensitive IP — reveals exploitable failure modes' },
+    threat_scenarios: { external: 'Attack roadmap — never share externally' },
+    attack_paths:     { external: 'Attacker guide — never share externally', auditor: 'Not required for process audit' },
+    traceability:     { external: 'Exposes internal architecture decisions' },
+  };
 
   const CLASSIFICATIONS: ReportClassification[] = ['public', 'internal', 'confidential'];
 
+  function isLocked(key: SectionKey): boolean {
+    const defaults = defaultConfigForAudience(config.audience);
+    return !defaults.sections[key];
+  }
+
+  function lockReason(key: SectionKey): string | null {
+    return LOCKED_REASONS[key]?.[config.audience] ?? null;
+  }
+
   function selectAudience(audience: ReportAudience): void {
     const next = defaultConfigForAudience(audience);
-    // Preserve any metadata the user already typed.
     next.metadata = { ...config.metadata };
     config = next;
     dispatch('change', config);
   }
 
   function toggleSection(key: SectionKey): void {
+    if (isLocked(key)) return;
     config.sections[key] = !config.sections[key];
     config = config;
     dispatch('change', config);
@@ -71,6 +89,15 @@
         </button>
       {/each}
     </div>
+    {#if config.audience === 'external'}
+      <p class="text-[10px] mt-2 px-1" style="color: var(--color-warning);">
+        Sensitive sections are locked off. Threat details, attack paths, and internal compliance gaps are never included in external reports.
+      </p>
+    {:else if config.audience === 'auditor'}
+      <p class="text-[10px] mt-2 px-1" style="color: var(--color-text-tertiary);">
+        Configured for ISO 21434 process audit. Full traceability included. Attack paths and CRA gaps excluded.
+      </p>
+    {/if}
   </div>
 
   <!-- Sections -->
@@ -78,17 +105,30 @@
     <p class="text-xs font-semibold mb-2" style="color: var(--color-text-primary);">Sections</p>
     <div class="space-y-1.5">
       {#each SECTIONS as s}
-        <label class="flex items-start gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer"
-          style="background: var(--color-bg-elevated);">
+        {@const locked = isLocked(s.key)}
+        {@const reason = lockReason(s.key)}
+        <label
+          class="flex items-start gap-2.5 px-2 py-1.5 rounded-lg {locked ? 'cursor-not-allowed' : 'cursor-pointer'}"
+          style="background: var(--color-bg-elevated); opacity: {locked ? '0.5' : '1'};"
+          title={locked && reason ? `Excluded: ${reason}` : ''}
+        >
           <input
             type="checkbox"
             checked={config.sections[s.key]}
             on:change={() => toggleSection(s.key)}
+            disabled={locked}
             class="mt-0.5"
           />
           <span class="flex-1">
-            <span class="block text-xs" style="color: var(--color-text-primary);">{s.label}</span>
-            <span class="block text-[10px]" style="color: var(--color-text-tertiary);">{s.wp}</span>
+            <span class="block text-xs" style="color: var(--color-text-primary);">
+              {s.label}
+              {#if locked}
+                <span class="ml-1 text-[10px] font-normal" style="color: var(--color-error);">locked</span>
+              {/if}
+            </span>
+            <span class="block text-[10px]" style="color: var(--color-text-tertiary);">
+              {locked && reason ? reason : s.wp}
+            </span>
           </span>
         </label>
       {/each}
