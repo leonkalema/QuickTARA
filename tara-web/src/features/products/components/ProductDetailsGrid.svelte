@@ -1,5 +1,6 @@
 <script lang="ts">
   import { User, Plus, X, Wand2 } from '@lucide/svelte';
+  import { createEventDispatcher } from 'svelte';
   import type { Product } from '$lib/types/product';
 
   export let product: Product;
@@ -7,21 +8,26 @@
   export let editedProduct: Partial<Product> = {};
   export let canEdit: boolean = true;
 
-  const TRUST_ZONES = ['Critical', 'Standard', 'Boundary', 'Untrusted'];
+  const dispatch = createEventDispatcher<{ save: Partial<Product> }>();
 
-  // Array fields can be edited inline even outside global edit mode
-  $: activeProduct = isEditing ? editedProduct : product as Partial<Product>;
+  const TRUST_ZONES = ['Critical', 'Standard', 'Boundary', 'Untrusted'];
 
   function addItem(field: string, value: string) {
     if (!value.trim()) return;
-    const arr = [...((activeProduct as any)[field] ?? [])];
-    if (!arr.includes(value.trim())) {
-      if (isEditing) {
+    if (isEditing) {
+      const arr = [...((editedProduct as any)[field] ?? [])];
+      if (!arr.includes(value.trim())) {
         (editedProduct as any)[field] = [...arr, value.trim()];
         editedProduct = { ...editedProduct };
-      } else {
-        (product as any)[field] = [...arr, value.trim()];
+      }
+    } else {
+      // Inline mode — update and auto-save immediately
+      const arr = [...((product as any)[field] ?? [])];
+      if (!arr.includes(value.trim())) {
+        arr.push(value.trim());
+        (product as any)[field] = arr;
         product = { ...product };
+        dispatch('save', { [field]: arr });
       }
     }
   }
@@ -33,10 +39,12 @@
       (editedProduct as any)[field] = arr;
       editedProduct = { ...editedProduct };
     } else {
+      // Inline mode — update and auto-save immediately
       const arr = [...((product as any)[field] ?? [])];
       arr.splice(index, 1);
       (product as any)[field] = arr;
       product = { ...product };
+      dispatch('save', { [field]: arr });
     }
   }
 

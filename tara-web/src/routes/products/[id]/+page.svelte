@@ -376,7 +376,20 @@
 
     <ProductSetupStatus {product} {assetCount} damageScenarioCount={damageCount} threatScenarioCount={threatCount} />
 
-    <ProductDetailsGrid {product} {isEditing} bind:editedProduct canEdit={permissions?.can_edit ?? false} />
+    <ProductDetailsGrid {product} {isEditing} bind:editedProduct canEdit={permissions?.can_edit ?? false}
+      on:save={async (e) => {
+        if (!productId) return;
+        try {
+          const updated = await productApi.update(productId, e.detail);
+          product = updated;
+          selectedProduct.set(updated);
+          notifyProductsChanged();
+          notifications.show('Saved', 'success');
+        } catch {
+          notifications.show('Failed to save', 'error');
+        }
+      }}
+    />
 
     <ProductQuickActions {assetCount} damageCount={damageCount} threatCount={threatCount} />
   {:else}
